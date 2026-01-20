@@ -1,0 +1,182 @@
+[versions]
+# AndroidX & Google
+agp = "9.0.0"
+androidx-activity = "1.12.2"
+androidx-appcompat = "1.7.1"
+androidx-browser = "1.9.0"
+androidx-core = "1.17.0"
+androidx-datastore = "1.2.0"
+androidx-fragment = "1.8.9"
+androidx-lifecycle = "2.10.0"
+androidx-media3 = "1.9.0"
+androidx-navigation3 = "1.0.0"
+androidx-paging = "3.3.6"
+androidx-room = "2.8.4"
+google-material = "1.13.0"
+
+# Compose
+compose-bom = "2026.01.00"
+compose-material3 = "1.5.0-alpha12"
+compose-material3-adpative-navigation = "1.4.0"
+
+# Kotlin & Coroutines
+kotlin = "2.3.0"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.9.0"
+ksp = "2.3.4"
+
+# Readium
+readium = "3.1.2"
+
+# Hilt
+dagger-hilt = "2.57.2"
+androidx-hilt = "1.3.0"
+
+# Third Party
+coil = "3.3.0"
+desugar_jdk_libs = "2.1.5"
+timber = "5.0.1"
+
+# Tests
+junit-bom = "5.13.4"
+junit-ktx = "1.3.0"
+mockk = "1.14.7"
+
+[libraries]
+# --- AndroidX Core & UI (Views) ---
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidx-activity" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "androidx-browser" }
+androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "androidx-fragment" }
+google-material = { group = "com.google.android.material", name = "material", version.ref = "google-material" }
+
+# --- Architecture & Data ---
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "androidx-datastore" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+# --- Hilt ---
+dagger-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "dagger-hilt" }
+dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "dagger-hilt" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidx-hilt" }
+
+# --- Navigation 3 ---
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "androidx-navigation3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "androidx-navigation3" }
+androidx-lifecycle-viewmodel-navigation3 = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
+androidx-material3-adaptive-navigation = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite", version.ref = "compose-material3-adpative-navigation"}
+
+# --- Paging ---
+androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "androidx-paging" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "androidx-paging" }
+
+# --- Room ---
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
+
+# --- Compose ---
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime"}
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation"}
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation"}
+androidx-compose-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation"}
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui"}
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling"}
+androidx-compose-activity = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "compose-material3" }
+
+# --- Readium ---
+readium-shared = { module = "org.readium.kotlin-toolkit:readium-shared", version.ref = "readium" }
+readium-streamer = { module = "org.readium.kotlin-toolkit:readium-streamer", version.ref = "readium" }
+readium-navigator = { module = "org.readium.kotlin-toolkit:readium-navigator", version.ref = "readium" }
+readium-navigator-media-audio = { module = "org.readium.kotlin-toolkit:readium-navigator-media-audio", version.ref = "readium" }
+readium-navigator-media-tts = { module = "org.readium.kotlin-toolkit:readium-navigator-media-tts", version.ref = "readium" }
+readium-adapter-exoplayer = { module = "org.readium.kotlin-toolkit:readium-adapter-exoplayer", version.ref = "readium" }
+readium-adapter-pdfium = { module = "org.readium.kotlin-toolkit:readium-adapter-pdfium", version.ref = "readium" }
+readium-opds = { module = "org.readium.kotlin-toolkit:readium-opds", version.ref = "readium" }
+readium-lcp = { module = "org.readium.kotlin-toolkit:readium-lcp", version.ref = "readium" }
+
+# --- Media & Image Loading ---
+androidx-media3-common = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "androidx-media3" }
+androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "androidx-media3" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "androidx-media3" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+# --- Third Party / Utils ---
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# --- JUnit Test ---
+junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit-bom" }
+junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api" }
+junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junit-ktx" }
+
+# --- Mockk ---
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+mockk-agent =  { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "dagger-hilt" }
+
+[bundles]
+compose = [
+    "androidx-compose-activity",
+    "androidx-compose-adaptive-navigation",
+    "androidx-compose-animation",
+    "androidx-compose-foundation",
+    "androidx-compose-material3",
+    "androidx-compose-runtime",
+    "androidx-compose-ui",
+    "androidx-compose-ui-tooling"
+]
+media3 = [
+    "androidx-media3-common",
+    "androidx-media3-session",
+    "androidx-media3-exoplayer"
+]
+readium = [
+    "readium-shared",
+    "readium-streamer",
+    "readium-navigator",
+    "readium-navigator-media-audio",
+    "readium-navigator-media-tts",
+    "readium-adapter-exoplayer",
+    "readium-adapter-pdfium",
+    "readium-opds",
+    "readium-lcp"
+]
+navigation = [
+    "androidx-navigation3-runtime",
+    "androidx-navigation3-ui",
+    "androidx-lifecycle-viewmodel-navigation3",
+    "androidx-material3-adaptive-navigation"
+]
+paging = [
+    "androidx-paging-runtime",
+    "androidx-paging-compose"
+]
+room = [
+    "androidx-room-runtime",
+    "androidx-room-ktx"
+]
+coil = [
+    "coil-compose",
+    "coil-network"
+]
+test-unit = [
+    "junit-jupiter-api",
+    "mockk-android",
+    "mockk-agent",
+    "kotlinx-coroutines-test"
+]

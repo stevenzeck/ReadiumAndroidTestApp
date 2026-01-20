@@ -1,0 +1,34 @@
+package com.example.readiumandroidtestapp.core.data.database
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.core.domain.model.Bookmark
+import com.example.readiumandroidtestapp.core.domain.model.Catalog
+import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.HighlightConverters
+
+@Database(
+    entities = [Book::class, Bookmark::class, Highlight::class, Catalog::class],
+    version = 1,
+    exportSchema = false,
+)
+@TypeConverters(
+    HighlightConverters::class,
+)
+/**
+ * The main Room database for the application.
+ *
+ * It manages the persistence of:
+ * - [Book]: The metadata of imported publications.
+ * - [Bookmark]: User bookmarks associated with a book.
+ * - [Highlight]: User highlights associated with a book.
+ * - [Catalog]: External OPDS catalog feeds.
+ */
+abstract class AppDatabase : RoomDatabase() {
+
+    abstract fun booksDao(): BooksDao
+
+    abstract fun catalogDao(): CatalogDao
+}

@@ -1,0 +1,169 @@
+<resources>
+    <string name="app_name">Readium App</string>
+
+    <!-- Common-->
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="add">Add</string>
+    <string name="more_options">More Options</string>
+    <string name="unknown_error">Unknown Error</string>
+    <string name="retry">Retry</string>
+
+    <!-- FAB-->
+    <string name="expanded">Expanded</string>
+    <string name="collapsed">Collapsed</string>
+    <string name="toggle_import_menu">Toggle import menu</string>
+    <string name="url">URL</string>
+
+    <!-- Navigation-->
+    <string name="bookshelf">Bookshelf</string>
+    <string name="catalogs">Catalogs</string>
+    <string name="account">Account</string>
+    <string name="publication_detail">Publication Detail</string>
+
+    <!-- Bookshelf-->
+    <string name="import_book">Import book</string>
+    <string name="import_from_device">Import from device</string>
+    <string name="import_from_shared_storage">Import from shared storage</string>
+    <string name="import_from_url">Import from URL</string>
+    <string name="enter_url_title">Import from URL</string>
+    <string name="enter_url_message">Enter the URL of the publication:</string>
+    <string name="import_action">Import</string>
+    <string name="delete_book_title">Delete Book</string>
+    <string name="delete_book_message">Are you sure you want to delete \'%1$s\'?</string>
+    <string name="unknown_title">Unknown Title</string>
+    <string name="cover_description">Cover of %1$s</string>
+    <string name="error_importing_book">Error importing book</string>
+    <string name="error_invalid_url">Invalid URL</string>
+    <string name="book_imported_successfully">Book imported successfully</string>
+    <string name="error_deleting_book">Error deleting book</string>
+    <string name="empty_bookshelf">No books yet. Use + to add</string>
+    <string name="bookshelf_error">There wan an error loading the bookshelf. Please try again.</string>
+    <string name="empty" />
+
+    <!-- Catalogs-->
+    <string name="no_catalogs_found">No catalogs found. Use + to add</string>
+    <string name="no_feed_selected">No feed selected</string>
+    <string name="select_feed_message">Select a feed to view its details</string>
+    <string name="add_feed">Add Feed</string>
+    <string name="feed_name">Feed Name</string>
+    <string name="feed_url">Feed URL</string>
+    <string name="edit_feed">Edit Feed</string>
+    <string name="delete_feed">Delete Feed</string>
+    <string name="delete_feed_confirmation">Are you sure you want to delete this feed?</string>
+    <string name="error_adding_feed">Error adding feed</string>
+    <string name="error_invalid_opds_feed">OPDS feed is invalid</string>
+    <string name="navigation">Navigation</string>
+    <string name="publications">Publications</string>
+    <string name="sub_feed">Sub-feed</string>
+    <string name="group_link_description">Group link</string>
+    <string name="error_parsing_feed">Parsing error</string>
+    <string name="error_no_feed_data">No feed data found</string>
+    <string name="download">Download</string>
+    <string name="details">Details</string>
+    <string name="publication_detail_error">Error loading publication details</string>
+
+    <!-- Account-->
+    <string name="settings">Settings</string>
+    <string name="about">About</string>
+    <string name="readium_version">Readium version 3.1.2</string>
+    <string name="system_default">System Default</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+
+    <!-- Reader-->
+    <string name="failed_asset_retrieval">Failed to retrieve asset: %1$s</string>
+    <string name="failed_publication_opening">Failed to open publication: %1$s</string>
+    <string name="failed_create_audio_navigator">Failed to create audio navigator: %1$s</string>
+    <string name="invalid_book_location">Invalid book location</string>
+    <string name="unknown_author">Unknown Author</string>
+    <string name="search">Search</string>
+    <string name="tts">Text-to-speech (TTS)</string>
+    <string name="reading_preferences">Reading Preferences</string>
+    <string name="table_of_contents">Table of Contents</string>
+    <string name="add_highlight">Add Highlight</string>
+    <string name="add_note">Add Note</string>
+    <string name="contents">Contents</string>
+    <string name="bookmarks">Bookmarks</string>
+    <string name="highlights">Highlights</string>
+
+    <!-- TTS and Audiobooks-->
+    <string name="audio_settings">Audio Settings</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
+    <string name="next_chapter">Next Chapter</string>
+    <string name="rewind_30">Rewind 30 seconds</string>
+    <string name="forward_30">Forward 30 seconds</string>
+    <string name="previous_chapter">Previous Chapter</string>
+    <string name="previous_sentence">Previous Sentence</string>
+    <string name="next_sentence">Next Sentence</string>
+    <string name="voice">Voice</string>
+    <string name="pitch">Pitch</string>
+    <string name="speed">Speed</string>
+    <string name="unsupported_format">Unsupported Format</string>
+
+    <!-- Preferences -->
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="no_settings_available">No settings available</string>
+    <string name="increase">Increase</string>
+    <string name="decrease">Decrease</string>
+    <string name="background_color">Background Color</string>
+    <string name="column_count">Column Count</string>
+    <string name="font_family">Font Family</string>
+    <string name="font_family_sans_serif">Sans Serif</string>
+    <string name="font_family_serif">Serif</string>
+    <string name="font_family_open_dyslexic">OpenDyslexic</string>
+    <string name="font_family_accessible_dfa">Accessible DFA</string>
+    <string name="font_family_ia_writer_duospace">IA Writer Duospace</string>
+    <string name="font_size">Font Size</string>
+    <string name="font_weight">Font Weight</string>
+    <string name="hyphens">Hyphens</string>
+    <string name="image_filter">Image Filter</string>
+    <string name="language">Language</string>
+    <string name="letter_spacing">Letter Spacing</string>
+    <string name="ligatures">Ligatures</string>
+    <string name="line_height">Line Height</string>
+    <string name="page_margins">Page Margins</string>
+    <string name="paragraph_indent">Paragraph Indent</string>
+    <string name="paragraph_spacing">Paragraph Spacing</string>
+    <string name="publisher_styles">Publisher Styles</string>
+    <string name="reading_progression">Reading Progression</string>
+    <string name="scroll">Scroll</string>
+    <string name="spread">Spread</string>
+    <string name="text_align">Text Align</string>
+    <string name="text_color">Text Color</string>
+    <string name="text_normalization">Text Normalization</string>
+    <string name="theme">Theme</string>
+    <string name="type_scale">Type Scale</string>
+    <string name="vertical_text">Vertical Text</string>
+    <string name="word_spacing">Word Spacing</string>
+    <string name="page_spacing">Page Spacing</string>
+    <string name="offset_first_page">Offset First Page</string>
+    <string name="fit">Fit</string>
+    <string name="scroll_axis">Scroll Axis</string>
+    <string name="scroll_mode">Scroll Mode</string>
+    <string name="text_align_start">Start</string>
+    <string name="text_align_left">Left</string>
+    <string name="text_align_right">Right</string>
+    <string name="text_align_justify">Justify</string>
+    <string name="text_align_center">Center</string>
+    <string name="text_align_end">End</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_sepia">Sepia</string>
+    <string name="fit_contain">Contain</string>
+    <string name="fit_cover">Cover</string>
+    <string name="fit_width">Fit Width</string>
+    <string name="fit_height">Fit Height</string>
+    <string name="scroll_axis_vertical">Vertical</string>
+    <string name="scroll_axis_horizontal">Horizontal</string>
+    <string name="spread_auto">Auto</string>
+    <string name="spread_never">Never</string>
+    <string name="spread_always">Always</string>
+    <string name="column_count_auto">Auto</string>
+    <string name="column_count_one">1 Column</string>
+    <string name="column_count_two">2 Columns</string>
+</resources>
