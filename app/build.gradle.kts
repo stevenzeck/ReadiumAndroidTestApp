@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.readiumtestapp"
+        applicationId = "com.example.readiumandroidtestapp"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
