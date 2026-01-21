@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commitNow
 import com.example.readiumandroidtestapp.features.reader.ui.utils.HighlightActionModeCallback
 import kotlinx.coroutines.launch
@@ -124,7 +123,13 @@ fun EpubReader(
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
-            FragmentContainerView(context = ctx).apply {
+            object : FrameLayout(ctx) {
+                override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
+                    if (disallowIntercept) {
+                        super.requestDisallowInterceptTouchEvent(true)
+                    }
+                }
+            }.apply {
                 id = containerId.intValue
                 layoutParams = FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
