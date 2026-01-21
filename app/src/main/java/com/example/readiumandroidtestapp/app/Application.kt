@@ -2,6 +2,7 @@ package com.example.readiumandroidtestapp.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
+import timber.log.Timber
 
 /**
  * The standard Android Application class.
@@ -10,4 +11,10 @@ import dagger.hilt.android.HiltAndroidApp
  * serving as the application-level dependency container.
  */
 @HiltAndroidApp
-class Application : Application()
+class Application : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        Timber.plant(Timber.DebugTree())
+    }
+}
