@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
@@ -42,6 +43,8 @@ fun EpubReader(
     val fragmentActivity = context as? FragmentActivity
     val containerId = rememberSaveable { mutableIntStateOf(value = View.generateViewId()) }
 
+    val configuration = LocalConfiguration.current
+
     val currentOnLocatorChanged by rememberUpdatedState(newValue = onLocatorChanged)
     val currentOnTap by rememberUpdatedState(newValue = onTap)
     val currentOnNavigatorReady by rememberUpdatedState(newValue = onNavigatorReady)
@@ -51,7 +54,7 @@ fun EpubReader(
         HighlightActionModeCallback(onHighlight = { loc -> currentOnHighlight(loc) })
     }
 
-    DisposableEffect(key1 = publication) {
+    DisposableEffect(key1 = publication, key2 = configuration) {
         if (fragmentActivity == null) return@DisposableEffect onDispose { }
 
         val fragmentManager = fragmentActivity.supportFragmentManager
@@ -68,19 +71,16 @@ fun EpubReader(
 
         fragmentManager.fragmentFactory = factory
 
-        var fragment = fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
-
-        if (fragment == null) {
-            fragmentManager.commitNow(allowStateLoss = true) {
-                replace(
-                    containerId.intValue,
-                    EpubNavigatorFragment::class.java,
-                    null,
-                    null,
-                )
-            }
-            fragment = fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
+        fragmentManager.commitNow(allowStateLoss = true) {
+            replace(
+                containerId.intValue,
+                EpubNavigatorFragment::class.java,
+                null,
+                null,
+            )
         }
+        val fragment = fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
+
 
         val inputListener = object : InputListener {
             override fun onTap(event: TapEvent): Boolean {
