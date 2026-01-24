@@ -56,6 +56,7 @@ fun ReaderOverlay(
                         Icon(
                             painter = painterResource(id = R.drawable.arrow_back),
                             contentDescription = stringResource(id = R.string.back),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 },
@@ -82,6 +83,7 @@ fun ReaderOverlay(
                             Icon(
                                 painter = painterResource(id = R.drawable.search),
                                 contentDescription = stringResource(id = R.string.search),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -91,6 +93,7 @@ fun ReaderOverlay(
                             Icon(
                                 painter = painterResource(id = R.drawable.text_to_speech),
                                 contentDescription = stringResource(id = R.string.tts),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -100,6 +103,7 @@ fun ReaderOverlay(
                             Icon(
                                 painter = painterResource(id = R.drawable.settings),
                                 contentDescription = stringResource(id = R.string.reading_preferences),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -109,19 +113,21 @@ fun ReaderOverlay(
                         Icon(
                             painter = painterResource(id = R.drawable.toc),
                             contentDescription = stringResource(id = R.string.table_of_contents),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 } else {
                     // TTS Media Controls
                     IconButton(onClick = actions.onTtsPrevious) {
                         Icon(
-                            painter = painterResource(id = R.drawable.skip_previous),
+                            painter = painterResource(id = R.drawable.skip_previous_filled),
                             contentDescription = stringResource(id = R.string.previous_sentence),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
                     val iconRes = remember(isPlaying) {
-                        if (isPlaying) R.drawable.pause else R.drawable.play_arrow
+                        if (isPlaying) R.drawable.pause_filled else R.drawable.play_arrow_filled
                     }
                     val description = if (isPlaying) R.string.pause else R.string.play
 
@@ -129,13 +135,15 @@ fun ReaderOverlay(
                         Icon(
                             painter = painterResource(id = iconRes),
                             contentDescription = stringResource(id = description),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
                     IconButton(onClick = actions.onTtsNext) {
                         Icon(
-                            painter = painterResource(id = R.drawable.skip_next),
+                            painter = painterResource(id = R.drawable.skip_next_filled),
                             contentDescription = stringResource(id = R.string.next_sentence),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -143,6 +151,7 @@ fun ReaderOverlay(
                         Icon(
                             painter = painterResource(id = R.drawable.stop),
                             contentDescription = stringResource(id = R.string.stop),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
@@ -150,6 +159,7 @@ fun ReaderOverlay(
                         Icon(
                             painter = painterResource(id = R.drawable.settings),
                             contentDescription = stringResource(id = R.string.reading_preferences),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

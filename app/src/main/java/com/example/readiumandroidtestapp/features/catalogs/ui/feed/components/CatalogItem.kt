@@ -64,6 +64,7 @@ fun CatalogItem(
                         painter = painterResource(id = R.drawable.edit),
                         contentDescription = stringResource(id = R.string.edit_feed),
                         modifier = Modifier.size(size = 20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 IconButton(
@@ -75,6 +76,7 @@ fun CatalogItem(
                         painter = painterResource(id = R.drawable.delete),
                         contentDescription = stringResource(id = R.string.delete_feed),
                         modifier = Modifier.size(size = 20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }

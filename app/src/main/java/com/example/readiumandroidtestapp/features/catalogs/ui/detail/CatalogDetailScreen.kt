@@ -86,6 +86,7 @@ fun CatalogDetailScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.arrow_back),
                         contentDescription = stringResource(id = R.string.back),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -198,7 +199,7 @@ private fun LazyGridScope.renderSectionHeader(
                     Icon(
                         painter = painterResource(id = R.drawable.arrow_forward),
                         contentDescription = stringResource(id = R.string.group_link_description),
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -227,6 +228,7 @@ private fun LazyGridScope.renderNavigationLinks(
                 Icon(
                     painter = painterResource(id = R.drawable.shelves),
                     contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
             modifier = Modifier.clickable {
@@ -295,6 +297,7 @@ fun PublicationItem(
                     Icon(
                         painter = painterResource(id = R.drawable.download),
                         contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 contentPadding = MenuDefaults.DropdownMenuItemContentPadding,

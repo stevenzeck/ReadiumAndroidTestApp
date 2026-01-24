@@ -65,6 +65,7 @@ fun BooksGrid(
                             Icon(
                                 painter = painterResource(id = R.drawable.close),
                                 contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
                             )
                         },
                         contentPadding = MenuDefaults.DropdownMenuItemContentPadding,

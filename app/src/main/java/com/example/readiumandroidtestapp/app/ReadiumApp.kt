@@ -146,10 +146,12 @@ fun ReadiumApp(
                 ),
                 navigationSuiteItems = {
                     navigationState.topLevelDestinations.forEach { screen ->
+                        val isSelected = currentRoute == screen
+
                         val (titleResId, iconResId) = when (screen) {
-                            Bookshelf -> R.string.bookshelf to R.drawable.shelves
-                            Catalogs -> R.string.catalogs to R.drawable.browse
-                            Account -> R.string.account to R.drawable.account_circle
+                            Bookshelf -> R.string.bookshelf to if (isSelected) R.drawable.shelves_filled else R.drawable.shelves
+                            Catalogs -> R.string.catalogs to if (isSelected) R.drawable.browse_filled else R.drawable.browse
+                            Account -> R.string.account to if (isSelected) R.drawable.account_circle_filled else R.drawable.account_circle
                             else -> R.string.empty to R.drawable.info
                         }
 
@@ -158,6 +160,7 @@ fun ReadiumApp(
                                 Icon(
                                     painter = painterResource(id = iconResId),
                                     contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                 )
                             },
                             label = { Text(text = stringResource(id = titleResId)) },

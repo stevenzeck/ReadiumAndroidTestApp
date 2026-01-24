@@ -35,9 +35,10 @@ fun AudioPlayerControls(
         // Previous Chapter
         IconButton(onClick = onSkipPrevious) {
             Icon(
-                painter = painterResource(id = R.drawable.skip_previous),
+                painter = painterResource(id = R.drawable.skip_previous_filled),
                 contentDescription = stringResource(id = R.string.previous_chapter),
                 modifier = Modifier.size(size = 32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
@@ -47,6 +48,7 @@ fun AudioPlayerControls(
                 painter = painterResource(id = R.drawable.replay_30),
                 contentDescription = stringResource(id = R.string.rewind_30),
                 modifier = Modifier.size(size = 32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
@@ -59,12 +61,13 @@ fun AudioPlayerControls(
         ) {
             Icon(
                 painter = painterResource(
-                    id = if (isPlaying) R.drawable.pause else R.drawable.play_arrow,
+                    id = if (isPlaying) R.drawable.pause_filled else R.drawable.play_arrow_filled,
                 ),
                 contentDescription = stringResource(
                     id = if (isPlaying) R.string.pause else R.string.play,
                 ),
                 modifier = Modifier.size(size = 36.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
 
@@ -74,15 +77,17 @@ fun AudioPlayerControls(
                 painter = painterResource(id = R.drawable.forward_30),
                 contentDescription = stringResource(id = R.string.forward_30),
                 modifier = Modifier.size(size = 32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         // Next Chapter
         IconButton(onClick = onSkipNext) {
             Icon(
-                painter = painterResource(id = R.drawable.skip_next),
+                painter = painterResource(id = R.drawable.skip_next_filled),
                 contentDescription = stringResource(id = R.string.next_chapter),
                 modifier = Modifier.size(size = 32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

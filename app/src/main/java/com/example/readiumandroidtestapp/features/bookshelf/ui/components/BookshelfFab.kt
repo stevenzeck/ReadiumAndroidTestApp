@@ -83,6 +83,7 @@ fun BookshelfFab(
                 Icon(
                     painter = painterResource(id = if (checkedProgress > 0.5f) R.drawable.close else R.drawable.add),
                     contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.animateIcon(checkedProgress = { checkedProgress }),
                 )
             }
@@ -91,7 +92,13 @@ fun BookshelfFab(
         menuItems.forEach { (icon, label, action) ->
             FloatingActionButtonMenuItem(
                 onClick = { onExpandedChange(false); action() },
-                icon = { Icon(painter = painterResource(id = icon), contentDescription = null) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
                 text = { Text(text = stringResource(id = label)) },
             )
         }

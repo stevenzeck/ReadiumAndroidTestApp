@@ -76,6 +76,7 @@ fun PublicationDetailScreen(
                 Icon(
                     painter = painterResource(id = R.drawable.arrow_back),
                     contentDescription = stringResource(id = R.string.back),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },

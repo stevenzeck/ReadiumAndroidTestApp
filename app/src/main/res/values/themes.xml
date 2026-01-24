@@ -1,4 +1,4 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Theme.ReadiumAndroidTestApp" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+    <style name="Theme.ReadiumAndroidTestApp" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

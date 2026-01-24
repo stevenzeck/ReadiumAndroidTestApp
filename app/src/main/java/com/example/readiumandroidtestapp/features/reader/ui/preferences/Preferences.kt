@@ -93,6 +93,7 @@ fun <T : Comparable<T>> StepperPreference(
                 Icon(
                     painter = painterResource(id = R.drawable.skip_previous),
                     contentDescription = stringResource(id = R.string.decrease),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -112,6 +113,7 @@ fun <T : Comparable<T>> StepperPreference(
                 Icon(
                     painter = painterResource(id = R.drawable.skip_next),
                     contentDescription = stringResource(id = R.string.increase),
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }

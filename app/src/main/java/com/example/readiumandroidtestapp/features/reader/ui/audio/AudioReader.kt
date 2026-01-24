@@ -65,6 +65,7 @@ fun AudioReader(
                 Icon(
                     painter = painterResource(id = R.drawable.arrow_back),
                     contentDescription = stringResource(id = R.string.back),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
@@ -73,6 +74,7 @@ fun AudioReader(
                 Icon(
                     painter = painterResource(id = R.drawable.settings),
                     contentDescription = stringResource(id = R.string.reading_preferences),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
