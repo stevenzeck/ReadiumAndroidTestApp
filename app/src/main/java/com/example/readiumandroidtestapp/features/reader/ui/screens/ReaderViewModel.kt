@@ -19,6 +19,9 @@ import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -27,8 +30,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -44,7 +45,6 @@ import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.asset.Asset
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -57,8 +57,8 @@ import kotlin.time.Duration.Companion.seconds
  * 4. **Persistence**: Saves reading progression, bookmarks, and highlights to the [BookRepository].
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-@HiltViewModel
-class ReaderViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = ReaderViewModel.Factory::class)
+class ReaderViewModel @AssistedInject constructor(
     private val application: Application,
     private val bookRepository: BookRepository,
     private val openPublicationUseCase: OpenPublicationUseCase,
@@ -68,6 +68,7 @@ class ReaderViewModel @Inject constructor(
     private val decorationManager: ReaderDecorationManager,
     private val sessionFactory: ReaderSessionFactory,
     private val mediaBinder: ReaderMediaBinder,
+    @Assisted val bookId: Long,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ReaderUiState>(value = ReaderUiState.Loading)
@@ -76,14 +77,10 @@ class ReaderViewModel @Inject constructor(
     private val _settingsSheetState = MutableStateFlow<ReaderSettingsSheet?>(value = null)
     val settingsSheetState: StateFlow<ReaderSettingsSheet?> = _settingsSheetState.asStateFlow()
 
-    private val _bookId = MutableStateFlow<Long?>(value = null)
-
     // Reactive streams for book data, switched dynamically based on the current bookId.
-    val bookmarks: Flow<List<Bookmark>> = _bookId.filterNotNull()
-        .flatMapLatest { id -> bookRepository.bookmarksForBook(bookId = id) }
+    val bookmarks: Flow<List<Bookmark>> = bookRepository.bookmarksForBook(bookId = bookId)
 
-    val highlights: Flow<List<Highlight>> = _bookId.filterNotNull()
-        .flatMapLatest { id -> bookRepository.highlightsForBook(bookId = id) }
+    val highlights: Flow<List<Highlight>> = bookRepository.highlightsForBook(bookId = bookId)
 
     val showHighlightDialog: StateFlow<Boolean> = decorationManager.showHighlightDialog
 
@@ -108,12 +105,13 @@ class ReaderViewModel @Inject constructor(
     private val visualLocatorFlow = MutableStateFlow<Locator?>(value = null)
 
     init {
+        loadBookData()
+
         // Save progression (Debounced to avoid excessive database writes)
         visualLocatorFlow.debounce(timeout = 2.seconds).onEach { locator ->
-            val id = _bookId.value
-            if (locator != null && id != null) {
+            if (locator != null) {
                 val json = locator.toJSON().toString()
-                bookRepository.saveProgression(bookId = id, locator = json)
+                bookRepository.saveProgression(bookId = bookId, locator = json)
             }
         }.launchIn(scope = viewModelScope)
 
@@ -129,13 +127,10 @@ class ReaderViewModel @Inject constructor(
     /**
      * Loads a book and initializes the appropriate session (Visual or Audio).
      */
-    fun loadBook(id: Long) {
-        if (_bookId.value == id && _uiState.value !is ReaderUiState.Error) return
-        _bookId.value = id
-
+    private fun loadBookData() {
         viewModelScope.launch {
             _uiState.value = ReaderUiState.Loading
-            val book = bookRepository.get(id)
+            val book = bookRepository.get(bookId)
             val url = book?.url
 
             if (url == null) {
@@ -143,21 +138,26 @@ class ReaderViewModel @Inject constructor(
                 return@launch
             }
 
-            // Use Case handles file access and publication parsing
-            openPublicationUseCase(url = url)
-                .onSuccess { openedBook ->
-                    asset = openedBook.asset
-                    publication = openedBook.publication
-                    setupSession(book = book, publication = openedBook.publication)
-                }
-                .onFailure { error ->
-                    _uiState.value = ReaderUiState.Error(
-                        error = ReaderError.PublicationOpenFailed(
-                            cause = error as? Exception ?: Exception(error),
-                        ),
-                    )
-                }
+            openPublicationUseCase(url = url).onSuccess { openedBook ->
+                asset = openedBook.asset
+                publication = openedBook.publication
+                setupSession(book = book, publication = openedBook.publication)
+            }.onFailure { error ->
+                _uiState.value = ReaderUiState.Error(
+                    error = ReaderError.PublicationOpenFailed(
+                        cause = error as? Exception ?: Exception(error),
+                    ),
+                )
+            }
         }
+    }
+
+    /**
+     * Retries loading the book if an error occurred.
+     */
+    fun retryLoad() {
+        if (_uiState.value !is ReaderUiState.Error) return
+        loadBookData()
     }
 
     private suspend fun setupSession(book: Book, publication: Publication) {
@@ -206,13 +206,11 @@ class ReaderViewModel @Inject constructor(
         val preferences = state?.initialPreferences
         if (preferences != null) {
             if (preferences is EpubPreferences) {
-                @Suppress("UNCHECKED_CAST")
-                (visualNavigator as? Configurable<*, EpubPreferences>)?.submitPreferences(
+                @Suppress("UNCHECKED_CAST") (visualNavigator as? Configurable<*, EpubPreferences>)?.submitPreferences(
                     preferences,
                 )
             } else if (preferences is PdfiumPreferences) {
-                @Suppress("UNCHECKED_CAST")
-                (visualNavigator as? Configurable<*, PdfiumPreferences>)?.submitPreferences(
+                @Suppress("UNCHECKED_CAST") (visualNavigator as? Configurable<*, PdfiumPreferences>)?.submitPreferences(
                     preferences,
                 )
             }
@@ -220,7 +218,7 @@ class ReaderViewModel @Inject constructor(
 
         // Restore Decorations (Highlights, Search)
         viewModelScope.launch {
-            decorationManager.decorationFlow(bookId = _bookId.value).onEach { decorations ->
+            decorationManager.decorationFlow(bookId = bookId).onEach { decorations ->
                 (visualNavigator as? DecorableNavigator)?.applyDecorations(
                     decorations,
                     group = "highlights",
@@ -261,11 +259,10 @@ class ReaderViewModel @Inject constructor(
 
     private fun openTtsSettings() {
         val pub = publication ?: return
-        val id = _bookId.value ?: return
 
         viewModelScope.launch {
             val session = preferencesManager.createTtsSettingsSession(
-                bookId = id,
+                bookId = bookId,
                 publication = pub,
                 ttsManager = ttsManager,
                 application = application,
@@ -291,10 +288,9 @@ class ReaderViewModel @Inject constructor(
     }
 
     private fun commitPreferences(preferences: Configurable.Preferences<*>) {
-        val id = _bookId.value ?: return
         viewModelScope.launch {
             preferencesManager.commitPreferences(
-                bookId = id,
+                bookId = bookId,
                 preferences = preferences,
                 currentVisualNavigator = currentVisualNavigator,
                 audioNavigator = audioNavigator,
@@ -329,10 +325,9 @@ class ReaderViewModel @Inject constructor(
 
             is ReaderSettingsSheet.Tts -> {
                 val visualState = currentState as? ReaderUiState.Visual ?: return
-                val id = _bookId.value ?: return
 
                 val newSession = preferencesManager.createTtsSettingsSession(
-                    bookId = id,
+                    bookId = bookId,
                     publication = visualState.publication,
                     ttsManager = ttsManager,
                     application = application,
@@ -364,9 +359,8 @@ class ReaderViewModel @Inject constructor(
 
     private fun startObservingAudioLocator(locatorFlow: StateFlow<Locator>) {
         locatorFlow.debounce(timeout = 2.seconds).onEach { locator ->
-            val id = _bookId.value ?: return@onEach
             val json = locator.toJSON().toString()
-            bookRepository.saveProgression(bookId = id, locator = json)
+            bookRepository.saveProgression(bookId = bookId, locator = json)
         }.launchIn(scope = viewModelScope)
     }
     //endregion
@@ -376,10 +370,14 @@ class ReaderViewModel @Inject constructor(
     fun onHighlightAction(selection: Locator) = decorationManager.onHighlightAction(selection)
     fun dismissHighlightDialog() = decorationManager.dismissHighlightDialog()
     fun saveHighlight(note: String, color: Int) {
-        val id = _bookId.value ?: return
         viewModelScope.launch {
-            decorationManager.saveHighlight(bookId = id, note = note, color = color)
+            decorationManager.saveHighlight(bookId = bookId, note = note, color = color)
         }
     }
     //endregion
+
+    @AssistedFactory
+    interface Factory {
+        fun create(bookId: Long): ReaderViewModel
+    }
 }

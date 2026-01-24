@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.domain.model.Catalog.Companion.TYPE_OPDS_1
 import com.example.readiumandroidtestapp.core.domain.model.Catalog.Companion.TYPE_OPDS_2
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,20 +18,23 @@ import org.readium.r2.opds.OPDS2Parser
 import org.readium.r2.shared.opds.Feed
 import org.readium.r2.shared.opds.ParseData
 import org.readium.r2.shared.util.Try
-import javax.inject.Inject
 
-@HiltViewModel
-class CatalogDetailViewModel @Inject constructor(
-
+@HiltViewModel(assistedFactory = CatalogDetailViewModel.Factory::class)
+class CatalogDetailViewModel @AssistedInject constructor(
+    @Assisted private val catalog: Catalog,
 ) : ViewModel() {
     private val _feedState = MutableStateFlow<FeedState>(value = FeedState.Loading)
     val feedState: StateFlow<FeedState> = _feedState.asStateFlow()
+
+    init {
+        fetchFeed()
+    }
 
     /**
      * Fetches the feed content. Optimized to use the persisted type
      * to call the correct parser directly.
      */
-    fun fetchFeed(catalog: Catalog) {
+    fun fetchFeed() {
         viewModelScope.launch {
             _feedState.value = FeedState.Loading
 
@@ -54,6 +60,11 @@ class CatalogDetailViewModel @Inject constructor(
         return OPDS2Parser.parseUrlString(url = url).onFailure {
             return OPDS1Parser.parseUrlString(url = url)
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(catalog: Catalog): CatalogDetailViewModel
     }
 }
 

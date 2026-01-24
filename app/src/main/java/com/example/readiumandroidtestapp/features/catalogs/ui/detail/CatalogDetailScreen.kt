@@ -29,7 +29,6 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -57,7 +56,11 @@ fun CatalogDetailScreen(
     showBackButton: Boolean,
     onSubFeedClick: (Catalog) -> Unit,
     onPublicationClick: (Publication) -> Unit,
-    viewModel: CatalogDetailViewModel = hiltViewModel(),
+    viewModel: CatalogDetailViewModel = hiltViewModel(
+        creationCallback = { factory: CatalogDetailViewModel.Factory ->
+            factory.create(catalog)
+        },
+    ),
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
     val feedState by viewModel.feedState.collectAsState()
@@ -67,10 +70,6 @@ fun CatalogDetailScreen(
     val publicationsTitle = stringResource(id = R.string.publications)
     val noFeedDataString = stringResource(id = R.string.error_no_feed_data)
     val parsingErrorString = stringResource(id = R.string.error_parsing_feed)
-
-    LaunchedEffect(key1 = catalog.href) {
-        viewModel.fetchFeed(catalog = catalog)
-    }
 
     ReadiumScaffold(
         title = catalog.title,

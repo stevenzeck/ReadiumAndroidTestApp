@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,13 +29,13 @@ import com.example.readiumandroidtestapp.features.reader.ui.visual.VisualReaderC
 @Composable
 fun ReaderScreen(
     bookId: Long,
-    viewModel: ReaderViewModel = hiltViewModel(),
+    viewModel: ReaderViewModel = hiltViewModel(
+        creationCallback = { factory: ReaderViewModel.Factory ->
+            factory.create(bookId)
+        },
+    ),
     onNavigateBack: () -> Unit,
 ) {
-    // Lifecycle Integration: Trigger book loading when the composable enters the composition.
-    LaunchedEffect(bookId) {
-        viewModel.loadBook(bookId)
-    }
 
     // State Collection
     val state by viewModel.uiState.collectAsState()
@@ -60,7 +59,7 @@ fun ReaderScreen(
             is ReaderUiState.Error -> {
                 ReaderErrorScreen(
                     error = uiState.error,
-                    onRetry = { viewModel.loadBook(bookId) },
+                    onRetry = { viewModel.retryLoad() },
                 )
             }
 
