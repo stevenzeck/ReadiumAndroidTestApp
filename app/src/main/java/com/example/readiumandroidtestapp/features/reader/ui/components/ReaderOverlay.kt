@@ -149,7 +149,7 @@ fun ReaderOverlay(
 
                     IconButton(onClick = actions.onTtsStop) {
                         Icon(
-                            painter = painterResource(id = R.drawable.stop),
+                            painter = painterResource(id = R.drawable.stop_filled),
                             contentDescription = stringResource(id = R.string.stop),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
