@@ -239,6 +239,14 @@ class ReaderViewModel @AssistedInject constructor(
 
     fun onVisualLocatorChanged(locator: Locator) {
         visualLocatorFlow.value = locator
+        val currentState = _uiState.value
+        if (currentState is ReaderUiState.Visual) {
+            _uiState.value = currentState.copy(initialLocator = locator)
+        }
+        // If audiobooks change and we need to update state here
+//        else if (currentState is ReaderUiState.Audio) {
+//
+//        }
     }
     //endregion
 

@@ -36,6 +36,7 @@ sealed interface ReaderUiState {
     data class Visual(
         val publication: Publication,
         val book: Book,
+        //FIXME rename to currentLocator
         val initialLocator: Locator?,
         val pdfiumDocumentFactory: PdfiumDocumentFactory,
         val capabilities: ReaderCapabilities,
