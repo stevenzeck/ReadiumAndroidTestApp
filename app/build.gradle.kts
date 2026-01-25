@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    kotlin("plugin.parcelize")
+    alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
@@ -107,13 +107,12 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui)
 
     // Tests
-    testImplementation(platform(libs.junit.bom))
     testImplementation(libs.bundles.test.unit)
-    testRuntimeOnly(libs.junit.jupiter.engine)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    androidTestImplementation(libs.androidx.junit.ktx)
+    kspTest(libs.dagger.hilt.compiler)
+    androidTestImplementation(libs.bundles.test.instrumented)
+    kspAndroidTest(libs.dagger.hilt.compiler)
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    jvmArgs("-noverify")
 }

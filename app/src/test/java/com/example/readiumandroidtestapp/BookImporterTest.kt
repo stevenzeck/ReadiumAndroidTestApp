@@ -7,10 +7,9 @@ import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertAll
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
@@ -79,21 +78,14 @@ class BookImporterTest {
 
         val result = importer.importFromUri(uri = mockk(relaxed = true))
 
-        assertAll(
-            "Book Import Results",
-            {
-                assertTrue(result.isSuccess) {
-                    "Operation failed: ${result.failureOrNull()}"
-                }
-            },
-            {
-                val savedBook = result.getOrNull()
-                if (savedBook != null) {
-                    val savedFile = File(savedBook.href)
-                    assertTrue(savedFile.exists()) { "File should exist in temp dir" }
-                    assertEquals("Fake Book Content", savedFile.readText())
-                }
-            },
-        )
+
+        assertTrue("Operation failed: ${result.failureOrNull()}", result.isSuccess)
+
+        val savedBook = result.getOrNull()
+        if (savedBook != null) {
+            val savedFile = File(savedBook.href)
+            assertTrue("File should exist in temp dir", savedFile.exists())
+            assertEquals("Fake Book Content", savedFile.readText())
+        }
     }
 }
