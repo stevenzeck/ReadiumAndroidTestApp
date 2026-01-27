@@ -32,16 +32,4 @@ object BookModule {
             httpClient = httpClient,
         )
 
-    @Provides
-    @Singleton
-    fun provideBookRepository(
-        booksDao: BooksDao,
-        bookImporter: BookImporter,
-        storageGateway: StorageGateway,
-    ): BookRepository =
-        BookRepository(
-            booksDao = booksDao,
-            bookImporter = bookImporter,
-            storageGateway = storageGateway,
-        )
 }

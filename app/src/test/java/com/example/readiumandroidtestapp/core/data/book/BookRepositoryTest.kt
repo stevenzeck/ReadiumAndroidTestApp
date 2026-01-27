@@ -26,7 +26,7 @@ class BookRepositoryTest {
     private val bookImporter: BookImporter = mockk()
     private val storageGateway: StorageGateway = mockk(relaxed = true)
 
-    private val repository = BookRepository(
+    private val repository = DefaultBookRepository(
         booksDao = booksDao,
         bookImporter = bookImporter,
         storageGateway = storageGateway,
