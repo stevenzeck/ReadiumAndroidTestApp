@@ -10,4 +10,5 @@ interface StorageGateway {
     fun openInputStream(uri: Uri): InputStream?
     fun resolveExtension(uri: Uri): String
     fun toUrl(file: File): AbsoluteUrl?
+    fun deleteFile(path: String): Boolean
 }

@@ -45,4 +45,8 @@ class AndroidStorageGateway @Inject constructor(
     override fun toUrl(file: File): AbsoluteUrl {
         return file.toUrl()
     }
+
+    override fun deleteFile(path: String): Boolean {
+        return File(path).delete()
+    }
 }

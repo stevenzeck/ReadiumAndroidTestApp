@@ -117,11 +117,11 @@ interface BooksDao {
 
     /**
      * Saves book progression
+     * @param bookId The book to update
      * @param locator Location of the book
-     * @param id The book to update
      */
     @Query(
-        "UPDATE " + Book.TABLE_NAME + " SET " + Book.PROGRESSION + " = :locator WHERE " + Book.ID + "= :id"
+        "UPDATE " + Book.TABLE_NAME + " SET " + Book.PROGRESSION + " = :locator WHERE " + Book.ID + "= :bookId"
     )
-    suspend fun saveProgression(locator: String, id: Long)
+    suspend fun saveProgression(bookId: Long, locator: String)
 }

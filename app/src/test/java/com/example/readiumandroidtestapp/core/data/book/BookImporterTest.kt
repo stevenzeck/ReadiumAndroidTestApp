@@ -38,6 +38,10 @@ class BookImporterTest {
         override fun toUrl(file: File): AbsoluteUrl {
             return mockUrl
         }
+
+        override fun deleteFile(path: String): Boolean {
+            return File(path).delete()
+        }
     }
 
     private val booksDao: BooksDao = mockk(relaxed = true)

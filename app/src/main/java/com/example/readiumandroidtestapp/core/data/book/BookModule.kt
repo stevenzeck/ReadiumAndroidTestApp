@@ -37,9 +37,11 @@ object BookModule {
     fun provideBookRepository(
         booksDao: BooksDao,
         bookImporter: BookImporter,
+        storageGateway: StorageGateway,
     ): BookRepository =
         BookRepository(
             booksDao = booksDao,
             bookImporter = bookImporter,
+            storageGateway = storageGateway,
         )
 }

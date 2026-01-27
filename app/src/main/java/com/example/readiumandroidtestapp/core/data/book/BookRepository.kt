@@ -5,6 +5,7 @@ import androidx.annotation.ColorInt
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
+import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +16,6 @@ import org.readium.r2.shared.publication.indexOfFirstWithHref
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import timber.log.Timber
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,6 +40,7 @@ import javax.inject.Singleton
 class BookRepository @Inject constructor(
     private val booksDao: BooksDao,
     private val bookImporter: BookImporter,
+    private val storageGateway: StorageGateway,
 ) {
 
     val books: Flow<List<Book>> = booksDao.getAllBooks()
@@ -87,8 +88,8 @@ class BookRepository @Inject constructor(
                 // We wrap this in a try-catch because even if file deletion fails,
                 // the "business transaction" (removing the book from the library) is effectively complete.
                 try {
-                    File(book.href).delete()
-                    book.cover?.let { File(it).delete() }
+                    storageGateway.deleteFile(path = book.href)
+                    book.cover?.let { storageGateway.deleteFile(path = it) }
                 } catch (e: Exception) {
                     Timber.w(t = e, message = "Failed to clean up files for book $bookId")
                 }
@@ -110,7 +111,7 @@ class BookRepository @Inject constructor(
     suspend fun saveProgression(bookId: Long, locator: String): Try<Unit, Exception> =
         withContext(context = Dispatchers.IO) {
             try {
-                booksDao.saveProgression(locator = locator, id = bookId)
+                booksDao.saveProgression(bookId = bookId, locator = locator)
                 Try.success(success = Unit)
             } catch (e: Exception) {
                 Try.failure(failure = e)
@@ -120,13 +121,13 @@ class BookRepository @Inject constructor(
     /**
      * Retrieves a book by its ID.
      *
-     * @param id The ID of the book to retrieve.
+     * @param bookId The ID of the book to retrieve.
      *
      * @return The [Book] with the given ID, or null if not found.
      */
-    suspend fun get(id: Long): Book? =
+    suspend fun get(bookId: Long): Book? =
         withContext(context = Dispatchers.IO) {
-            booksDao.get(id)
+            booksDao.get(bookId)
         }
 
     /**
