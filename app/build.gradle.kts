@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.dagger.hilt.android)
+    alias(libs.plugins.androidx.room)
 }
 
 android {
@@ -34,14 +35,20 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
         compose = true
         resValues = true
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 }
 
@@ -55,61 +62,67 @@ kotlin {
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
             "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
             "-opt-in=org.readium.r2.shared.ExperimentalReadiumApi",
         )
     }
 }
 
-dependencies {
-    // BOMs
-    implementation(platform(libs.androidx.compose.bom))
-//    androidTestImplementation(platform(libs.androidx.compose.bom))
+room {
+    schemaDirectory("$projectDir/schemas")
+}
 
-    // Core & Kotlin
+dependencies {
+    // --- BOMs ---
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+    // --- Core & Kotlin ---
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.androidx.core)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.browser)
+
+    // --- Async & Serialization ---
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 
-    // AndroidX & UI
-    implementation(libs.androidx.core)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.browser)
-
-    // Architecture
+    // --- Architecture ---
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.datastore.preferences)
 
-    // Hilt
+    // --- Dependency Injection (Hilt) ---
     implementation(libs.dagger.hilt.android)
     ksp(libs.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Feature Bundles
+    // --- Feature Bundles ---
     implementation(libs.bundles.readium)
     implementation(libs.bundles.paging)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
 
-    // Compose
+    // --- Compose & Navigation ---
     implementation(libs.bundles.compose)
     implementation(libs.bundles.navigation)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // Room
+    // --- Database (Room) ---
     implementation(libs.bundles.room)
     ksp(libs.androidx.room.compiler)
 
-    // Utilities
+    // --- Utilities ---
     implementation(libs.timber)
 
-    // Debug
-    debugImplementation(libs.androidx.compose.ui)
-
-    // Tests
+    // --- Testing ---
+    // Unit Tests
     testImplementation(libs.bundles.test.unit)
     kspTest(libs.dagger.hilt.compiler)
-    androidTestImplementation(libs.bundles.test.instrumented)
+
+    // Instrumentation Tests
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     kspAndroidTest(libs.dagger.hilt.compiler)
 }
 

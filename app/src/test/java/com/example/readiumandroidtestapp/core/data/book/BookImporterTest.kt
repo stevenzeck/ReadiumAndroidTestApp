@@ -1,14 +1,12 @@
-package com.example.readiumandroidtestapp
+package com.example.readiumandroidtestapp.core.data.book
 
 import android.net.Uri
-import com.example.readiumandroidtestapp.core.data.book.BookImporter
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert
 import org.junit.Test
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
@@ -79,13 +77,13 @@ class BookImporterTest {
         val result = importer.importFromUri(uri = mockk(relaxed = true))
 
 
-        assertTrue("Operation failed: ${result.failureOrNull()}", result.isSuccess)
+        Assert.assertTrue("Operation failed: ${result.failureOrNull()}", result.isSuccess)
 
         val savedBook = result.getOrNull()
         if (savedBook != null) {
             val savedFile = File(savedBook.href)
-            assertTrue("File should exist in temp dir", savedFile.exists())
-            assertEquals("Fake Book Content", savedFile.readText())
+            Assert.assertTrue("File should exist in temp dir", savedFile.exists())
+            Assert.assertEquals("Fake Book Content", savedFile.readText())
         }
     }
 }
