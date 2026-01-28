@@ -4,5 +4,5 @@ import org.readium.r2.shared.opds.ParseData
 import org.readium.r2.shared.util.Try
 
 interface OpdsParser {
-    suspend fun parseUrlString(url: String): Try<ParseData, Exception>
+    suspend fun parseUrlString(url: String, type: Int? = null): Try<ParseData, Exception>
 }

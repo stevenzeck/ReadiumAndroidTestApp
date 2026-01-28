@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -25,15 +26,17 @@ class BookRepositoryTest {
     private val booksDao: BooksDao = mockk(relaxed = true)
     private val bookImporter: BookImporter = mockk()
     private val storageGateway: StorageGateway = mockk(relaxed = true)
+    private val testDispatcher = StandardTestDispatcher()
 
     private val repository = DefaultBookRepository(
         booksDao = booksDao,
         bookImporter = bookImporter,
         storageGateway = storageGateway,
+        ioDispatcher = testDispatcher,
     )
 
     @Test
-    fun `addBook from URL returns success`() = runTest {
+    fun `addBook from URL returns success`() = runTest(testDispatcher) {
         val url = mockk<AbsoluteUrl>()
         val expectedBook = mockk<Book>()
         coEvery { bookImporter.importFromUrl(url = url) } returns Try.success(success = expectedBook)
@@ -45,7 +48,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `addBook from URI returns success`() = runTest {
+    fun `addBook from URI returns success`() = runTest(testDispatcher) {
         val uri = mockk<Uri>()
         val expectedBook = mockk<Book>()
         coEvery { bookImporter.importFromUri(uri = uri) } returns Try.success(success = expectedBook)
@@ -57,7 +60,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `deleteBook success deletes from dao and storage`() = runTest {
+    fun `deleteBook success deletes from dao and storage`() = runTest(testDispatcher) {
         val bookId = 1L
         val bookPath = "/path/to/book.epub"
         val coverPath = "/path/to/cover.jpg"
@@ -84,7 +87,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `deleteBook handles storage failure gracefully`() = runTest {
+    fun `deleteBook handles storage failure gracefully`() = runTest(testDispatcher) {
         val bookId = 1L
         val bookPath = "/path/to/book.epub"
         val book = Book(
@@ -108,7 +111,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `deleteBook returns failure if book not found`() = runTest {
+    fun `deleteBook returns failure if book not found`() = runTest(testDispatcher) {
         val bookId = 1L
         coEvery { booksDao.get(bookId = bookId) } returns null
 
@@ -119,7 +122,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `saveProgression calls dao`() = runTest {
+    fun `saveProgression calls dao`() = runTest(testDispatcher) {
         val bookId = 1L
         val locatorJson = "{}"
 
@@ -130,7 +133,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `get returns book from dao`() = runTest {
+    fun `get returns book from dao`() = runTest(testDispatcher) {
         val bookId = 1L
         val expectedBook = mockk<Book>()
         coEvery { booksDao.get(bookId = bookId) } returns expectedBook
@@ -141,7 +144,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `bookmarksForBook returns flow from dao`() = runTest {
+    fun `bookmarksForBook returns flow from dao`() = runTest(testDispatcher) {
         val bookId = 1L
         val expectedBookmarks = listOf(mockk<Bookmark>())
         every { booksDao.getBookmarksForBook(bookId = bookId) } returns flowOf(value = expectedBookmarks)
@@ -153,7 +156,7 @@ class BookRepositoryTest {
 
 
     @Test
-    fun `highlightsForBook returns flow from dao`() = runTest {
+    fun `highlightsForBook returns flow from dao`() = runTest(testDispatcher) {
         val bookId = 1L
         val expectedHighlights = listOf(mockk<Highlight>())
         every { booksDao.getHighlightsForBook(bookId = bookId) } returns flowOf(value = expectedHighlights)
@@ -164,7 +167,7 @@ class BookRepositoryTest {
     }
 
     @Test
-    fun `addHighlight calls dao`() = runTest {
+    fun `addHighlight calls dao`() = runTest(testDispatcher) {
         val bookId = 1L
         val locator = mockk<Locator>(relaxed = true)
         coEvery { booksDao.insertHighlight(highlight = any()) } returns 20L

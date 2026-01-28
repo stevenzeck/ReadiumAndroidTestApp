@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.core.data.opds
 
+import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.domain.opds.OpdsParser
 import org.readium.r2.opds.OPDS1Parser
 import org.readium.r2.opds.OPDS2Parser
@@ -9,9 +10,15 @@ import javax.inject.Inject
 
 class DefaultOpdsParser @Inject constructor() : OpdsParser {
 
-    override suspend fun parseUrlString(url: String): Try<ParseData, Exception> {
-        return OPDS2Parser.parseUrlString(url = url).onFailure {
-            return OPDS1Parser.parseUrlString(url = url)
+    override suspend fun parseUrlString(url: String, type: Int?): Try<ParseData, Exception> {
+        return when (type) {
+            Catalog.TYPE_OPDS_1 -> OPDS1Parser.parseUrlString(url = url)
+            Catalog.TYPE_OPDS_2 -> OPDS2Parser.parseUrlString(url = url)
+            else -> {
+                OPDS2Parser.parseUrlString(url = url).onFailure {
+                    return OPDS1Parser.parseUrlString(url = url)
+                }
+            }
         }
     }
 }

@@ -61,7 +61,7 @@ class BookImporterTest {
     private val coverImageSaver: CoverImageSaver = mockk()
     private val testDispatcher = UnconfinedTestDispatcher()
 
-    private val importer = BookImporter(
+    private val importer = DefaultBookImporter(
         storageGateway = fakeGateway,
         booksDao = booksDao,
         assetRetriever = assetRetriever,

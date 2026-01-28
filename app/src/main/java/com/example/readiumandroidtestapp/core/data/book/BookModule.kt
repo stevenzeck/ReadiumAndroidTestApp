@@ -42,7 +42,7 @@ object BookModule {
         coverImageSaver: CoverImageSaver,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
     ): BookImporter =
-        BookImporter(
+        DefaultBookImporter(
             storageGateway = storageGateway,
             booksDao = booksDao,
             assetRetriever = assetRetriever,

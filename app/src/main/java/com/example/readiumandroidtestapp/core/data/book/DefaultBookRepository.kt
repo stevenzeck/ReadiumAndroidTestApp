@@ -3,11 +3,12 @@ package com.example.readiumandroidtestapp.core.data.book
 import android.net.Uri
 import androidx.annotation.ColorInt
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
+import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.readium.r2.shared.publication.Locator
@@ -41,6 +42,7 @@ class DefaultBookRepository @Inject constructor(
     private val booksDao: BooksDao,
     private val bookImporter: BookImporter,
     private val storageGateway: StorageGateway,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : BookRepository {
 
     override val books: Flow<List<Book>> = booksDao.getAllBooks()
@@ -76,7 +78,7 @@ class DefaultBookRepository @Inject constructor(
      * or [Try.Failure] if a database error occurred.
      */
     override suspend fun deleteBook(bookId: Long): Try<Unit, Exception> =
-        withContext(context = Dispatchers.IO) {
+        withContext(context = ioDispatcher) {
             try {
                 val book = booksDao.get(bookId = bookId)
                     ?: return@withContext Try.failure(failure = Exception("Book not found"))
@@ -109,7 +111,7 @@ class DefaultBookRepository @Inject constructor(
      * @return [Try.Success] if the update was successful, or [Try.Failure] if a database error occurred.
      */
     override suspend fun saveProgression(bookId: Long, locator: String): Try<Unit, Exception> =
-        withContext(context = Dispatchers.IO) {
+        withContext(context = ioDispatcher) {
             try {
                 booksDao.saveProgression(bookId = bookId, locator = locator)
                 Try.success(success = Unit)
@@ -126,7 +128,7 @@ class DefaultBookRepository @Inject constructor(
      * @return The [Book] with the given ID, or null if not found.
      */
     override suspend fun get(bookId: Long): Book? =
-        withContext(context = Dispatchers.IO) {
+        withContext(context = ioDispatcher) {
             booksDao.get(bookId)
         }
 
