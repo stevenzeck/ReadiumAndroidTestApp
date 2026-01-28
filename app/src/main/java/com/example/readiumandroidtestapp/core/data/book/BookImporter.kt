@@ -1,23 +1,19 @@
 package com.example.readiumandroidtestapp.core.data.book
 
-import android.graphics.Bitmap
 import android.net.Uri
-import android.webkit.MimeTypeMap
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
+import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
 import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.services.cover
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
 import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.flatMap
-import org.readium.r2.shared.util.http.HttpClient
-import org.readium.r2.shared.util.http.HttpRequest
-import org.readium.r2.shared.util.http.fetch
 import org.readium.r2.streamer.PublicationOpener
 import timber.log.Timber
 import java.io.ByteArrayInputStream
@@ -42,7 +38,9 @@ class BookImporter @Inject constructor(
     private val booksDao: BooksDao,
     private val assetRetriever: AssetRetriever,
     private val publicationOpener: PublicationOpener,
-    private val httpClient: HttpClient,
+    private val httpGateway: HttpGateway,
+    private val coverImageSaver: CoverImageSaver,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
 
     /**
@@ -52,24 +50,19 @@ class BookImporter @Inject constructor(
      * and we need to persist the book for offline access anyway.
      */
     suspend fun importFromUrl(url: AbsoluteUrl): Try<Book, ImportError> =
-        withContext(context = Dispatchers.IO) {
-            val request = HttpRequest(url = url)
-
-            httpClient.fetch(request = request)
+        withContext(context = ioDispatcher) {
+            httpGateway.fetch(url = url)
                 .mapFailure { ImportError.Network }
-                .flatMap { response ->
-                    val stream = ByteArrayInputStream(response.body)
+                .flatMap { result ->
+                    val stream = ByteArrayInputStream(result.body)
                     var extension = url.extension?.toString()
 
                     if (extension.isNullOrBlank()) {
-                        val contentType = response.response.headers["Content-Type"]
-                            ?: response.response.headers["content-type"]
-
-                        val mimeType = contentType?.firstOrNull()?.substringBefore(";")?.trim()
+                        val mimeType = result.contentType
 
                         if (mimeType != null) {
                             extension =
-                                MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+                                storageGateway.resolveExtensionFromMimeType(mimeType = mimeType)
                         }
                     }
 
@@ -91,7 +84,7 @@ class BookImporter @Inject constructor(
      * This grants us full ownership of the file and avoids permission persistence issues with SAF URIs.
      */
     suspend fun importFromUri(uri: Uri): Try<Book, ImportError> =
-        withContext(context = Dispatchers.IO) {
+        withContext(context = ioDispatcher) {
             try {
                 val inputStream = storageGateway.openInputStream(uri = uri)
                     ?: throw IOException("Could not open input stream")
@@ -157,7 +150,7 @@ class BookImporter @Inject constructor(
                     .mapFailure { ImportError.InvalidBook }
                     .flatMap { publication ->
                         try {
-                            val coverPath = saveCoverToDisk(publication = publication)
+                            val coverPath = coverImageSaver.saveCover(publication = publication)
                             val book = mapToBook(
                                 publication = publication,
                                 asset = asset,
@@ -192,22 +185,6 @@ class BookImporter @Inject constructor(
             mediaType = asset.format.mediaType,
             cover = coverPath,
         )
-    }
-
-    private suspend fun saveCoverToDisk(publication: Publication): String? {
-        return try {
-            val coverBitmap = publication.cover() ?: return null
-            val coverFile = File(storageGateway.filesDir, "covers/${UUID.randomUUID()}.jpg")
-            coverFile.parentFile?.mkdirs()
-
-            FileOutputStream(coverFile).use { out ->
-                coverBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-            }
-            coverFile.absolutePath
-        } catch (e: Exception) {
-            Timber.w(t = e, message = "Failed to save cover image")
-            null
-        }
     }
 }
 

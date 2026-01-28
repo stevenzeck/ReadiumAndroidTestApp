@@ -36,10 +36,14 @@ class AndroidStorageGateway @Inject constructor(
         }
         val mimeType = context.contentResolver.getType(uri)
         return if (mimeType != null) {
-            MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "epub"
+            resolveExtensionFromMimeType(mimeType) ?: "epub"
         } else {
             "epub"
         }
+    }
+
+    override fun resolveExtensionFromMimeType(mimeType: String): String? {
+        return MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
     }
 
     override fun toUrl(file: File): AbsoluteUrl {

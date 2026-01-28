@@ -9,6 +9,7 @@ interface StorageGateway {
     val filesDir: File
     fun openInputStream(uri: Uri): InputStream?
     fun resolveExtension(uri: Uri): String
+    fun resolveExtensionFromMimeType(mimeType: String): String?
     fun toUrl(file: File): AbsoluteUrl?
     fun deleteFile(path: String): Boolean
 }
