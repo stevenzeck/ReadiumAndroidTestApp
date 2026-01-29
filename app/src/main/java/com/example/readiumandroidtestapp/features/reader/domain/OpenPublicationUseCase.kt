@@ -1,12 +1,13 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
-import kotlinx.coroutines.Dispatchers
+import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
+import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
+import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.asset.Asset
-import org.readium.r2.shared.util.asset.AssetRetriever
-import org.readium.r2.streamer.PublicationOpener
 import javax.inject.Inject
 
 data class OpenedBook(
@@ -15,11 +16,12 @@ data class OpenedBook(
 )
 
 class OpenPublicationUseCase @Inject constructor(
-    private val assetRetriever: AssetRetriever,
-    private val publicationOpener: PublicationOpener,
+    private val assetRetriever: AssetRetrieverGateway,
+    private val publicationOpener: PublicationOpenerGateway,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
     suspend operator fun invoke(url: AbsoluteUrl): Result<OpenedBook> =
-        withContext(context = Dispatchers.IO) {
+        withContext(context = ioDispatcher) {
 
             val assetResult = assetRetriever.retrieve(url)
 
@@ -36,12 +38,12 @@ class OpenPublicationUseCase @Inject constructor(
                         },
                         onFailure = { error ->
                             asset.close()
-                            Result.failure(Exception(error.message))
+                            Result.failure(exception = error)
                         },
                     )
                 },
                 onFailure = { error ->
-                    Result.failure(Exception(error.message))
+                    Result.failure(exception = error)
                 },
             )
         }
