@@ -1,5 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.di
 
+import com.example.readiumandroidtestapp.features.reader.data.DefaultSearchGateway
+import com.example.readiumandroidtestapp.features.reader.domain.SearchGateway
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAppAudioNavigatorFactory
 import dagger.Binds
@@ -17,4 +19,9 @@ abstract class ReaderModule {
     abstract fun bindAppAudioNavigatorFactory(
         factory: DefaultAppAudioNavigatorFactory,
     ): AppAudioNavigatorFactory
+
+    @Binds
+    abstract fun bindSearchGateway(
+        gateway: DefaultSearchGateway,
+    ): SearchGateway
 }
