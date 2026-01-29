@@ -52,6 +52,18 @@ class BookImporterTest {
         override fun deleteFile(path: String): Boolean {
             return File(path).delete()
         }
+
+        override fun saveFileFromStream(
+            input: InputStream,
+            extension: String?,
+        ): Try<File, Exception> {
+            val name = "test_${System.nanoTime()}.${extension ?: "epub"}"
+            val file = File(filesDir, name)
+            java.io.FileOutputStream(file).use { output ->
+                input.copyTo(output)
+            }
+            return Try.success(success = file)
+        }
     }
 
     private val booksDao: BooksDao = mockk(relaxed = true)

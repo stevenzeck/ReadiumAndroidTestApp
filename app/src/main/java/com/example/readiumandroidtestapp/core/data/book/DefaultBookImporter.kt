@@ -18,10 +18,7 @@ import org.readium.r2.streamer.PublicationOpener
 import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStream
-import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -67,7 +64,8 @@ class DefaultBookImporter @Inject constructor(
                     }
 
                     // Save to local storage first to ensure we have a file handle for the parser.
-                    saveFileToDisk(extension = extension, input = stream)
+                    storageGateway.saveFileFromStream(input = stream, extension = extension)
+                        .mapFailure { mapIOError(e = it) }
                 }
                 .flatMap { file ->
                     addBookFromFile(file = file)
@@ -89,13 +87,14 @@ class DefaultBookImporter @Inject constructor(
                 val inputStream = storageGateway.openInputStream(uri = uri)
                     ?: throw IOException("Could not open input stream")
                 inputStream.use { stream ->
-                    saveFileToDisk(
-                        extension = storageGateway.resolveExtension(uri = uri),
+                    storageGateway.saveFileFromStream(
                         input = stream,
+                        extension = storageGateway.resolveExtension(uri = uri),
                     )
+                        .mapFailure { mapIOError(e = it) }
                 }
             } catch (e: Exception) {
-                mapIOError(e = e)
+                Try.failure(failure = mapIOError(e))
             }
                 .flatMap { file ->
                     addBookFromFile(file = file)
@@ -105,34 +104,11 @@ class DefaultBookImporter @Inject constructor(
                 }
         }
 
-    // Assigns a unique filename (UUID) to avoid collisions and writes the input stream to disk.
-    private fun saveFileToDisk(
-        extension: String?,
-        input: InputStream,
-    ): Try<File, ImportError> {
-        return try {
-            val safeExtension = when {
-                extension == null -> ".epub"
-                extension.startsWith(prefix = ".") -> extension
-                else -> ".$extension"
-            }
-            val filename = "${UUID.randomUUID()}$safeExtension"
-            val file = File(storageGateway.filesDir, filename)
-
-            FileOutputStream(file).use { output ->
-                input.copyTo(out = output)
-            }
-            Try.success(success = file)
-        } catch (e: Exception) {
-            mapIOError(e = e)
-        }
-    }
-
-    private fun <T> mapIOError(e: Exception): Try<T, ImportError> {
+    private fun mapIOError(e: Exception): ImportError {
         Timber.e(t = e, message = "Storage error during import")
         return when (e) {
-            is IOException -> Try.failure(failure = ImportError.Storage)
-            else -> Try.failure(failure = ImportError.Unknown(cause = e))
+            is IOException -> ImportError.Storage
+            else -> ImportError.Unknown(cause = e)
         }
     }
 
