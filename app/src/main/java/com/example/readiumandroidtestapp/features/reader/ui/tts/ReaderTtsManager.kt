@@ -1,9 +1,10 @@
 package com.example.readiumandroidtestapp.features.reader.ui.tts
 
-import android.app.Application
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.fragment.app.Fragment
+import com.example.readiumandroidtestapp.features.reader.domain.TtsNavigatorGateway
+import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -13,12 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import org.readium.navigator.media.tts.AndroidTtsNavigator
-import org.readium.navigator.media.tts.AndroidTtsNavigatorFactory
-import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.navigator.media.tts.android.AndroidTtsEngine
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.r2.navigator.DecorableNavigator
@@ -30,17 +27,17 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReaderTtsManager @Inject constructor(
-    private val application: Application,
+    private val ttsServiceGateway: TtsServiceGateway,
 ) {
-    private var ttsNavigator: AndroidTtsNavigator? = null
-    private var ttsFactory: AndroidTtsNavigatorFactory? = null
+    private var ttsNavigator: TtsNavigatorGateway? = null
     private var ttsJob: Job? = null
+    private var publication: Publication? = null
 
     private val _isTtsActive = MutableStateFlow(value = false)
     val isTtsActive = _isTtsActive.asStateFlow()
 
     val ttsPlayback: Flow<Boolean> = _isTtsActive.flatMapLatest { active ->
-        if (active) ttsNavigator?.playback?.map { it.playWhenReady } ?: emptyFlow()
+        if (active) ttsNavigator?.playback ?: emptyFlow()
         else emptyFlow()
     }
 
@@ -51,12 +48,7 @@ class ReaderTtsManager @Inject constructor(
      * Initializes the factory. Should be called when publication is ready.
      */
     fun initFactory(publication: Publication) {
-        if (ttsFactory == null) {
-            ttsFactory = AndroidTtsNavigatorFactory(
-                application = application,
-                publication = publication,
-            )
-        }
+        this.publication = publication
     }
 
     fun start(
@@ -64,14 +56,15 @@ class ReaderTtsManager @Inject constructor(
         scope: CoroutineScope,
         onStop: () -> Unit,
     ) {
-        val factory = ttsFactory ?: return
+        val pub = publication ?: return
 
         scope.launch {
             val initialLocator = visualNavigator.firstVisibleElementLocator() ?: return@launch
 
-            factory.createNavigator(
+            ttsServiceGateway.createNavigator(
+                publication = pub,
                 initialLocator = initialLocator,
-                listener = object : TtsNavigator.Listener {
+                listener = object : TtsNavigatorGateway.Listener {
                     override fun onStopRequested() {
                         onStop()
                     }

@@ -2,6 +2,8 @@ package com.example.readiumandroidtestapp.core.data.book
 
 import android.net.Uri
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
+import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
+import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
 import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import com.example.readiumandroidtestapp.core.domain.network.HttpResult
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
@@ -18,9 +20,6 @@ import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
-import org.readium.r2.shared.util.asset.AssetRetriever
-import org.readium.r2.shared.util.format.FormatHints
-import org.readium.r2.streamer.PublicationOpener
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -67,8 +66,8 @@ class BookImporterTest {
     }
 
     private val booksDao: BooksDao = mockk(relaxed = true)
-    private val assetRetriever: AssetRetriever = mockk()
-    private val publicationOpener: PublicationOpener = mockk()
+    private val assetRetriever: AssetRetrieverGateway = mockk()
+    private val publicationOpener: PublicationOpenerGateway = mockk()
     private val httpGateway: HttpGateway = mockk()
     private val coverImageSaver: CoverImageSaver = mockk()
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -91,16 +90,15 @@ class BookImporterTest {
         coEvery {
             assetRetriever.retrieve(
                 url = mockUrl,
-                formatHints = any<FormatHints>(),
             )
-        } returns Try.success(success = mockAsset)
+        } returns Result.success(value = mockAsset)
 
         coEvery {
             publicationOpener.open(
                 asset = any<Asset>(),
                 allowUserInteraction = any<Boolean>(),
             )
-        } returns Try.success(success = mockPublication)
+        } returns Result.success(value = mockPublication)
 
         coEvery { coverImageSaver.saveCover(publication = mockPublication) } returns null
         coEvery { booksDao.insertBook(book = any()) } returns 1L
@@ -135,16 +133,15 @@ class BookImporterTest {
         coEvery {
             assetRetriever.retrieve(
                 url = mockUrl,
-                formatHints = any<FormatHints>(),
             )
-        } returns Try.success(success = mockAsset)
+        } returns Result.success(value = mockAsset)
 
         coEvery {
             publicationOpener.open(
                 asset = any<Asset>(),
                 allowUserInteraction = any<Boolean>(),
             )
-        } returns Try.success(success = mockPublication)
+        } returns Result.success(value = mockPublication)
 
         coEvery { coverImageSaver.saveCover(publication = mockPublication) } returns null
         coEvery { booksDao.insertBook(book = any()) } returns 1L
@@ -171,16 +168,15 @@ class BookImporterTest {
         coEvery {
             assetRetriever.retrieve(
                 url = mockUrl,
-                formatHints = any<FormatHints>(),
             )
-        } returns Try.success(success = mockAsset)
+        } returns Result.success(value = mockAsset)
 
         coEvery {
             publicationOpener.open(
                 asset = any<Asset>(),
                 allowUserInteraction = any<Boolean>(),
             )
-        } returns Try.success(success = mockPublication)
+        } returns Result.success(value = mockPublication)
 
         coEvery { coverImageSaver.saveCover(publication = mockPublication) } returns coverPath
         coEvery { booksDao.insertBook(book = any()) } returns 1L

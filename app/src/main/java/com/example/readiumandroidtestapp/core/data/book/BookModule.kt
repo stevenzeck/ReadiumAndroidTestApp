@@ -3,6 +3,8 @@ package com.example.readiumandroidtestapp.core.data.book
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
 import com.example.readiumandroidtestapp.core.data.network.DefaultHttpGateway
+import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
+import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
 import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import dagger.Module
@@ -10,9 +12,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
-import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.http.HttpClient
-import org.readium.r2.streamer.PublicationOpener
 import javax.inject.Singleton
 
 @Module
@@ -36,8 +36,8 @@ object BookModule {
     fun provideBookImporter(
         storageGateway: StorageGateway,
         booksDao: BooksDao,
-        assetRetriever: AssetRetriever,
-        publicationOpener: PublicationOpener,
+        assetRetriever: AssetRetrieverGateway,
+        publicationOpener: PublicationOpenerGateway,
         httpGateway: HttpGateway,
         coverImageSaver: CoverImageSaver,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,

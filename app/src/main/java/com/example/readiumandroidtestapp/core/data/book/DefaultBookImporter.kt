@@ -3,6 +3,8 @@ package com.example.readiumandroidtestapp.core.data.book
 import android.net.Uri
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
+import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
+import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
@@ -12,9 +14,7 @@ import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
-import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.flatMap
-import org.readium.r2.streamer.PublicationOpener
 import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -33,8 +33,8 @@ import javax.inject.Inject
 class DefaultBookImporter @Inject constructor(
     private val storageGateway: StorageGateway,
     private val booksDao: BooksDao,
-    private val assetRetriever: AssetRetriever,
-    private val publicationOpener: PublicationOpener,
+    private val assetRetriever: AssetRetrieverGateway,
+    private val publicationOpener: PublicationOpenerGateway,
     private val httpGateway: HttpGateway,
     private val coverImageSaver: CoverImageSaver,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -118,12 +118,18 @@ class DefaultBookImporter @Inject constructor(
             ?: return Try.failure(failure = ImportError.Unknown(cause = Exception("Could not convert file to URL")))
 
         return assetRetriever.retrieve(url = url)
-            .mapFailure { ImportError.InvalidBook }
+            .fold(
+                onSuccess = { Try.success(success = it) },
+                onFailure = { Try.failure(failure = ImportError.InvalidBook) },
+            )
             .flatMap { asset ->
                 // We open the publication here specifically to extract static metadata (title, author)
                 // and the cover image. This relies on the Readium Streamer.
                 publicationOpener.open(asset = asset, allowUserInteraction = false)
-                    .mapFailure { ImportError.InvalidBook }
+                    .fold(
+                        onSuccess = { Try.success(success = it) },
+                        onFailure = { Try.failure(failure = ImportError.InvalidBook) },
+                    )
                     .flatMap { publication ->
                         try {
                             val coverPath = coverImageSaver.saveCover(publication = publication)
