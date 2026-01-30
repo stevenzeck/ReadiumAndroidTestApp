@@ -1,5 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.di
 
+import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.DefaultAndroidTtsNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.DefaultSearchGateway
 import com.example.readiumandroidtestapp.features.reader.data.DefaultTtsServiceGateway
 import com.example.readiumandroidtestapp.features.reader.domain.DefaultOpenPublicationUseCase
@@ -45,6 +47,11 @@ abstract class ReaderModule {
     abstract fun bindAudioNavigatorFactoryWrapper(
         wrapper: DefaultAudioNavigatorFactoryWrapper,
     ): AudioNavigatorFactoryWrapper
+
+    @Binds
+    abstract fun bindAndroidTtsNavigatorFactoryWrapper(
+        wrapper: DefaultAndroidTtsNavigatorFactoryWrapper,
+    ): AndroidTtsNavigatorFactoryWrapper
 
     @Binds
     abstract fun bindSearchGateway(
