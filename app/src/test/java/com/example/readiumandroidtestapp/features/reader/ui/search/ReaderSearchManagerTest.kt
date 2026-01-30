@@ -25,7 +25,7 @@ class ReaderSearchManagerTest {
 
     private val searchGateway: SearchGateway = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
-    private val manager = ReaderSearchManager(searchGateway = searchGateway)
+    private val manager = DefaultReaderSearchManager(searchGateway = searchGateway)
 
     @Test
     fun `getSearchResults emits empty PagingData initially`() = runTest(context = testDispatcher) {

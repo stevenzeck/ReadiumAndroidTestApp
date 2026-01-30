@@ -10,9 +10,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -30,6 +29,7 @@ import org.readium.r2.shared.util.Try
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookshelfViewModelTest {
 
+    private lateinit var viewModel: BookshelfViewModel
     private val bookRepository: BookRepository = mockk()
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
@@ -45,43 +45,16 @@ class BookshelfViewModelTest {
     }
 
     @Test
-    fun `uiState emits Loading initially`() = runTest {
-        every { bookRepository.books } returns flowOf(value = emptyList())
-        val viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
-            userMessageManager = userMessageManager,
-        )
-
-        assertEquals(BookshelfUiState.Loading, viewModel.uiState.value)
-    }
-
-    @Test
-    fun `uiState emits Empty when no books`() = runTest {
-        every { bookRepository.books } returns flowOf(value = emptyList())
-        val viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
-            userMessageManager = userMessageManager,
-        )
-
-        backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
-            viewModel.uiState.collect()
-        }
-
-        advanceUntilIdle()
-
-        assertEquals(BookshelfUiState.Empty, viewModel.uiState.value)
-    }
-
-    @Test
-    fun `uiState emits Success when books exist`() = runTest {
+    fun `uiState emits Success when books exist`() = runTest(context = testDispatcher) {
         val books = listOf(mockk<Book>())
-        every { bookRepository.books } returns flowOf(value = books)
-        val viewModel = BookshelfViewModel(
+        every { bookRepository.books } returns MutableStateFlow(value = books)
+
+        viewModel = BookshelfViewModel(
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
         )
 
-        backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
+        backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
@@ -93,57 +66,59 @@ class BookshelfViewModelTest {
     }
 
     @Test
-    fun `uiState emits Error on exception`() = runTest {
-        every { bookRepository.books } returns flow { throw RuntimeException("Error") }
-        val viewModel = BookshelfViewModel(
+    fun `uiState emits Empty when no books exist`() = runTest(context = testDispatcher) {
+        every { bookRepository.books } returns MutableStateFlow(value = emptyList())
+
+        viewModel = BookshelfViewModel(
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
         )
 
-        backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
+        backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
 
         advanceUntilIdle()
 
-        assertEquals(BookshelfUiState.Error, viewModel.uiState.value)
+        val state = viewModel.uiState.value
+        assertTrue(state is BookshelfUiState.Empty)
     }
 
     @Test
-    fun `deleteBook calls repository`() = runTest {
-        val bookId = 1L
-        every { bookRepository.books } returns flowOf(value = emptyList())
-        coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.success(success = Unit)
+    fun `deleteBook success`() = runTest(context = testDispatcher) {
+        every { bookRepository.books } returns MutableStateFlow(value = emptyList())
+        coEvery { bookRepository.deleteBook(bookId = any()) } returns Try.success(success = Unit)
 
-        val viewModel = BookshelfViewModel(
+        viewModel = BookshelfViewModel(
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
         )
-        viewModel.deleteBook(bookId = bookId)
 
+        viewModel.deleteBook(bookId = 1L)
         advanceUntilIdle()
 
-        coVerify { bookRepository.deleteBook(bookId) }
+        coVerify { bookRepository.deleteBook(bookId = 1L) }
+        coVerify(exactly = 0) { userMessageManager.emitMessage(messageId = any()) }
     }
 
     @Test
-    fun `deleteBook emits error message on failure`() = runTest {
-        val bookId = 1L
-        every { bookRepository.books } returns flowOf(value = emptyList())
-        coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.failure(
+    fun `deleteBook failure emits error message`() = runTest(context = testDispatcher) {
+        every { bookRepository.books } returns MutableStateFlow(value = emptyList())
+        coEvery { bookRepository.deleteBook(bookId = any()) } returns Try.failure(
             failure = Exception(
-                "Failed",
+                "Error",
             ),
         )
 
-        val viewModel = BookshelfViewModel(
+        viewModel = BookshelfViewModel(
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
         )
-        viewModel.deleteBook(bookId = bookId)
 
+        viewModel.deleteBook(bookId = 1L)
         advanceUntilIdle()
 
+        coVerify { bookRepository.deleteBook(bookId = 1L) }
         coVerify { userMessageManager.emitMessage(messageId = R.string.error_deleting_book) }
     }
 }

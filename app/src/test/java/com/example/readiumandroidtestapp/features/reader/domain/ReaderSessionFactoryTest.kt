@@ -23,7 +23,7 @@ class ReaderSessionFactoryTest {
     private val audioNavigatorFactory: AppAudioNavigatorFactory = mockk()
     private val pdfiumDocumentFactory: PdfiumDocumentFactory = mockk(relaxed = true)
 
-    private val factory = ReaderSessionFactory(
+    private val factory = DefaultReaderSessionFactory(
         preferencesManager = preferencesManager,
         audioNavigatorFactory = audioNavigatorFactory,
         pdfiumDocumentFactory = pdfiumDocumentFactory,

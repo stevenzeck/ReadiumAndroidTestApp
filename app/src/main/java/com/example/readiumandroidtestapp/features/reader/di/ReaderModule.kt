@@ -2,12 +2,26 @@ package com.example.readiumandroidtestapp.features.reader.di
 
 import com.example.readiumandroidtestapp.features.reader.data.DefaultSearchGateway
 import com.example.readiumandroidtestapp.features.reader.data.DefaultTtsServiceGateway
+import com.example.readiumandroidtestapp.features.reader.domain.DefaultOpenPublicationUseCase
+import com.example.readiumandroidtestapp.features.reader.domain.DefaultReaderDecorationManager
+import com.example.readiumandroidtestapp.features.reader.domain.DefaultReaderPreferencesManager
+import com.example.readiumandroidtestapp.features.reader.domain.DefaultReaderSessionFactory
+import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
+import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
+import com.example.readiumandroidtestapp.features.reader.domain.ReaderPreferencesManager
+import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFactory
 import com.example.readiumandroidtestapp.features.reader.domain.SearchGateway
 import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AudioNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAudioNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultReaderMediaBinder
+import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
+import com.example.readiumandroidtestapp.features.reader.ui.search.DefaultReaderSearchManager
+import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
+import com.example.readiumandroidtestapp.features.reader.ui.tts.DefaultReaderTtsManager
+import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -39,4 +53,39 @@ abstract class ReaderModule {
     abstract fun bindTtsServiceGateway(
         gateway: DefaultTtsServiceGateway,
     ): TtsServiceGateway
+
+    @Binds
+    abstract fun bindReaderSearchManager(
+        manager: DefaultReaderSearchManager,
+    ): ReaderSearchManager
+
+    @Binds
+    abstract fun bindReaderTtsManager(
+        manager: DefaultReaderTtsManager,
+    ): ReaderTtsManager
+
+    @Binds
+    abstract fun bindReaderDecorationManager(
+        manager: DefaultReaderDecorationManager,
+    ): ReaderDecorationManager
+
+    @Binds
+    abstract fun bindReaderPreferencesManager(
+        manager: DefaultReaderPreferencesManager,
+    ): ReaderPreferencesManager
+
+    @Binds
+    abstract fun bindReaderSessionFactory(
+        factory: DefaultReaderSessionFactory,
+    ): ReaderSessionFactory
+
+    @Binds
+    abstract fun bindReaderMediaBinder(
+        binder: DefaultReaderMediaBinder,
+    ): ReaderMediaBinder
+
+    @Binds
+    abstract fun bindOpenPublicationUseCase(
+        useCase: DefaultOpenPublicationUseCase,
+    ): OpenPublicationUseCase
 }

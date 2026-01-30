@@ -23,7 +23,7 @@ import org.robolectric.annotation.Config
 class ReaderDecorationManagerTest {
 
     private val bookRepository: BookRepository = mockk()
-    private val manager = ReaderDecorationManager(bookRepository = bookRepository)
+    private val manager = DefaultReaderDecorationManager(bookRepository = bookRepository)
 
     @Test
     fun `decorationFlow returns empty list when bookId is null`() = runTest {

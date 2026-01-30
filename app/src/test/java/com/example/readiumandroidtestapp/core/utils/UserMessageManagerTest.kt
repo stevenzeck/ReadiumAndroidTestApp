@@ -9,7 +9,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserMessageManagerTest {
 
-    private val manager = UserMessageManager()
+    private val manager = DefaultUserMessageManager()
 
     @Test
     fun `emitMessage sends message to flow`() = runTest {

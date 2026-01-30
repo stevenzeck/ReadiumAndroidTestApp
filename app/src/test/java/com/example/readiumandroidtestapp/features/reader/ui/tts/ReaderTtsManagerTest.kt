@@ -35,7 +35,7 @@ class ReaderTtsManagerTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
-        manager = ReaderTtsManager(ttsServiceGateway = ttsServiceGateway)
+        manager = DefaultReaderTtsManager(ttsServiceGateway = ttsServiceGateway)
     }
 
     @After

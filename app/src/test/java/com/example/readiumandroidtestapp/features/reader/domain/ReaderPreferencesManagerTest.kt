@@ -16,7 +16,7 @@ class ReaderPreferencesManagerTest {
     private val audioNavigatorFactory: AppAudioNavigatorFactory = mockk()
     private val ttsManager: ReaderTtsManager = mockk(relaxed = true)
 
-    private val readerPreferencesManager = ReaderPreferencesManager(
+    private val readerPreferencesManager = DefaultReaderPreferencesManager(
         bookPreferencesRepository = bookPreferencesRepository,
         audioNavigatorFactory = audioNavigatorFactory,
     )

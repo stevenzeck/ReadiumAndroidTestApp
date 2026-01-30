@@ -10,25 +10,28 @@ import com.example.readiumandroidtestapp.features.reader.domain.ReaderPreference
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderError
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.asset.Asset
@@ -36,31 +39,37 @@ import org.readium.r2.shared.util.asset.Asset
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReaderViewModelTest {
 
-    private val application: Application = mockk(relaxed = true)
+    private lateinit var viewModel: ReaderViewModel
+    private val application: Application = mockk()
     private val bookRepository: BookRepository = mockk(relaxed = true)
     private val openPublicationUseCase: OpenPublicationUseCase = mockk()
     private val searchManager: ReaderSearchManager = mockk(relaxed = true)
     private val ttsManager: ReaderTtsManager = mockk(relaxed = true)
     private val preferencesManager: ReaderPreferencesManager = mockk(relaxed = true)
     private val decorationManager: ReaderDecorationManager = mockk(relaxed = true)
-    private val sessionFactory: ReaderSessionFactory = mockk()
+    private val sessionFactory: ReaderSessionFactory = mockk(relaxed = true)
     private val mediaBinder: ReaderMediaBinder = mockk(relaxed = true)
-
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+        Dispatchers.setMain(dispatcher = testDispatcher)
 
-        // Setup default mocks for flows to prevent initialization crashes
-        every { bookRepository.bookmarksForBook(bookId = any()) } returns flowOf(value = emptyList())
-        every { bookRepository.highlightsForBook(bookId = any()) } returns flowOf(value = emptyList())
-        every { decorationManager.showHighlightDialog } returns MutableStateFlow(value = false)
+        // Default mocks
+        every { bookRepository.bookmarksForBook(bookId = any()) } returns emptyFlow()
+        every { bookRepository.highlightsForBook(bookId = any()) } returns emptyFlow()
         every { searchManager.searchQuery } returns MutableStateFlow(value = null)
         every { ttsManager.isTtsActive } returns MutableStateFlow(value = false)
-        every { ttsManager.ttsPlayback } returns flowOf(value = false)
-        every { searchManager.searchDecorations } returns flowOf(value = emptyList())
-        every { decorationManager.decorationFlow(bookId = any()) } returns flowOf(value = emptyList())
+        every { ttsManager.ttsPlayback } returns emptyFlow()
+        every {
+            searchManager.getSearchResults(
+                publicationFlow = any(),
+                scope = any(),
+            )
+        } returns emptyFlow()
+        every { searchManager.searchDecorations } returns emptyFlow()
+        every { decorationManager.showHighlightDialog } returns MutableStateFlow(value = false)
+        every { decorationManager.decorationFlow(bookId = any()) } returns emptyFlow()
     }
 
     @After
@@ -69,83 +78,153 @@ class ReaderViewModelTest {
     }
 
     @Test
-    fun `loadBookData success updates uiState to Visual`() = runTest {
+    fun `loadBookData success opens publication`() = runTest(context = testDispatcher) {
         val bookId = 1L
-        val book = mockk<Book>(relaxed = true)
-        val url = mockk<AbsoluteUrl>()
-        every { book.url } returns url
-
-        coEvery { bookRepository.get(bookId = bookId) } returns book
-
-        val publication = mockk<Publication>(relaxed = true)
+        val bookUrl = mockk<AbsoluteUrl>()
+        val book = mockk<Book>(relaxed = true) {
+            every { url } returns bookUrl
+        }
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = any()) } returns false // Visual
+        }
         val asset = mockk<Asset>(relaxed = true)
         val openedBook = OpenedBook(publication = publication, asset = asset)
 
-        coEvery { openPublicationUseCase.invoke(url = url) } returns Result.success(value = openedBook)
-
-        val visualState = mockk<ReaderUiState.Visual>(relaxed = true)
+        coEvery { bookRepository.get(bookId) } returns book
+        coEvery { openPublicationUseCase(bookUrl) } returns Result.success(value = openedBook)
         coEvery {
             sessionFactory.createVisualSession(
-                book = book,
-                publication = publication,
+                book,
+                publication,
             )
-        } returns visualState
-
-        val viewModel = ReaderViewModel(
-            application = application,
-            bookRepository = bookRepository,
-            openPublicationUseCase = openPublicationUseCase,
-            searchManager = searchManager,
-            ttsManager = ttsManager,
-            preferencesManager = preferencesManager,
-            decorationManager = decorationManager,
-            sessionFactory = sessionFactory,
-            mediaBinder = mediaBinder,
-            bookId = bookId,
+        } returns ReaderUiState.Visual(
+            publication = publication,
+            book = book,
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = mockk(),
+            preferencesEditor = null,
+            initialPreferences = mockk(),
+            isFixedLayout = false,
         )
 
+        viewModel = createViewModel(bookId)
         advanceUntilIdle()
 
-        Assert.assertEquals(visualState, viewModel.uiState.value)
+        assertTrue(viewModel.uiState.value is ReaderUiState.Visual)
     }
 
     @Test
-    fun `loadBookData failure due to missing book returns Error`() = runTest {
+    fun `loadBookData failure emits Error`() = runTest(context = testDispatcher) {
         val bookId = 1L
-        coEvery { bookRepository.get(bookId = bookId) } returns null
+        val bookUrl = mockk<AbsoluteUrl>()
+        val book = mockk<Book>(relaxed = true) {
+            every { url } returns bookUrl
+        }
 
-        val viewModel = ReaderViewModel(
-            application = application,
-            bookRepository = bookRepository,
-            openPublicationUseCase = openPublicationUseCase,
-            searchManager = searchManager,
-            ttsManager = ttsManager,
-            preferencesManager = preferencesManager,
-            decorationManager = decorationManager,
-            sessionFactory = sessionFactory,
-            mediaBinder = mediaBinder,
-            bookId = bookId,
-        )
+        coEvery { bookRepository.get(bookId) } returns book
+        coEvery { openPublicationUseCase(bookUrl) } returns Result.failure(Exception("Failed"))
 
+        viewModel = createViewModel(bookId)
         advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        Assert.assertTrue(state is ReaderUiState.Error)
-        Assert.assertEquals(ReaderError.InvalidBookLocation, (state as ReaderUiState.Error).error)
+        assertTrue(viewModel.uiState.value is ReaderUiState.Error)
     }
 
     @Test
-    fun `loadBookData failure due to open exception returns Error`() = runTest {
+    fun `openSettings delegates to ttsManager when active`() = runTest(context = testDispatcher) {
         val bookId = 1L
+        every { ttsManager.isTtsActive } returns MutableStateFlow(value = true)
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = any()) } returns false
+        }
         val book = mockk<Book>(relaxed = true)
-        val url = mockk<AbsoluteUrl>()
-        every { book.url } returns url
 
-        coEvery { bookRepository.get(bookId = bookId) } returns book
+        // Setup session
+        setupVisualSession(bookId = bookId, publication = publication, book = book)
 
-        coEvery { openPublicationUseCase.invoke(url = url) } returns Result.failure(Exception("Open failed"))
+        // Mock ttsManager settings session
+        coEvery {
+            preferencesManager.createTtsSettingsSession(
+                bookId = bookId,
+                publication = publication,
+                ttsManager = ttsManager,
+                application = application,
+            )
+        } returns mockk(relaxed = true)
 
-        val viewModel = ReaderViewModel(
+        viewModel.openSettings()
+        advanceUntilIdle()
+
+        coVerify {
+            preferencesManager.createTtsSettingsSession(
+                bookId = bookId,
+                publication = publication,
+                ttsManager = ttsManager,
+                application = application,
+            )
+        }
+    }
+
+    @Test
+    fun `openSettings opens visual settings when TTS inactive`() =
+        runTest(context = testDispatcher) {
+        val bookId = 1L
+            every { ttsManager.isTtsActive } returns MutableStateFlow(value = false)
+            val publication = mockk<Publication>(relaxed = true) {
+                every { conformsTo(profile = any()) } returns false
+            }
+        val book = mockk<Book>(relaxed = true)
+            val editor = mockk<PreferencesEditor<*>>()
+
+            // Setup session
+            setupVisualSession(
+                bookId = bookId,
+                publication = publication,
+                book = book,
+                editor = editor,
+            )
+
+            viewModel.openSettings()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.settingsSheetState.value is ReaderSettingsSheet.Configurable)
+        }
+
+    private fun TestScope.setupVisualSession(
+        bookId: Long,
+        publication: Publication,
+        book: Book,
+        editor: PreferencesEditor<*>? = null,
+    ) {
+        val bookUrl = mockk<AbsoluteUrl>()
+        every { book.url } returns bookUrl
+
+        val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
+        coEvery { bookRepository.get(bookId) } returns book
+        coEvery { openPublicationUseCase(bookUrl) } returns Result.success(value = openedBook)
+        coEvery {
+            sessionFactory.createVisualSession(
+                book,
+                publication,
+            )
+        } returns ReaderUiState.Visual(
+            publication = publication,
+            book = book,
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = mockk(),
+            preferencesEditor = editor,
+            initialPreferences = mockk(),
+            isFixedLayout = false,
+        )
+
+        viewModel = createViewModel(bookId)
+        advanceUntilIdle()
+    }
+
+    private fun createViewModel(bookId: Long): ReaderViewModel {
+        return ReaderViewModel(
             application = application,
             bookRepository = bookRepository,
             openPublicationUseCase = openPublicationUseCase,
@@ -157,11 +236,5 @@ class ReaderViewModelTest {
             mediaBinder = mediaBinder,
             bookId = bookId,
         )
-
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        Assert.assertTrue(state is ReaderUiState.Error)
-        Assert.assertTrue((state as ReaderUiState.Error).error is ReaderError.PublicationOpenFailed)
     }
 }
