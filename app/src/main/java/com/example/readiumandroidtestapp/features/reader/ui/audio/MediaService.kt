@@ -1,6 +1,5 @@
 package com.example.readiumandroidtestapp.features.reader.ui.audio
 
-import android.app.PendingIntent
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
@@ -9,9 +8,11 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import dagger.hilt.android.AndroidEntryPoint
 import org.readium.navigator.media.common.Media3Adapter
 import org.readium.navigator.media.common.MediaNavigator
 import timber.log.Timber
+import javax.inject.Inject
 
 /**
  * Android Service responsible for managing background media playback.
@@ -24,7 +25,11 @@ import timber.log.Timber
  * a [MediaNavigator]. The service then creates and manages a [MediaSession]
  * backed by the navigator's underlying player.
  */
+@AndroidEntryPoint
 class MediaService : MediaSessionService() {
+
+    @Inject
+    lateinit var mediaSessionFactory: MediaSessionFactory
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -57,19 +62,11 @@ class MediaService : MediaSessionService() {
                     return
                 }
 
-            val session = MediaSession.Builder(this@MediaService, player)
-                .apply {
-                    if (activityIntent != null) {
-                        val pendingIntent = PendingIntent.getActivity(
-                            this@MediaService,
-                            0,
-                            activityIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                        )
-                        setSessionActivity(pendingIntent)
-                    }
-                }
-                .build()
+            val session = mediaSessionFactory.createSession(
+                context = this@MediaService,
+                player = player,
+                activityIntent = activityIntent,
+            )
 
             addSession(session)
             mediaSession = session

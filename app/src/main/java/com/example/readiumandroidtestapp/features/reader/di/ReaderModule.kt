@@ -16,7 +16,9 @@ import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNaviga
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AudioNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAudioNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultMediaSessionFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultReaderMediaBinder
+import com.example.readiumandroidtestapp.features.reader.ui.audio.MediaSessionFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.DefaultReaderSearchManager
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
@@ -88,4 +90,9 @@ abstract class ReaderModule {
     abstract fun bindOpenPublicationUseCase(
         useCase: DefaultOpenPublicationUseCase,
     ): OpenPublicationUseCase
+
+    @Binds
+    abstract fun bindMediaSessionFactory(
+        factory: DefaultMediaSessionFactory,
+    ): MediaSessionFactory
 }
