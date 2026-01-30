@@ -5,7 +5,9 @@ import com.example.readiumandroidtestapp.features.reader.data.DefaultTtsServiceG
 import com.example.readiumandroidtestapp.features.reader.domain.SearchGateway
 import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
+import com.example.readiumandroidtestapp.features.reader.ui.audio.AudioNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAppAudioNavigatorFactory
+import com.example.readiumandroidtestapp.features.reader.ui.audio.DefaultAudioNavigatorFactoryWrapper
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,6 +23,12 @@ abstract class ReaderModule {
     abstract fun bindAppAudioNavigatorFactory(
         factory: DefaultAppAudioNavigatorFactory,
     ): AppAudioNavigatorFactory
+
+    @Binds
+    @Singleton
+    abstract fun bindAudioNavigatorFactoryWrapper(
+        wrapper: DefaultAudioNavigatorFactoryWrapper,
+    ): AudioNavigatorFactoryWrapper
 
     @Binds
     abstract fun bindSearchGateway(

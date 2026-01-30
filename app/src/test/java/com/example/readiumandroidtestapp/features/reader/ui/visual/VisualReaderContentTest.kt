@@ -1,0 +1,96 @@
+package com.example.readiumandroidtestapp.features.reader.ui.visual
+
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabilities
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
+import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
+import org.readium.r2.navigator.preferences.Configurable
+import org.readium.r2.shared.publication.Metadata
+import org.readium.r2.shared.publication.Publication
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class VisualReaderContentTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    @Test
+    fun visualReaderContent_displaysUnsupportedFormat_whenProfileIsUnknown() {
+        val publication = mockk<Publication>()
+        every { publication.conformsTo(profile = any()) } returns false
+
+        val metadata = mockk<Metadata>(relaxed = true)
+        every { metadata.title } returns "Test Publication"
+        every { publication.metadata } returns metadata
+
+        val book = Book(
+            id = 1,
+            href = "file://test.epub",
+            title = "Test Book",
+            identifier = "id",
+            rawMediaType = "application/epub+zip",
+            cover = null,
+        )
+
+        val uiState = ReaderUiState.Visual(
+            publication = publication,
+            book = book,
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk<PdfiumDocumentFactory>(),
+            capabilities = ReaderCapabilities(
+                isSearchable = false,
+                canSpeak = false,
+                hasPreferences = false,
+            ),
+            initialPreferences = mockk<Configurable.Preferences<*>>(),
+        )
+
+        composeTestRule.setContent {
+            val searchResults =
+                flowOf(value = PagingData.empty<SearchItem>()).collectAsLazyPagingItems()
+
+            VisualReaderContent(
+                uiState = uiState,
+                settingsSheetState = null,
+                onSettingsClick = {},
+                onSettingsChange = {},
+                onSettingsDismiss = {},
+                bookmarks = emptyList(),
+                highlights = emptyList(),
+                searchResults = searchResults,
+                searchQuery = "",
+                isTtsActive = false,
+                isPlaying = false,
+                showHighlightDialog = false,
+                onNavigateBack = {},
+                onVisualLocatorChanged = {},
+                onNavigatorReady = {},
+                onHighlightAction = {},
+                startTts = {},
+                stopTts = {},
+                play = {},
+                pause = {},
+                previous = {},
+                next = {},
+                onSearchQueryChanged = {},
+                saveHighlight = { _, _ -> },
+                dismissHighlightDialog = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(text = "Unsupported format").assertIsDisplayed()
+    }
+}

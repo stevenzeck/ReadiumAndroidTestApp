@@ -10,7 +10,7 @@ kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
 
 # -- AndroidX Core --
-androidx-activity = "1.12.2"
+androidx-activity = "1.12.3"
 androidx-appcompat = "1.7.1"
 androidx-browser = "1.9.0"
 androidx-core = "1.17.0"
@@ -24,8 +24,8 @@ androidx-paging = "3.3.6"
 androidx-navigation3 = "1.0.0"
 
 # -- Compose --
-compose-bom = "2026.01.00"
-compose-material3 = "1.5.0-alpha12"
+compose-bom = "2026.01.01"
+compose-material3 = "1.5.0-alpha13"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
