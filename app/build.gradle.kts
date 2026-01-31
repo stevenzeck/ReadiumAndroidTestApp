@@ -130,3 +130,26 @@ dependencies {
 tasks.withType<Test> {
     jvmArgs("-noverify")
 }
+
+kover {
+    reports {
+        filters {
+            excludes {
+                annotatedBy(
+                    "dagger.internal.DaggerGenerated",
+                    "dagger.hilt.codegen.OriginatingElement",
+                    "javax.annotation.processing.Generated",
+                )
+                classes(
+                    "**.Dagger*",
+                    "**.*_Factory*",
+                    "**.Hilt_*",
+                    "**.*_HiltModules*",
+                    "**.*_MembersInjector*",
+                    "**.*_Impl*",
+                    "**.BuildConfig",
+                )
+            }
+        }
+    }
+}
