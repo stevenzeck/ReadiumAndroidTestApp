@@ -1,21 +1,30 @@
 package com.example.readiumandroidtestapp.core.utils
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class UserMessageManagerTest {
-
-    private val manager = DefaultUserMessageManager()
+class DefaultUserMessageManagerTest {
 
     @Test
-    fun `emitMessage sends message to flow`() = runTest {
+    fun `emitMessage emits message to flow`() = runTest {
+        val manager = DefaultUserMessageManager()
         val messageId = 123
+        val receivedMessages = mutableListOf<Int>()
+
+        backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
+            manager.messages.collect {
+                receivedMessages.add(it)
+            }
+        }
+
         manager.emitMessage(messageId = messageId)
-        val result = manager.messages.first()
-        assertEquals(messageId, result)
+
+        assertEquals(1, receivedMessages.size)
+        assertEquals(messageId, receivedMessages[0])
     }
 }
