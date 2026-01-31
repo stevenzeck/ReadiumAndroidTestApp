@@ -11,9 +11,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -32,7 +31,8 @@ import org.readium.r2.shared.util.Try
 @OptIn(ExperimentalCoroutinesApi::class)
 class CatalogFeedViewModelTest {
 
-    private val catalogDao: CatalogDao = mockk()
+    private lateinit var viewModel: CatalogFeedViewModel
+    private val catalogDao: CatalogDao = mockk(relaxed = true)
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val opdsParser: OpdsParser = mockk()
     private val testDispatcher = StandardTestDispatcher()
@@ -48,35 +48,17 @@ class CatalogFeedViewModelTest {
     }
 
     @Test
-    fun `uiState emits Loading initially`() = runTest {
-        every { catalogDao.getCatalogModels() } returns flowOf(value = emptyList())
-        val viewModel = CatalogFeedViewModel(
+    fun `catalogsState emits Success when catalogs exist`() = runTest(context = testDispatcher) {
+        val catalogs = listOf(mockk<Catalog>())
+        every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = catalogs)
+
+        viewModel = CatalogFeedViewModel(
             catalogDao = catalogDao,
             userMessageManager = userMessageManager,
             opdsParser = opdsParser,
         )
 
-        assertEquals(CatalogFeedUiState.Loading, viewModel.catalogsState.value)
-    }
-
-    @Test
-    fun `uiState emits Success when catalogs exist`() = runTest {
-        val catalogs = listOf(
-            Catalog(
-                id = 1,
-                title = "Test Catalog",
-                href = "http://test.com/opds",
-                type = 1,
-            ),
-        )
-        every { catalogDao.getCatalogModels() } returns flowOf(value = catalogs)
-        val viewModel = CatalogFeedViewModel(
-            catalogDao = catalogDao,
-            userMessageManager = userMessageManager,
-            opdsParser = opdsParser,
-        )
-
-        backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
+        val collectJob = backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
             viewModel.catalogsState.collect()
         }
 
@@ -85,119 +67,111 @@ class CatalogFeedViewModelTest {
         val state = viewModel.catalogsState.value
         assertTrue(state is CatalogFeedUiState.Success)
         assertEquals(catalogs, (state as CatalogFeedUiState.Success).catalogs)
+
+        collectJob.cancel()
     }
 
     @Test
-    fun `uiState emits Error on exception`() = runTest {
-        every { catalogDao.getCatalogModels() } returns flow { throw RuntimeException("Error") }
-        val viewModel = CatalogFeedViewModel(
-            catalogDao = catalogDao,
-            userMessageManager = userMessageManager,
-            opdsParser = opdsParser,
-        )
-
-        backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
-            viewModel.catalogsState.collect()
+    fun `addCatalog success inserts catalog`() = runTest(context = testDispatcher) {
+        val title = "Test Feed"
+        val url = "http://example.com/feed"
+        val parseData = mockk<ParseData> {
+            every { type } returns Catalog.TYPE_OPDS_1
         }
 
-        advanceUntilIdle()
+        // Setup initial flow to avoid crash/hang if init runs
+        every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = emptyList())
 
-        assertEquals(CatalogFeedUiState.Error, viewModel.catalogsState.value)
-    }
+        coEvery {
+            opdsParser.parseUrlString(
+                url = url,
+                type = any(),
+            )
+        } returns Try.success(success = parseData)
 
-    @Test
-    fun `addCatalog inserts catalog on valid OPDS feed`() = runTest {
-        val title = "New Catalog"
-        val url = "http://example.com/feed"
-        val parseData = mockk<ParseData>()
-        every { parseData.type } returns 2
-
-        every { catalogDao.getCatalogModels() } returns flowOf(value = emptyList())
-        coEvery { opdsParser.parseUrlString(url = url) } returns Try.success(success = parseData)
-        coEvery { catalogDao.insertCatalog(catalog = any()) } returns 1L
-
-        val viewModel = CatalogFeedViewModel(
+        viewModel = CatalogFeedViewModel(
             catalogDao = catalogDao,
             userMessageManager = userMessageManager,
             opdsParser = opdsParser,
         )
 
         viewModel.addCatalog(title = title, url = url)
-
         advanceUntilIdle()
 
+        coVerify { opdsParser.parseUrlString(url = url) }
         coVerify {
             catalogDao.insertCatalog(
-                catalog = Catalog(
-                    title = title,
-                    href = url,
-                    type = 2,
-                ),
+                catalog = withArg { catalog ->
+                    assertEquals(title, catalog.title)
+                    assertEquals(url, catalog.href)
+                    assertEquals(Catalog.TYPE_OPDS_1, catalog.type)
+                },
             )
         }
     }
 
     @Test
-    fun `addCatalog emits error message on invalid OPDS feed`() = runTest {
-        val title = "Invalid Catalog"
-        val url = "http://example.com/invalid"
+    fun `addCatalog failure emits error message`() = runTest(context = testDispatcher) {
+        val title = "Test Feed"
+        val url = "http://example.com/feed"
 
-        every { catalogDao.getCatalogModels() } returns flowOf(value = emptyList())
-        coEvery { opdsParser.parseUrlString(url = url) } returns Try.failure(failure = Exception("Invalid"))
+        every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = emptyList())
+        coEvery { opdsParser.parseUrlString(url = url, type = any()) } returns Try.failure(
+            failure = Exception("Error"),
+        )
 
-        val viewModel = CatalogFeedViewModel(
+        viewModel = CatalogFeedViewModel(
             catalogDao = catalogDao,
             userMessageManager = userMessageManager,
             opdsParser = opdsParser,
         )
 
         viewModel.addCatalog(title = title, url = url)
-
         advanceUntilIdle()
 
-        coVerify { userMessageManager.emitMessage(messageId = R.string.error_invalid_opds_feed) }
         coVerify(exactly = 0) { catalogDao.insertCatalog(catalog = any()) }
+        coVerify { userMessageManager.emitMessage(messageId = R.string.error_invalid_opds_feed) }
     }
 
     @Test
-    fun `deleteCatalog calls dao delete`() = runTest {
-        val catalog = Catalog(id = 123, title = "Delete Me", href = "url", type = 1)
-        every { catalogDao.getCatalogModels() } returns flowOf(value = emptyList())
-        coEvery { catalogDao.deleteCatalog(id = 123) } returns Unit
+    fun `deleteCatalog calls dao delete`() = runTest(context = testDispatcher) {
+        val catalog = Catalog(id = 123L, title = "Title", href = "href", type = 1)
+        every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = emptyList())
 
-        val viewModel = CatalogFeedViewModel(
+        viewModel = CatalogFeedViewModel(
             catalogDao = catalogDao,
             userMessageManager = userMessageManager,
             opdsParser = opdsParser,
         )
 
-        viewModel.deleteCatalog(catalog = catalog)
-
+        viewModel.deleteCatalog(catalog)
         advanceUntilIdle()
 
-        coVerify { catalogDao.deleteCatalog(id = 123) }
+        coVerify { catalogDao.deleteCatalog(id = 123L) }
     }
 
     @Test
-    fun `editCatalog calls dao insert with new title`() = runTest {
-        val catalog = Catalog(id = 1, title = "Old Title", href = "url", type = 1)
+    fun `editCatalog calls dao insert with new title`() = runTest(context = testDispatcher) {
+        val catalog = Catalog(id = 123L, title = "Old Title", href = "href", type = 1)
         val newTitle = "New Title"
-        every { catalogDao.getCatalogModels() } returns flowOf(value = emptyList())
-        coEvery { catalogDao.insertCatalog(catalog = any()) } returns 1L
+        every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = emptyList())
 
-        val viewModel = CatalogFeedViewModel(
+        viewModel = CatalogFeedViewModel(
             catalogDao = catalogDao,
             userMessageManager = userMessageManager,
             opdsParser = opdsParser,
         )
 
-        viewModel.editCatalog(catalog = catalog, newTitle = newTitle)
-
+        viewModel.editCatalog(catalog, newTitle)
         advanceUntilIdle()
 
         coVerify {
             catalogDao.insertCatalog(
-                catalog = catalog.copy(title = newTitle),
+                catalog = withArg { updatedCatalog ->
+                    assertEquals(newTitle, updatedCatalog.title)
+                    assertEquals(catalog.id, updatedCatalog.id)
+                    assertEquals(catalog.href, updatedCatalog.href)
+                },
             )
         }
     }

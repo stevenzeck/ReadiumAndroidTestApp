@@ -42,6 +42,24 @@ fun CatalogFeedScreen(
     viewModel: CatalogFeedViewModel = hiltViewModel(),
 ) {
     val feedUiState by viewModel.catalogsState.collectAsState()
+
+    CatalogFeedContent(
+        feedUiState = feedUiState,
+        onCatalogClick = onCatalogClick,
+        onAddCatalog = viewModel::addCatalog,
+        onEditCatalog = viewModel::editCatalog,
+        onDeleteCatalog = viewModel::deleteCatalog,
+    )
+}
+
+@Composable
+fun CatalogFeedContent(
+    feedUiState: CatalogFeedUiState,
+    onCatalogClick: (Catalog) -> Unit,
+    onAddCatalog: (String, String) -> Unit,
+    onEditCatalog: (Catalog, String) -> Unit,
+    onDeleteCatalog: (Catalog) -> Unit,
+) {
     var catalogToEdit by remember { mutableStateOf<Catalog?>(value = null) }
     var catalogToDelete by remember { mutableStateOf<Catalog?>(value = null) }
     var showAddCatalogDialog by remember { mutableStateOf(value = false) }
@@ -69,7 +87,7 @@ fun CatalogFeedScreen(
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
-            when (val state = feedUiState) {
+            when (feedUiState) {
                 is CatalogFeedUiState.Loading -> {
                     LoadingView(modifier = Modifier.align(alignment = Alignment.Center))
                 }
@@ -82,7 +100,7 @@ fun CatalogFeedScreen(
                 }
 
                 is CatalogFeedUiState.Success -> {
-                    val catalogs = state.catalogs
+                    val catalogs = feedUiState.catalogs
                     if (catalogs.isEmpty()) {
                         EmptyView(
                             message = stringResource(id = R.string.no_catalogs_found),
@@ -114,7 +132,7 @@ fun CatalogFeedScreen(
         AddCatalogDialog(
             onDismissRequest = { showAddCatalogDialog = false },
             onConfirm = { title, url ->
-                viewModel.addCatalog(title = title, url = url)
+                onAddCatalog(title, url)
                 showAddCatalogDialog = false
             },
         )
@@ -126,10 +144,7 @@ fun CatalogFeedScreen(
         AddCatalogDialog(
             onDismissRequest = { catalogToEdit = null },
             onConfirm = { newTitle, _ ->
-                viewModel.editCatalog(
-                    catalog = editingCatalog,
-                    newTitle = newTitle,
-                )
+                onEditCatalog(editingCatalog, newTitle)
                 catalogToEdit = null
             },
             initialTitle = editingCatalog.title,
@@ -150,7 +165,7 @@ fun CatalogFeedScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.deleteCatalog(catalog = deletingCatalog)
+                        onDeleteCatalog(deletingCatalog)
                         catalogToDelete = null
                     },
                 ) {

@@ -64,6 +64,28 @@ fun CatalogDetailScreen(
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
     val feedState by viewModel.feedState.collectAsState()
+
+    CatalogDetailContent(
+        feedState = feedState,
+        catalog = catalog,
+        showBackButton = showBackButton,
+        onNavigateBack = onNavigateBack,
+        onSubFeedClick = onSubFeedClick,
+        onPublicationClick = onPublicationClick,
+        onImportBook = appViewModel::importBook,
+    )
+}
+
+@Composable
+fun CatalogDetailContent(
+    feedState: FeedState,
+    catalog: Catalog,
+    showBackButton: Boolean,
+    onNavigateBack: () -> Unit,
+    onSubFeedClick: (Catalog) -> Unit,
+    onPublicationClick: (Publication) -> Unit,
+    onImportBook: (String) -> Unit,
+) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     val navigationTitle = stringResource(id = R.string.navigation)
@@ -95,13 +117,13 @@ fun CatalogDetailScreen(
             modifier = Modifier
                 .fillMaxSize(),
         ) {
-            when (val state = feedState) {
+            when (feedState) {
                 is FeedState.Loading -> {
                     LoadingIndicator(modifier = Modifier.align(alignment = Alignment.Center))
                 }
 
                 is FeedState.Success -> {
-                    val feed = state.feed
+                    val feed = feedState.feed
                     if (feed != null) {
                         LazyVerticalGrid(
                             columns = GridCells.Adaptive(minSize = 160.dp),
@@ -128,7 +150,7 @@ fun CatalogDetailScreen(
                                         parentCatalog = catalog,
                                         onSubFeedClick = onSubFeedClick,
                                         onPublicationClick = onPublicationClick,
-                                        appViewModel = appViewModel,
+                                        onImportBook = onImportBook,
                                     )
                                 }
                             }
@@ -139,7 +161,7 @@ fun CatalogDetailScreen(
                                 renderPublications(
                                     publications = feed.publications,
                                     onPublicationClick = onPublicationClick,
-                                    appViewModel = appViewModel,
+                                    onImportBook = onImportBook,
                                 )
                             }
                         }
@@ -153,7 +175,7 @@ fun CatalogDetailScreen(
                 }
 
                 is FeedState.Error -> {
-                    val message = state.message ?: parsingErrorString
+                    val message = feedState.message ?: parsingErrorString
                     Text(
                         text = message,
                         color = MaterialTheme.colorScheme.error,
@@ -248,13 +270,13 @@ private fun LazyGridScope.renderNavigationLinks(
 private fun LazyGridScope.renderPublications(
     publications: List<Publication>,
     onPublicationClick: (Publication) -> Unit,
-    appViewModel: AppViewModel,
+    onImportBook: (String) -> Unit,
 ) {
     items(items = publications) { publication ->
         PublicationItem(
             publication = publication,
             onPublicationClick = onPublicationClick,
-            appViewModel = appViewModel,
+            onImportBook = onImportBook,
             modifier = Modifier.padding(bottom = 16.dp),
         )
     }
@@ -264,7 +286,7 @@ private fun LazyGridScope.renderPublications(
 fun PublicationItem(
     publication: Publication,
     onPublicationClick: (Publication) -> Unit,
-    appViewModel: AppViewModel,
+    onImportBook: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val coverUrl = publication.images.firstOrNull()?.href?.toString()
@@ -288,7 +310,7 @@ fun PublicationItem(
                     val acquisitionUrl = acquisitionLink?.href?.toString()
 
                     if (acquisitionUrl != null) {
-                        appViewModel.importBook(url = acquisitionUrl)
+                        onImportBook(acquisitionUrl)
                     }
                     dismiss()
                 },
@@ -313,7 +335,7 @@ private fun LazyGridScope.renderGroup(
     parentCatalog: Catalog,
     onSubFeedClick: (Catalog) -> Unit,
     onPublicationClick: (Publication) -> Unit,
-    appViewModel: AppViewModel,
+    onImportBook: (String) -> Unit,
 ) {
     val title = group.metadata.title
     val selfLink = group.links.firstOrNull { it.rels.contains("self") } ?: group.links.firstOrNull()
@@ -351,7 +373,7 @@ private fun LazyGridScope.renderGroup(
                     PublicationItem(
                         publication = publication,
                         onPublicationClick = onPublicationClick,
-                        appViewModel = appViewModel,
+                        onImportBook = onImportBook,
                         modifier = Modifier.width(width = 160.dp),
                     )
                 }

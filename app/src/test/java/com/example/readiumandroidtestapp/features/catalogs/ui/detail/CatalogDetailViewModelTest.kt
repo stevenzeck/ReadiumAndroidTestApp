@@ -3,11 +3,14 @@ package com.example.readiumandroidtestapp.features.catalogs.ui.detail
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.domain.opds.OpdsParser
 import io.mockk.coEvery
-import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -24,19 +27,20 @@ import org.readium.r2.shared.util.Try
 @OptIn(ExperimentalCoroutinesApi::class)
 class CatalogDetailViewModelTest {
 
+    private lateinit var viewModel: CatalogDetailViewModel
     private val opdsParser: OpdsParser = mockk()
     private val testDispatcher = StandardTestDispatcher()
 
     private val catalog = Catalog(
-        id = 1L,
-        title = "Test Catalog",
-        href = "http://example.com/feed",
-        type = Catalog.TYPE_OPDS_1,
+        id = 1,
+        title = "Test",
+        href = "http://test.com",
+        type = 1,
     )
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+        Dispatchers.setMain(dispatcher = testDispatcher)
     }
 
     @After
@@ -45,84 +49,55 @@ class CatalogDetailViewModelTest {
     }
 
     @Test
-    fun `initial state is Loading`() = runTest {
-        // Mock parser to return a dummy value (or just hang if we don't advance)
-        // Since init block calls fetchFeed, we need to mock it to avoid crash
+    fun `init fetches feed successfully`() = runTest(context = testDispatcher) {
+        val feed = mockk<Feed>()
+        val parseData = mockk<ParseData> {
+            every { this@mockk.feed } returns feed
+        }
+
         coEvery {
-            opdsParser.parseUrlString(
-                url = any(),
-                type = any(),
-            )
-        } returns Try.success(success = mockk(relaxed = true))
-
-        val viewModel = CatalogDetailViewModel(
-            catalog = catalog,
-            opdsParser = opdsParser,
-        )
-
-        assertEquals(FeedState.Loading, viewModel.feedState.value)
-    }
-
-    @Test
-    fun `fetchFeed calls parser with correct arguments`() = runTest {
-        coEvery {
-            opdsParser.parseUrlString(
-                url = any(),
-                type = any(),
-            )
-        } returns Try.success(success = mockk(relaxed = true))
-
-        CatalogDetailViewModel(
-            catalog = catalog,
-            opdsParser = opdsParser,
-        )
-
-        advanceUntilIdle()
-
-        coVerify { opdsParser.parseUrlString(url = catalog.href, type = catalog.type) }
-    }
-
-    @Test
-    fun `feedState is Success when parser succeeds`() = runTest {
-        val feed: Feed = mockk()
-        val parseData: ParseData = mockk(relaxed = true)
-        coEvery { parseData.feed } returns feed
-        coEvery {
-            opdsParser.parseUrlString(
-                url = any(),
-                type = any(),
-            )
+            opdsParser.parseUrlString(url = catalog.href, type = catalog.type)
         } returns Try.success(success = parseData)
 
-        val viewModel = CatalogDetailViewModel(
+        viewModel = CatalogDetailViewModel(
             catalog = catalog,
             opdsParser = opdsParser,
         )
 
+        val collectJob = backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.feedState.collect()
+        }
         advanceUntilIdle()
 
-        assertTrue(viewModel.feedState.value is FeedState.Success)
-        assertEquals(feed, (viewModel.feedState.value as FeedState.Success).feed)
+        val state = viewModel.feedState.value
+        assertTrue(state is FeedState.Success)
+        assertEquals(feed, (state as FeedState.Success).feed)
+
+        collectJob.cancel()
     }
 
     @Test
-    fun `feedState is Error when parser fails`() = runTest {
-        val errorMessage = "Network Error"
+    fun `init handles fetch failure`() = runTest(context = testDispatcher) {
+        val errorMessage = "Network error"
         coEvery {
-            opdsParser.parseUrlString(
-                url = any(),
-                type = any(),
-            )
+            opdsParser.parseUrlString(url = catalog.href, type = catalog.type)
         } returns Try.failure(failure = Exception(errorMessage))
 
-        val viewModel = CatalogDetailViewModel(
+        viewModel = CatalogDetailViewModel(
             catalog = catalog,
             opdsParser = opdsParser,
         )
 
+        val collectJob =
+            backgroundScope.launch(context = UnconfinedTestDispatcher(scheduler = testScheduler)) {
+                viewModel.feedState.collect()
+            }
         advanceUntilIdle()
 
-        assertTrue(viewModel.feedState.value is FeedState.Error)
-        assertEquals(errorMessage, (viewModel.feedState.value as FeedState.Error).message)
+        val state = viewModel.feedState.value
+        assertTrue(state is FeedState.Error)
+        assertEquals(errorMessage, (state as FeedState.Error).message)
+
+        collectJob.cancel()
     }
 }

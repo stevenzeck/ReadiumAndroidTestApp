@@ -32,6 +32,7 @@ import com.example.readiumandroidtestapp.core.ui.common.BookItem
 import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
 import org.json.JSONObject
 import org.readium.r2.shared.publication.Manifest
+import timber.log.Timber
 
 @Composable
 fun PublicationDetailScreen(
@@ -39,12 +40,11 @@ fun PublicationDetailScreen(
     onNavigateBack: () -> Unit,
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-
     val manifestJsonObj = remember(key1 = manifestJson) {
         try {
             JSONObject(manifestJson)
         } catch (e: Exception) {
+            Timber.e(e)
             null
         }
     }
@@ -53,7 +53,22 @@ fun PublicationDetailScreen(
         manifestJsonObj?.let { Manifest.fromJSON(json = it) }
     }
 
-    if (manifest == null || manifestJsonObj == null) {
+    PublicationDetailContent(
+        manifest = manifest,
+        onNavigateBack = onNavigateBack,
+        onImportBook = appViewModel::importBook,
+    )
+}
+
+@Composable
+fun PublicationDetailContent(
+    manifest: Manifest?,
+    onNavigateBack: () -> Unit,
+    onImportBook: (String) -> Unit,
+) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    if (manifest == null) {
         Text(text = stringResource(id = R.string.publication_detail_error))
         return
     }
@@ -130,7 +145,7 @@ fun PublicationDetailScreen(
                         val acquisitionUrl = acquisitionLink?.href?.toString()
 
                         if (acquisitionUrl != null) {
-                            appViewModel.importBook(url = acquisitionUrl)
+                            onImportBook(acquisitionUrl)
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
