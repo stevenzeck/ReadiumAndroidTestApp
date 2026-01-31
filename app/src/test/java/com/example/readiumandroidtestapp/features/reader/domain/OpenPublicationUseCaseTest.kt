@@ -27,20 +27,26 @@ class OpenPublicationUseCaseTest {
     )
 
     @Test
-    fun `invoke returns success when asset and publication open successfully`() = runTest(context = testDispatcher) {
-        val url = mockk<AbsoluteUrl>()
-        val asset = mockk<Asset>()
-        val publication = mockk<Publication>()
+    fun `invoke returns success when asset and publication open successfully`() =
+        runTest(context = testDispatcher) {
+            val url = mockk<AbsoluteUrl>()
+            val asset = mockk<Asset>()
+            val publication = mockk<Publication>()
 
-        coEvery { assetRetriever.retrieve(url = url) } returns Result.success(value = asset)
-        coEvery { publicationOpener.open(asset = asset, allowUserInteraction = true) } returns Result.success(value = publication)
+            coEvery { assetRetriever.retrieve(url = url) } returns Result.success(value = asset)
+            coEvery {
+                publicationOpener.open(
+                    asset = asset,
+                    allowUserInteraction = true,
+                )
+            } returns Result.success(value = publication)
 
-        val result = useCase(url = url)
+            val result = useCase(url = url)
 
-        assertTrue(result.isSuccess)
-        assertEquals(publication, result.getOrNull()?.publication)
-        assertEquals(asset, result.getOrNull()?.asset)
-    }
+            assertTrue(result.isSuccess)
+            assertEquals(publication, result.getOrNull()?.publication)
+            assertEquals(asset, result.getOrNull()?.asset)
+        }
 
     @Test
     fun `invoke returns failure when asset retrieval fails`() = runTest(context = testDispatcher) {
@@ -54,24 +60,35 @@ class OpenPublicationUseCaseTest {
         assertTrue(result.isFailure)
         assertEquals(error, result.exceptionOrNull())
 
-        coVerify(exactly = 0) { publicationOpener.open(asset = any(), allowUserInteraction =  any()) }
+        coVerify(exactly = 0) {
+            publicationOpener.open(
+                asset = any(),
+                allowUserInteraction = any(),
+            )
+        }
     }
 
     @Test
-    fun `invoke returns failure and closes asset when publication opening fails`() = runTest(context = testDispatcher) {
-        val url = mockk<AbsoluteUrl>()
-        val asset = mockk<Asset>(relaxed = true)
-        val error = Exception("Publication opening failed")
+    fun `invoke returns failure and closes asset when publication opening fails`() =
+        runTest(context = testDispatcher) {
+            val url = mockk<AbsoluteUrl>()
+            val asset = mockk<Asset>(relaxed = true)
+            val error = Exception("Publication opening failed")
 
-        coEvery { assetRetriever.retrieve(url = url) } returns Result.success(value = asset)
-        coEvery { publicationOpener.open(asset = asset, allowUserInteraction = true) } returns Result.failure(exception = error)
-        coEvery { asset.close() } returns Unit
+            coEvery { assetRetriever.retrieve(url = url) } returns Result.success(value = asset)
+            coEvery {
+                publicationOpener.open(
+                    asset = asset,
+                    allowUserInteraction = true,
+                )
+            } returns Result.failure(exception = error)
+            coEvery { asset.close() } returns Unit
 
-        val result = useCase(url = url)
+            val result = useCase(url = url)
 
-        assertTrue(result.isFailure)
-        assertEquals(error, result.exceptionOrNull())
+            assertTrue(result.isFailure)
+            assertEquals(error, result.exceptionOrNull())
 
-        coVerify { asset.close() }
-    }
+            coVerify { asset.close() }
+        }
 }

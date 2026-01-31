@@ -34,7 +34,7 @@ class CatalogDetailScreenTest {
                 onNavigateBack = {},
                 onSubFeedClick = {},
                 onPublicationClick = {},
-                onImportBook = {}
+                onImportBook = {},
             )
         }
 
@@ -54,7 +54,7 @@ class CatalogDetailScreenTest {
                 onNavigateBack = {},
                 onSubFeedClick = {},
                 onPublicationClick = {},
-                onImportBook = {}
+                onImportBook = {},
             )
         }
 
@@ -84,7 +84,7 @@ class CatalogDetailScreenTest {
                 onNavigateBack = {},
                 onSubFeedClick = {},
                 onPublicationClick = {},
-                onImportBook = {}
+                onImportBook = {},
             )
         }
 

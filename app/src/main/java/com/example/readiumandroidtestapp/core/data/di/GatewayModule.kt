@@ -17,12 +17,12 @@ abstract class GatewayModule {
     @Binds
     @Singleton
     abstract fun bindAssetRetrieverGateway(
-        impl: DefaultAssetRetrieverGateway
+        impl: DefaultAssetRetrieverGateway,
     ): AssetRetrieverGateway
 
     @Binds
     @Singleton
     abstract fun bindPublicationOpenerGateway(
-        impl: DefaultPublicationOpenerGateway
+        impl: DefaultPublicationOpenerGateway,
     ): PublicationOpenerGateway
 }

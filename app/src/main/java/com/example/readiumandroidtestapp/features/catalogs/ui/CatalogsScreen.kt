@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
+import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.navigation.api.CatalogScreens
 import com.example.readiumandroidtestapp.features.catalogs.ui.detail.CatalogDetailScreen
 import com.example.readiumandroidtestapp.features.catalogs.ui.feed.CatalogFeedScreen
@@ -37,7 +38,11 @@ import com.example.readiumandroidtestapp.features.catalogs.ui.publication.Public
 import kotlinx.coroutines.launch
 
 @Composable
-fun CatalogsScreen() {
+fun CatalogsScreen(
+    listPaneContent: @Composable (onCatalogClick: (Catalog) -> Unit) -> Unit = { onCatalogClick ->
+        CatalogFeedScreen(onCatalogClick = onCatalogClick)
+    },
+) {
     val navigator = rememberListDetailPaneScaffoldNavigator<CatalogScreens>()
     val backNavigationBehavior = BackNavigationBehavior.PopUntilContentChange
     val scope = rememberCoroutineScope()
@@ -61,16 +66,14 @@ fun CatalogsScreen() {
         defaultBackBehavior = backNavigationBehavior,
         listPane = {
             AnimatedPane {
-                CatalogFeedScreen(
-                    onCatalogClick = { catalog ->
-                        scope.launch {
-                            navigator.navigateTo(
-                                pane = ListDetailPaneScaffoldRole.Detail,
-                                contentKey = CatalogScreens.CatalogDetail(catalog),
-                            )
-                        }
-                    },
-                )
+                listPaneContent { catalog ->
+                    scope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = CatalogScreens.CatalogDetail(catalog),
+                        )
+                    }
+                }
             }
         },
         detailPane = {

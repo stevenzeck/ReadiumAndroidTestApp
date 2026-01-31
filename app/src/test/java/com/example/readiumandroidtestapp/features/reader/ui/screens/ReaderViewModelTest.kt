@@ -169,12 +169,12 @@ class ReaderViewModelTest {
     @Test
     fun `openSettings opens visual settings when TTS inactive`() =
         runTest(context = testDispatcher) {
-        val bookId = 1L
+            val bookId = 1L
             every { ttsManager.isTtsActive } returns MutableStateFlow(value = false)
             val publication = mockk<Publication>(relaxed = true) {
                 every { conformsTo(profile = any()) } returns false
             }
-        val book = mockk<Book>(relaxed = true)
+            val book = mockk<Book>(relaxed = true)
             val editor = mockk<PreferencesEditor<*>>()
 
             // Setup session

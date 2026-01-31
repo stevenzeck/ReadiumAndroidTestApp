@@ -7,16 +7,16 @@ import org.readium.r2.streamer.PublicationOpener
 import javax.inject.Inject
 
 class DefaultPublicationOpenerGateway @Inject constructor(
-    private val publicationOpener: PublicationOpener
+    private val publicationOpener: PublicationOpener,
 ) : PublicationOpenerGateway {
 
     override suspend fun open(asset: Asset, allowUserInteraction: Boolean): Result<Publication> {
         return publicationOpener.open(
             asset = asset,
-            allowUserInteraction = allowUserInteraction
+            allowUserInteraction = allowUserInteraction,
         ).fold(
             onSuccess = { Result.success(value = it) },
-            onFailure = { Result.failure(Exception(it.message)) }
+            onFailure = { Result.failure(Exception(it.message)) },
         )
     }
 }

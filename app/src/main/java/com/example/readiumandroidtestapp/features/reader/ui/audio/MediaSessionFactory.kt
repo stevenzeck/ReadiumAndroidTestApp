@@ -19,7 +19,7 @@ class DefaultMediaSessionFactory @Inject constructor() : MediaSessionFactory {
     override fun createSession(
         context: Context,
         player: Player,
-        activityIntent: Intent?
+        activityIntent: Intent?,
     ): MediaSession {
         return MediaSession.Builder(context, player)
             .apply {

@@ -43,10 +43,14 @@ class ReaderDecorationManagerTest {
             href = "http://example.com/chapter1",
             type = "text/html",
             title = "Chapter 1",
-            annotation = "Test annotation"
+            annotation = "Test annotation",
         ).apply { id = 100L }
 
-        coEvery { bookRepository.highlightsForBook(bookId = bookId) } returns flowOf(value = listOf(highlight))
+        coEvery { bookRepository.highlightsForBook(bookId = bookId) } returns flowOf(
+            value = listOf(
+                highlight,
+            ),
+        )
 
         val result = manager.decorationFlow(bookId = bookId).first()
 
@@ -96,7 +100,7 @@ class ReaderDecorationManagerTest {
                 style = Highlight.Style.HIGHLIGHT,
                 tint = color,
                 locator = locator,
-                annotation = note
+                annotation = note,
             )
         } returns 101L
 
@@ -108,7 +112,7 @@ class ReaderDecorationManagerTest {
                 style = Highlight.Style.HIGHLIGHT,
                 tint = color,
                 locator = locator,
-                annotation = note
+                annotation = note,
             )
         }
 
