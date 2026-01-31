@@ -2,6 +2,7 @@ package com.example.readiumandroidtestapp.features.reader.data
 
 import android.app.Application
 import org.readium.navigator.media.tts.AndroidTtsNavigator
+import org.readium.navigator.media.tts.AndroidTtsNavigatorFactory
 import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
@@ -13,4 +14,9 @@ interface AndroidTtsNavigatorFactoryWrapper {
         initialLocator: Locator,
         listener: TtsNavigator.Listener,
     ): Result<AndroidTtsNavigator>
+
+    suspend fun createFactory(
+        application: Application,
+        publication: Publication,
+    ): AndroidTtsNavigatorFactory?
 }

@@ -30,4 +30,11 @@ class DefaultAndroidTtsNavigatorFactoryWrapper @Inject constructor() :
             onFailure = { Result.failure(Exception("TTS creation failed: $it")) },
         )
     }
+
+    override suspend fun createFactory(
+        application: Application,
+        publication: Publication,
+    ): AndroidTtsNavigatorFactory? {
+        return AndroidTtsNavigatorFactory(application, publication)
+    }
 }

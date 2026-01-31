@@ -1,6 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
 import android.app.Application
+import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.BookPreferencesRepository
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
@@ -30,6 +31,7 @@ import javax.inject.Inject
 class DefaultReaderPreferencesManager @Inject constructor(
     private val bookPreferencesRepository: BookPreferencesRepository,
     private val audioNavigatorFactory: AppAudioNavigatorFactory,
+    private val ttsNavigatorFactoryWrapper: AndroidTtsNavigatorFactoryWrapper,
 ) : ReaderPreferencesManager {
 
     /**
@@ -167,9 +169,9 @@ class DefaultReaderPreferencesManager @Inject constructor(
             json?.let { AndroidTtsPreferencesSerializer().deserialize(preferences = it) }
                 ?: AndroidTtsPreferences()
 
-        val factory = org.readium.navigator.media.tts.AndroidTtsNavigatorFactory(
-            application,
-            publication,
+        val factory = ttsNavigatorFactoryWrapper.createFactory(
+            application = application,
+            publication = publication,
         ) ?: return null
         val editor = factory.createPreferencesEditor(preferences)
 
