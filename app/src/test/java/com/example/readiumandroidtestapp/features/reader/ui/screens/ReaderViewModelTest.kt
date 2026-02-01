@@ -31,6 +31,7 @@ import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
@@ -132,6 +133,47 @@ class ReaderViewModelTest {
     }
 
     @Test
+    fun `retryLoad re-calls loadBookData`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        // Setup for failure initially
+        val bookUrl = mockk<AbsoluteUrl>()
+        val book = mockk<Book>(relaxed = true) {
+            every { url } returns bookUrl
+        }
+        coEvery { bookRepository.get(bookId = bookId) } returns book
+        coEvery { openPublicationUseCase(url = bookUrl) } returns Result.failure(Exception("Fail"))
+
+        viewModel = createViewModel(bookId)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is ReaderUiState.Error)
+
+        // Now setup for success
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = any()) } returns false
+        }
+        val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
+        coEvery { openPublicationUseCase(bookUrl) } returns Result.success(value = openedBook)
+        coEvery {
+            sessionFactory.createVisualSession(book = book, publication = publication)
+        } returns ReaderUiState.Visual(
+            publication = publication,
+            book = book,
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = mockk(),
+            preferencesEditor = null,
+            initialPreferences = mockk(),
+            isFixedLayout = false,
+        )
+
+        viewModel.retryLoad()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is ReaderUiState.Visual)
+    }
+
+    @Test
     fun `openSettings delegates to ttsManager when active`() = runTest(context = testDispatcher) {
         val bookId = 1L
         every { ttsManager.isTtsActive } returns MutableStateFlow(value = true)
@@ -190,6 +232,43 @@ class ReaderViewModelTest {
 
             assertTrue(viewModel.settingsSheetState.value is ReaderSettingsSheet.Configurable)
         }
+
+    @Test
+    fun `startTts delegates to ttsManager`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = any()) } returns false
+        }
+        val book = mockk<Book>(relaxed = true)
+
+        setupVisualSession(bookId, publication, book)
+        val navigator = mockk<VisualNavigator>(relaxed = true)
+        viewModel.onNavigatorReady(visualNavigator = navigator)
+
+        viewModel.startTts()
+        advanceUntilIdle()
+
+        coVerify { ttsManager.start(visualNavigator = navigator, scope = any(), onStop = any()) }
+    }
+
+    @Test
+    fun `stopTts delegates to ttsManager`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = any()) } returns false
+        }
+        val book = mockk<Book>(relaxed = true)
+
+        setupVisualSession(bookId, publication, book)
+        val navigator = mockk<VisualNavigator>(relaxed = true)
+        viewModel.onNavigatorReady(visualNavigator = navigator)
+
+        viewModel.stopTts()
+        advanceUntilIdle()
+
+        coVerify { ttsManager.stop(visualNavigator = navigator, scope = any()) }
+    }
+
 
     private fun TestScope.setupVisualSession(
         bookId: Long,

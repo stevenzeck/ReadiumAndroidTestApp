@@ -141,13 +141,16 @@ kover {
                     "javax.annotation.processing.Generated",
                 )
                 classes(
+                    "**.BuildConfig",
+                    "dagger.hilt.internal.aggregatedroot.codegen.**",
                     "**.Dagger*",
                     "**.*_Factory*",
                     "**.Hilt_*",
                     "**.*_HiltModules*",
-                    "**.*_MembersInjector*",
+                    "hilt_aggregated_deps.**",
                     "**.*_Impl*",
-                    "**.BuildConfig",
+                    "**.*_MembersInjector*",
+                    "**.*_Provide*Factory*",
                 )
             }
         }
