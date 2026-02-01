@@ -5,6 +5,7 @@ import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.data.book.BookRepository
 import com.example.readiumandroidtestapp.core.data.book.ImportError
 import com.example.readiumandroidtestapp.core.data.settings.SettingsRepository
+import com.example.readiumandroidtestapp.core.domain.gateway.UrlGateway
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
@@ -25,18 +26,16 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class AppViewModelTest {
 
     private val bookRepository: BookRepository = mockk()
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk()
+    private val urlGateway: UrlGateway = mockk()
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: AppViewModel
@@ -51,6 +50,7 @@ class AppViewModelTest {
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
+            urlGateway = urlGateway,
         )
     }
 
@@ -72,7 +72,7 @@ class AppViewModelTest {
 
     @Test
     fun `importBook with URI calls repository and emits success message`() = runTest {
-        val uri = Uri.parse("content://example/book.epub")
+        val uri = mockk<Uri>()
         val book = mockk<Book>()
         coEvery { bookRepository.addBook(uri = any()) } returns Try.success(success = book)
 
@@ -85,7 +85,7 @@ class AppViewModelTest {
 
     @Test
     fun `importBook with URI emits error message on failure`() = runTest {
-        val uri = Uri.parse("content://example/book.epub")
+        val uri = mockk<Uri>()
         coEvery { bookRepository.addBook(uri = any()) } returns Try.failure(failure = ImportError.InvalidBook)
 
         viewModel.importBook(uri = uri)
@@ -98,18 +98,21 @@ class AppViewModelTest {
     fun `importBook with valid URL calls repository`() = runTest {
         val urlString = "https://example.com/book.epub"
         val book = mockk<Book>()
+        val absoluteUrl = mockk<AbsoluteUrl>()
+        every { urlGateway.parseAbsoluteUrl(urlString) } returns absoluteUrl
         coEvery { bookRepository.addBook(url = any()) } returns Try.success(success = book)
 
         viewModel.importBook(url = urlString)
         advanceUntilIdle()
 
-        coVerify { bookRepository.addBook(url = any<AbsoluteUrl>()) }
+        coVerify { bookRepository.addBook(url = absoluteUrl) }
         coVerify { userMessageManager.emitMessage(messageId = R.string.book_imported_successfully) }
     }
 
     @Test
     fun `importBook with invalid URL emits error message`() = runTest {
-        val urlString = "" // Empty URL is invalid for AbsoluteUrl.Companion
+        val urlString = ""
+        every { urlGateway.parseAbsoluteUrl(urlString) } returns null
 
         viewModel.importBook(url = urlString)
         advanceUntilIdle()

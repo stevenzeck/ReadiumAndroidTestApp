@@ -3,6 +3,9 @@ package com.example.readiumandroidtestapp.features.catalogs.ui.feed
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -94,5 +97,60 @@ class CatalogFeedScreenTest {
         composeTestRule.onNodeWithText(text = "My Feed").performClick()
 
         assertTrue(clickedCatalog == catalog)
+    }
+
+    @Test
+    fun `invokes onDeleteCatalog when delete icon is clicked`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val deleteContentDescription = context.getString(R.string.delete_feed)
+        val catalog = Catalog(id = 1, title = "My Feed", href = "http://test.com", type = 1)
+        var deletedCatalog: Catalog? = null
+
+        composeTestRule.setContent {
+            CatalogFeedContent(
+                feedUiState = CatalogFeedUiState.Success(catalogs = listOf(catalog)),
+                onCatalogClick = {},
+                onAddCatalog = { _, _ -> },
+                onEditCatalog = { _, _ -> },
+                onDeleteCatalog = { deletedCatalog = it },
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription(
+            label = deleteContentDescription,
+            useUnmergedTree = true,
+        ).performClick()
+
+        composeTestRule.onAllNodesWithText(text = deleteContentDescription).onLast().performClick()
+
+        assertTrue(deletedCatalog == catalog)
+    }
+
+    @Test
+    fun `invokes onEditCatalog when edit icon is clicked`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val editContentDescription = context.getString(R.string.edit_feed)
+        val saveText = context.getString(R.string.save)
+        val catalog = Catalog(id = 1, title = "My Feed", href = "http://test.com", type = 1)
+        var editedCatalog: Catalog? = null
+
+        composeTestRule.setContent {
+            CatalogFeedContent(
+                feedUiState = CatalogFeedUiState.Success(catalogs = listOf(catalog)),
+                onCatalogClick = {},
+                onAddCatalog = { _, _ -> },
+                onEditCatalog = { catalog, _ -> editedCatalog = catalog },
+                onDeleteCatalog = {},
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription(
+            label = editContentDescription,
+            useUnmergedTree = true,
+        ).performClick()
+
+        composeTestRule.onNodeWithText(text = saveText).performClick()
+
+        assertTrue(editedCatalog == catalog)
     }
 }

@@ -7,6 +7,7 @@ import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.data.book.BookRepository
 import com.example.readiumandroidtestapp.core.data.book.ImportError
 import com.example.readiumandroidtestapp.core.data.settings.SettingsRepository
+import com.example.readiumandroidtestapp.core.domain.gateway.UrlGateway
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
@@ -14,7 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import javax.inject.Inject
 
@@ -29,12 +29,14 @@ import javax.inject.Inject
  * @param bookRepository Repository for managing book data and imports.
  * @param userMessageManager Utility class for queuing user-facing messages.
  * @param settingsRepository Repository for persisting app preferences.
+ * @param urlGateway Gateway for parsing URLs, enabling unit testing without Android/Readium dependencies.
  */
 @HiltViewModel
 class AppViewModel @Inject constructor(
     private val bookRepository: BookRepository,
     private val userMessageManager: UserMessageManager,
     settingsRepository: SettingsRepository,
+    private val urlGateway: UrlGateway,
 ) : ViewModel() {
 
     /**
@@ -66,7 +68,7 @@ class AppViewModel @Inject constructor(
      */
     fun importBook(url: String) {
         viewModelScope.launch {
-            val absoluteUrl = AbsoluteUrl.Companion(url)
+            val absoluteUrl = urlGateway.parseAbsoluteUrl(url)
             if (absoluteUrl == null) {
                 userMessageManager.emitMessage(messageId = R.string.error_invalid_url)
                 return@launch
