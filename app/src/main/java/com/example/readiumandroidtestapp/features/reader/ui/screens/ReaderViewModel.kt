@@ -130,7 +130,7 @@ class ReaderViewModel @AssistedInject constructor(
     private fun loadBookData() {
         viewModelScope.launch {
             _uiState.value = ReaderUiState.Loading
-            val book = bookRepository.get(bookId)
+            val book = bookRepository.get(bookId = bookId)
             val url = book?.url
 
             if (url == null) {

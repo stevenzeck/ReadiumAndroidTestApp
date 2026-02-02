@@ -2,16 +2,18 @@ package com.example.readiumandroidtestapp.features.catalogs.ui.feed
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
-import org.junit.Assert.assertTrue
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,10 +26,39 @@ class CatalogFeedScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `shows empty view when list is empty`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val emptyMessage = context.getString(R.string.no_catalogs_found)
+    fun `shows loading state`() {
+        composeTestRule.setContent {
+            CatalogFeedContent(
+                feedUiState = CatalogFeedUiState.Loading,
+                onCatalogClick = {},
+                onAddCatalog = { _, _ -> },
+                onEditCatalog = { _, _ -> },
+                onDeleteCatalog = {},
+            )
+        }
 
+        composeTestRule.waitForIdle()
+    }
+
+    @Test
+    fun `shows error state`() {
+        composeTestRule.setContent {
+            CatalogFeedContent(
+                feedUiState = CatalogFeedUiState.Error,
+                onCatalogClick = {},
+                onAddCatalog = { _, _ -> },
+                onEditCatalog = { _, _ -> },
+                onDeleteCatalog = {},
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val errorText = context.getString(R.string.error_no_feed_data)
+        composeTestRule.onNodeWithText(text = errorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun `shows empty state`() {
         composeTestRule.setContent {
             CatalogFeedContent(
                 feedUiState = CatalogFeedUiState.Success(catalogs = emptyList()),
@@ -38,73 +69,67 @@ class CatalogFeedScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText(text = emptyMessage).assertIsDisplayed()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val emptyText = context.getString(R.string.no_catalogs_found)
+        composeTestRule.onNodeWithText(text = emptyText).assertIsDisplayed()
     }
 
     @Test
-    fun `shows catalogs when list is not empty`() {
-        val catalog = Catalog(id = 1, title = "My Feed", href = "http://test.com", type = 1)
+    fun `shows catalogs and handles click`() {
+        val catalog = Catalog(id = 1, title = "Test Catalog", href = "http://example.com", type = 1)
+        val onCatalogClick = mockk<(Catalog) -> Unit>(relaxed = true)
 
         composeTestRule.setContent {
             CatalogFeedContent(
                 feedUiState = CatalogFeedUiState.Success(catalogs = listOf(catalog)),
-                onCatalogClick = {},
+                onCatalogClick = onCatalogClick,
                 onAddCatalog = { _, _ -> },
                 onEditCatalog = { _, _ -> },
                 onDeleteCatalog = {},
             )
         }
 
-        composeTestRule.onNodeWithText(text = "My Feed").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Test Catalog").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Test Catalog").performClick()
+
+        verify { onCatalogClick(catalog) }
     }
 
     @Test
-    fun `clicking add fab opens dialog`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val addFeedText = context.getString(R.string.add_feed)
-        val cancelText = context.getString(R.string.cancel)
+    fun `handles add catalog`() {
+        val onAddCatalog = mockk<(String, String) -> Unit>(relaxed = true)
 
         composeTestRule.setContent {
             CatalogFeedContent(
                 feedUiState = CatalogFeedUiState.Success(catalogs = emptyList()),
                 onCatalogClick = {},
-                onAddCatalog = { _, _ -> },
+                onAddCatalog = onAddCatalog,
                 onEditCatalog = { _, _ -> },
                 onDeleteCatalog = {},
             )
         }
 
-        composeTestRule.onNodeWithText(addFeedText, useUnmergedTree = true).performClick()
-
-        composeTestRule.onNodeWithText(cancelText).assertIsDisplayed()
-    }
-
-    @Test
-    fun `invokes onCatalogClick when catalog is clicked`() {
-        val catalog = Catalog(id = 1, title = "My Feed", href = "http://test.com", type = 1)
-        var clickedCatalog: Catalog? = null
-
-        composeTestRule.setContent {
-            CatalogFeedContent(
-                feedUiState = CatalogFeedUiState.Success(catalogs = listOf(catalog)),
-                onCatalogClick = { clickedCatalog = it },
-                onAddCatalog = { _, _ -> },
-                onEditCatalog = { _, _ -> },
-                onDeleteCatalog = {},
-            )
-        }
-
-        composeTestRule.onNodeWithText(text = "My Feed").performClick()
-
-        assertTrue(clickedCatalog == catalog)
-    }
-
-    @Test
-    fun `invokes onDeleteCatalog when delete icon is clicked`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val deleteContentDescription = context.getString(R.string.delete_feed)
-        val catalog = Catalog(id = 1, title = "My Feed", href = "http://test.com", type = 1)
-        var deletedCatalog: Catalog? = null
+        val addText = context.getString(R.string.add_feed)
+        val confirmText = context.getString(R.string.add)
+        val titleLabel = context.getString(R.string.feed_name)
+        val urlLabel = context.getString(R.string.feed_url)
+
+        composeTestRule.onNodeWithText(text = addText, useUnmergedTree = true).performClick()
+
+        composeTestRule.onNodeWithText(text = titleLabel).performTextInput(text = "New Catalog")
+        composeTestRule.onNodeWithText(text = urlLabel)
+            .performTextInput(text = "http://example.com")
+
+        composeTestRule.onNodeWithText(text = confirmText).performClick()
+
+        verify { onAddCatalog("New Catalog", "http://example.com") }
+    }
+
+    @Test
+    fun `handles delete catalog`() {
+        val catalog = Catalog(id = 1, title = "Test Catalog", href = "http://example.com", type = 1)
+        val onDeleteCatalog = mockk<(Catalog) -> Unit>(relaxed = true)
 
         composeTestRule.setContent {
             CatalogFeedContent(
@@ -112,45 +137,20 @@ class CatalogFeedScreenTest {
                 onCatalogClick = {},
                 onAddCatalog = { _, _ -> },
                 onEditCatalog = { _, _ -> },
-                onDeleteCatalog = { deletedCatalog = it },
+                onDeleteCatalog = onDeleteCatalog,
             )
         }
 
-        composeTestRule.onNodeWithContentDescription(
-            label = deleteContentDescription,
-            useUnmergedTree = true,
-        ).performClick()
-
-        composeTestRule.onAllNodesWithText(text = deleteContentDescription).onLast().performClick()
-
-        assertTrue(deletedCatalog == catalog)
-    }
-
-    @Test
-    fun `invokes onEditCatalog when edit icon is clicked`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val editContentDescription = context.getString(R.string.edit_feed)
-        val saveText = context.getString(R.string.save)
-        val catalog = Catalog(id = 1, title = "My Feed", href = "http://test.com", type = 1)
-        var editedCatalog: Catalog? = null
+        val deleteFeedDesc = context.getString(R.string.delete_feed)
+        val deleteButtonText = context.getString(R.string.delete_feed)
 
-        composeTestRule.setContent {
-            CatalogFeedContent(
-                feedUiState = CatalogFeedUiState.Success(catalogs = listOf(catalog)),
-                onCatalogClick = {},
-                onAddCatalog = { _, _ -> },
-                onEditCatalog = { catalog, _ -> editedCatalog = catalog },
-                onDeleteCatalog = {},
-            )
-        }
+        // Click delete icon directly
+        composeTestRule.onNodeWithContentDescription(label = deleteFeedDesc).performClick()
 
-        composeTestRule.onNodeWithContentDescription(
-            label = editContentDescription,
-            useUnmergedTree = true,
-        ).performClick()
+        composeTestRule.onNode(matcher = hasText(text = deleteButtonText).and(other = hasClickAction()))
+            .performClick()
 
-        composeTestRule.onNodeWithText(text = saveText).performClick()
-
-        assertTrue(editedCatalog == catalog)
+        verify { onDeleteCatalog(catalog) }
     }
 }

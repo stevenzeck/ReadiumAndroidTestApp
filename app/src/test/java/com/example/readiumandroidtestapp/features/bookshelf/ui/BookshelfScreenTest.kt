@@ -1,8 +1,16 @@
 package com.example.readiumandroidtestapp.features.bookshelf.ui
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.test.core.app.ApplicationProvider
+import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.app.AppViewModel
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
@@ -10,6 +18,7 @@ import com.example.readiumandroidtestapp.features.bookshelf.BookshelfUiState
 import com.example.readiumandroidtestapp.features.bookshelf.BookshelfViewModel
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -60,7 +69,9 @@ class BookshelfScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText(text = "No books yet. Use + to add").assertIsDisplayed()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val emptyText = context.getString(R.string.empty_bookshelf)
+        composeTestRule.onNodeWithText(text = emptyText).assertIsDisplayed()
     }
 
     @Test
@@ -77,12 +88,13 @@ class BookshelfScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText(text = "There wan an error loading the bookshelf. Please try again.")
-            .assertIsDisplayed()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val errorText = context.getString(R.string.bookshelf_error)
+        composeTestRule.onNodeWithText(text = errorText).assertIsDisplayed()
     }
 
     @Test
-    fun `shows success state with books`() {
+    fun `shows success state with books and handles interactions`() {
         val books = listOf(
             Book(
                 id = 1,
@@ -109,6 +121,58 @@ class BookshelfScreenTest {
             )
         }
 
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
         composeTestRule.onNodeWithText(text = "Test Book").assertIsDisplayed()
+
+        val moreOptionsDesc = context.getString(R.string.more_options)
+        composeTestRule.onAllNodesWithContentDescription(label = moreOptionsDesc).onFirst()
+            .performClick()
+
+        val deleteText = context.getString(R.string.delete)
+        composeTestRule.onNodeWithText(text = deleteText).performClick()
+
+        val deleteTitle = context.getString(R.string.delete_book_title)
+        composeTestRule.onNodeWithText(text = deleteTitle).assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(text = deleteText).performClick()
+
+        verify { bookshelfViewModel.deleteBook(bookId = 1) }
+    }
+
+    @Test
+    fun `handles FAB import from URL`() {
+        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Empty)
+        every { appViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
+        every { appViewModel.userMessages } returns flowOf()
+
+        composeTestRule.setContent {
+            BookshelfScreen(
+                onOpenBook = {},
+                viewModel = bookshelfViewModel,
+                appViewModel = appViewModel,
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val toggleFabDesc = context.getString(R.string.toggle_import_menu)
+        val importUrlText = context.getString(R.string.import_from_url)
+
+        // Expand FAB
+        composeTestRule.onNodeWithContentDescription(label = toggleFabDesc).performClick()
+
+        composeTestRule.onNodeWithText(text = importUrlText).performClick()
+
+        val urlTitle = context.getString(R.string.enter_url_title)
+        composeTestRule.onNodeWithText(text = urlTitle).assertIsDisplayed()
+
+        val urlLabel = context.getString(R.string.url)
+        composeTestRule.onNodeWithText(text = urlLabel)
+            .performTextInput(text = "http://example.com/book.epub")
+
+        val importAction = context.getString(R.string.import_action)
+        composeTestRule.onNodeWithText(text = importAction).performClick()
+
+        verify { appViewModel.importBook(url = "http://example.com/book.epub") }
     }
 }

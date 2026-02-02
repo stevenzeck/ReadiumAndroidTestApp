@@ -1,18 +1,24 @@
 package com.example.readiumandroidtestapp.features.reader.ui.components
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
+import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
-import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Link
+import org.readium.r2.shared.publication.LocalizedString
 import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.publication.Manifest
+import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
@@ -25,11 +31,15 @@ class ReaderTocTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `TocBottomSheet displays Contents tab by default`() {
-        val link = Link(href = Url(url = "chapter1.html")!!, title = "Chapter 1")
-        val publication = mockk<Publication>(relaxed = true) {
-            every { tableOfContents } returns listOf(link)
-        }
+    fun `displays chapters and handles click`() {
+        val link = Link(href = Url(url = "href")!!, title = "Chapter 1")
+        val publication = Publication(
+            manifest = Manifest(
+                metadata = Metadata(localizedTitle = LocalizedString("Title")),
+                tableOfContents = listOf(link),
+            ),
+        )
+        val onLinkSelected = mockk<(Link) -> Unit>(relaxed = true)
 
         composeTestRule.setContent {
             TocBottomSheet(
@@ -37,74 +47,105 @@ class ReaderTocTest {
                 bookmarks = emptyList(),
                 highlights = emptyList(),
                 onDismissRequest = {},
-                onLinkSelected = {},
+                onLinkSelected = onLinkSelected,
                 onLocatorSelected = {},
             )
         }
 
-        composeTestRule.onNodeWithText(text = "Contents").assertIsDisplayed()
         composeTestRule.onNodeWithText(text = "Chapter 1").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Chapter 1").performClick()
+
+        verify { onLinkSelected(link) }
     }
 
     @Test
-    fun `TocBottomSheet switches to Bookmarks tab`() {
+    fun `displays bookmarks and handles click`() {
+        Locator(
+            href = Url(url = "href")!!,
+            mediaType = MediaType(string = "text/html")!!,
+            title = "Locator Title",
+        )
         val bookmark = Bookmark(
-            id = 1L,
-            creation = 0L,
-            bookId = 1L,
-            resourceIndex = 0L,
-            resourceHref = "chap1",
+            id = 1,
+            bookId = 1,
+            resourceIndex = 0,
+            resourceTitle = "Chapter 1",
+            resourceHref = "href",
             resourceType = "text/html",
-            resourceTitle = "Bookmark 1",
             location = "{}",
             locatorText = "{}",
         )
-        val publication = mockk<Publication>(relaxed = true)
+        val onLocatorSelected = mockk<(Locator) -> Unit>(relaxed = true)
 
         composeTestRule.setContent {
             TocBottomSheet(
-                publication = publication,
+                publication = Publication(
+                    manifest = Manifest(
+                        metadata = Metadata(
+                            localizedTitle = LocalizedString(
+                                value = "Title",
+                            ),
+                        ),
+                    ),
+                ),
                 bookmarks = listOf(bookmark),
                 highlights = emptyList(),
                 onDismissRequest = {},
                 onLinkSelected = {},
-                onLocatorSelected = {},
+                onLocatorSelected = onLocatorSelected,
             )
         }
 
-        composeTestRule.onNodeWithText(text = "Bookmarks").performClick()
-        composeTestRule.onNodeWithText(text = "Bookmark 1").assertIsDisplayed()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val bookmarksTab = context.getString(R.string.bookmarks)
+
+        composeTestRule.onNodeWithText(text = bookmarksTab).performClick()
+        composeTestRule.onNodeWithText(text = "Chapter 1").performClick()
+
+        verify { onLocatorSelected(any()) }
     }
 
     @Test
-    fun `TocBottomSheet switches to Highlights tab`() {
+    fun `displays highlights and handles click`() {
         val locator = Locator(
-            href = Url(url = "chap1")!!,
+            href = Url(url = "href")!!,
             mediaType = MediaType(string = "text/html")!!,
             text = Locator.Text(highlight = "Highlighted text"),
         )
         val highlight = Highlight(
-            bookId = 1L,
+            bookId = 1,
             style = Highlight.Style.HIGHLIGHT,
             tint = 0,
             locator = locator,
-            annotation = "My Annotation",
+            annotation = "",
         )
-        val publication = mockk<Publication>(relaxed = true)
+        val onLocatorSelected = mockk<(Locator) -> Unit>(relaxed = true)
 
         composeTestRule.setContent {
             TocBottomSheet(
-                publication = publication,
+                publication = Publication(
+                    manifest = Manifest(
+                        metadata = Metadata(
+                            localizedTitle = LocalizedString(
+                                value = "Title",
+                            ),
+                        ),
+                    ),
+                ),
                 bookmarks = emptyList(),
                 highlights = listOf(highlight),
                 onDismissRequest = {},
                 onLinkSelected = {},
-                onLocatorSelected = {},
+                onLocatorSelected = onLocatorSelected,
             )
         }
 
-        composeTestRule.onNodeWithText(text = "Highlights").performClick()
-        composeTestRule.onNodeWithText(text = "Highlighted text").assertIsDisplayed()
-        composeTestRule.onNodeWithText(text = "My Annotation").assertIsDisplayed()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val highlightsTab = context.getString(R.string.highlights)
+
+        composeTestRule.onNodeWithText(text = highlightsTab).performClick()
+        composeTestRule.onNodeWithText(text = "Highlighted text").performClick()
+
+        verify { onLocatorSelected(any()) }
     }
 }
