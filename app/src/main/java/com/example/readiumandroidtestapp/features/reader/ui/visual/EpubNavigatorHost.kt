@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
@@ -121,7 +122,9 @@ fun EpubReader(
     }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(tag = "EpubNavigatorHost"),
         factory = { ctx ->
             object : FrameLayout(ctx) {
                 override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {

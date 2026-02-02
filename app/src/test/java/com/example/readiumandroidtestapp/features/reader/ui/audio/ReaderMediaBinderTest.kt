@@ -35,4 +35,19 @@ class ReaderMediaBinderTest {
         assertNotNull("Service should be bound", boundIntent)
         assertEquals(MediaService::class.java.name, boundIntent.component?.className)
     }
+
+    @Test
+    fun `unbind unbinds service`() {
+        val navigator = mockk<AudioNavigator<*, *>>()
+        binder.bind(navigator = navigator)
+
+        val shadowApp = Shadows.shadowOf(application)
+
+        val boundConnections = shadowApp.boundServiceConnections
+        assertEquals(1, boundConnections.size)
+
+        binder.unbind()
+
+        assertEquals(0, shadowApp.boundServiceConnections.size)
+    }
 }

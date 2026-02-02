@@ -7,6 +7,8 @@ import com.example.readiumandroidtestapp.features.reader.data.EpubNavigatorFacto
 import com.example.readiumandroidtestapp.features.reader.data.PdfNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.PreferencesSerializerFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabilities
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,11 +18,14 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferencesSerializer
+import org.readium.adapter.pdfium.navigator.PdfiumPreferences
 import org.readium.adapter.pdfium.navigator.PdfiumPreferencesSerializer
+import org.readium.adapter.pdfium.navigator.PdfiumSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.tts.AndroidTtsNavigatorFactory
 import org.readium.navigator.media.tts.android.AndroidTtsEngine
@@ -34,6 +39,7 @@ import org.readium.r2.navigator.epub.EpubPreferencesSerializer
 import org.readium.r2.navigator.epub.EpubSettings
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.navigator.preferences.Preference
+import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Language
 
@@ -76,13 +82,41 @@ class DefaultReaderPreferencesManagerTest {
     interface ConfigurableVisualNavigator : VisualNavigator,
         Configurable<EpubSettings, EpubPreferences>
 
+    interface ConfigurablePdfNavigator : VisualNavigator,
+        Configurable<PdfiumSettings, PdfiumPreferences>
+
     @Test
     fun `commitPreferences saves epub preferences`() = runTest {
         val bookId = 1L
         val preferences = EpubPreferences()
         val visualNavigator = mockk<ConfigurableVisualNavigator>(relaxed = true)
         val json = "{}"
-        every { epubSerializer.serialize(preferences) } returns json
+        every { epubSerializer.serialize(preferences = preferences) } returns json
+
+        manager.commitPreferences(
+            bookId = bookId,
+            preferences = preferences,
+            currentVisualNavigator = visualNavigator,
+            audioNavigator = null,
+            ttsManager = ttsManager,
+        )
+
+        verify { visualNavigator.submitPreferences(preferences = preferences) }
+        coVerify {
+            bookPreferencesRepository.savePreferences(
+                bookId = bookId,
+                preferencesJson = json,
+            )
+        }
+    }
+
+    @Test
+    fun `commitPreferences saves pdf preferences`() = runTest {
+        val bookId = 1L
+        val preferences = PdfiumPreferences()
+        val visualNavigator = mockk<ConfigurablePdfNavigator>(relaxed = true)
+        val json = "{}"
+        every { pdfSerializer.serialize(preferences = preferences) } returns json
 
         manager.commitPreferences(
             bookId = bookId,
@@ -106,7 +140,7 @@ class DefaultReaderPreferencesManagerTest {
         val bookId = 1L
         val preferences = AndroidTtsPreferences()
         val json = "{}"
-        every { ttsSerializer.serialize(preferences) } returns json
+        every { ttsSerializer.serialize(preferences = preferences) } returns json
 
         manager.commitPreferences(
             bookId = bookId,
@@ -131,7 +165,7 @@ class DefaultReaderPreferencesManagerTest {
         val preferences = ExoPlayerPreferences()
         val audioNavigator = mockk<AudioNavigator<*, ExoPlayerPreferences>>(relaxed = true)
         val json = "{}"
-        every { audioSerializer.serialize(preferences) } returns json
+        every { audioSerializer.serialize(preferences = preferences) } returns json
 
         manager.commitPreferences(
             bookId = bookId,
@@ -141,7 +175,11 @@ class DefaultReaderPreferencesManagerTest {
             ttsManager = ttsManager,
         )
 
-        verify { audioNavigator.submitPreferences(preferences = preferences) }
+        verify {
+            (audioNavigator as Configurable<*, ExoPlayerPreferences>).submitPreferences(
+                preferences = preferences,
+            )
+        }
         coVerify {
             bookPreferencesRepository.saveAudiobookPreferences(
                 bookId = bookId,
@@ -163,15 +201,48 @@ class DefaultReaderPreferencesManagerTest {
             )
         } returns editor
 
-        val result = manager.createPreferencesEditor(publication, preferences)
+        val result =
+            manager.createPreferencesEditor(publication = publication, preferences = preferences)
 
         assertEquals(editor, result)
-        verify {
-            epubNavigatorFactoryWrapper.createPreferencesEditor(
+    }
+
+    @Test
+    fun `createPreferencesEditor for PDF`() {
+        val publication = mockk<Publication>()
+        val preferences = PdfiumPreferences()
+        val editor = mockk<PreferencesEditor<PdfiumPreferences>>()
+
+        every {
+            pdfNavigatorFactoryWrapper.createPreferencesEditor(
                 publication = publication,
                 initialPreferences = preferences,
             )
-        }
+        } returns editor
+
+        val result =
+            manager.createPreferencesEditor(publication = publication, preferences = preferences)
+
+        assertEquals(editor, result)
+    }
+
+    @Test
+    fun `createPreferencesEditor for Audio`() {
+        val publication = mockk<Publication>()
+        val preferences = ExoPlayerPreferences()
+        val editor = mockk<PreferencesEditor<ExoPlayerPreferences>>()
+
+        every {
+            audioNavigatorFactory.createPreferencesEditor(
+                publication = publication,
+                initialPreferences = preferences,
+            )
+        } returns editor
+
+        val result =
+            manager.createPreferencesEditor(publication = publication, preferences = preferences)
+
+        assertEquals(editor, result)
     }
 
     @Test
@@ -183,10 +254,42 @@ class DefaultReaderPreferencesManagerTest {
         val json = "{}"
         val preferences = EpubPreferences()
 
-        coEvery { bookPreferencesRepository.getPreferences(bookId) } returns json
+        coEvery { bookPreferencesRepository.getPreferences(bookId = bookId) } returns json
         every { epubSerializer.deserialize(preferences = json) } returns preferences
 
-        val result = manager.loadPreferences(bookId, publication)
+        val result = manager.loadPreferences(bookId = bookId, publication = publication)
+
+        assertEquals(preferences, result)
+    }
+
+    @Test
+    fun `loadPreferences for PDF`() = runTest {
+        val bookId = 1L
+        val publication = mockk<Publication> {
+            every { conformsTo(profile = Publication.Profile.EPUB) } returns false
+            every { conformsTo(profile = Publication.Profile.PDF) } returns true
+        }
+        val json = "{}"
+        val preferences = PdfiumPreferences()
+
+        coEvery { bookPreferencesRepository.getPreferences(bookId = bookId) } returns json
+        every { pdfSerializer.deserialize(preferences = json) } returns preferences
+
+        val result = manager.loadPreferences(bookId = bookId, publication = publication)
+
+        assertEquals(preferences, result)
+    }
+
+    @Test
+    fun `loadAudiobookPreferences returns deserialized preferences`() = runTest {
+        val bookId = 1L
+        val json = "{}"
+        val preferences = ExoPlayerPreferences()
+
+        coEvery { bookPreferencesRepository.getAudiobookPreferences(bookId = bookId) } returns json
+        every { audioSerializer.deserialize(preferences = json) } returns preferences
+
+        val result = manager.loadAudiobookPreferences(bookId = bookId)
 
         assertEquals(preferences, result)
     }
@@ -229,11 +332,84 @@ class DefaultReaderPreferencesManagerTest {
         )
 
         assertNotNull(session)
-        coVerify {
+    }
+
+    @Test
+    fun `createTtsSettingsSession returns null when factory is null`() = runTest {
+        val bookId = 1L
+        val publication = mockk<Publication>(relaxed = true)
+
+        coEvery {
             ttsNavigatorFactoryWrapper.createFactory(
                 application = application,
                 publication = publication,
             )
-        }
+        } returns null
+
+        val session = manager.createTtsSettingsSession(
+            bookId = bookId,
+            publication = publication,
+            ttsManager = ttsManager,
+            application = application,
+        )
+
+        assertNull(session)
+    }
+
+    @Test
+    fun `refreshSessionState refreshes Visual state`() {
+        val publication = mockk<Publication>()
+        val preferences = EpubPreferences()
+        val editor = mockk<PreferencesEditor<EpubPreferences>>()
+        val currentState = ReaderUiState.Visual(
+            publication = publication,
+            book = mockk(),
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = ReaderCapabilities(
+                isSearchable = true,
+                canSpeak = true,
+                hasPreferences = true,
+            ),
+            initialPreferences = preferences,
+        )
+
+        every {
+            epubNavigatorFactoryWrapper.createPreferencesEditor(
+                publication = publication,
+                initialPreferences = preferences,
+            )
+        } returns editor
+
+        val newState =
+            manager.refreshSessionState(currentState = currentState, newPreferences = preferences)
+
+        assertNotNull(newState)
+        assertEquals(editor, (newState as ReaderUiState.Visual).preferencesEditor)
+    }
+
+    @Test
+    fun `refreshSessionState refreshes Audio state`() {
+        val publication = mockk<Publication>()
+        val preferences = ExoPlayerPreferences()
+        val editor = mockk<PreferencesEditor<ExoPlayerPreferences>>()
+        val currentState = ReaderUiState.Audio(
+            publication = publication,
+            book = mockk(),
+            navigator = mockk(),
+        )
+
+        every {
+            audioNavigatorFactory.createPreferencesEditor(
+                publication = publication,
+                initialPreferences = preferences,
+            )
+        } returns editor
+
+        val newState =
+            manager.refreshSessionState(currentState = currentState, newPreferences = preferences)
+
+        assertNotNull(newState)
+        assertEquals(editor, (newState as ReaderUiState.Audio).preferencesEditor)
     }
 }

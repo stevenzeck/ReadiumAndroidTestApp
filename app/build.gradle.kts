@@ -142,6 +142,7 @@ kover {
                 )
                 classes(
                     "**.BuildConfig",
+                    "*ComposableSingletons*",
                     "dagger.hilt.internal.aggregatedroot.codegen.**",
                     "**.Dagger*",
                     "**.*_Factory*",

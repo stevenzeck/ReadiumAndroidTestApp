@@ -204,4 +204,38 @@ class EpubSettingsSheetTest {
         composeTestRule.onNodeWithText(text = "Publisher Styles").performScrollTo()
             .assertIsDisplayed()
     }
+
+    @Test
+    fun epubSettingsSheet_fixedLayoutInteractions() {
+        val editor = mockk<EpubPreferencesEditor>(relaxed = true)
+        val onCommit = mockk<(Configurable.Preferences<*>) -> Unit>(relaxed = true)
+
+        val spreadPref = mockk<TestSpreadPreference>(relaxed = true)
+        every { editor.spread } returns spreadPref
+        every { spreadPref.isEffective } returns true
+        every { spreadPref.value } returns Spread.AUTO
+        every { spreadPref.effectiveValue } returns Spread.AUTO
+        every { spreadPref.supportedValues } returns listOf(Spread.AUTO)
+
+        val themePref = mockk<TestThemePreference>(relaxed = true)
+        every { editor.theme } returns themePref
+        every { themePref.isEffective } returns true
+        every { themePref.value } returns Theme.LIGHT
+        every { themePref.effectiveValue } returns Theme.LIGHT
+        every { themePref.supportedValues } returns listOf(Theme.LIGHT)
+
+        composeTestRule.setContent {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                EpubSettingsSheet(
+                    editor = editor,
+                    isFixedLayout = true,
+                    onCommit = onCommit,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(text = "Spread").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Theme").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Font Size").assertDoesNotExist()
+    }
 }

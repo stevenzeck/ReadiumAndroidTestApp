@@ -36,6 +36,25 @@ fun HighlightDialog(
     onDismiss: () -> Unit,
     onSave: (String, Int) -> Unit, // Note, Color
 ) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {},
+        dismissButton = {},
+        title = { Text(text = stringResource(id = R.string.add_highlight)) },
+        text = {
+            HighlightDialogContent(
+                onDismiss = onDismiss,
+                onSave = onSave,
+            )
+        },
+    )
+}
+
+@Composable
+fun HighlightDialogContent(
+    onDismiss: () -> Unit,
+    onSave: (String, Int) -> Unit,
+) {
     var note by remember { mutableStateOf(value = "") }
     val colors = listOf(
         Color(color = 0xFFFFFF00), // Yellow
@@ -46,54 +65,52 @@ fun HighlightDialog(
     )
     var selectedColor by remember { mutableStateOf(value = colors[0]) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(id = R.string.add_highlight)) },
-        text = {
-            Column {
-                // Color Circles
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    colors.forEach { color ->
-                        Box(
-                            modifier = Modifier
-                                .size(size = 40.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .border(
-                                    width = if (selectedColor == color) 3.dp else 1.dp,
-                                    color = if (selectedColor == color) MaterialTheme.colorScheme.primary else Color.LightGray,
-                                    shape = CircleShape,
-                                )
-                                .clickable { selectedColor = color },
+    Column {
+        // Color Circles
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            colors.forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .size(size = 40.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(
+                            width = if (selectedColor == color) 3.dp else 1.dp,
+                            color = if (selectedColor == color) MaterialTheme.colorScheme.primary else Color.LightGray,
+                            shape = CircleShape,
                         )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(height = 16.dp))
-
-                // Note Input
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text(text = stringResource(id = R.string.add_note)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 5,
+                        .clickable { selectedColor = color },
                 )
             }
-        },
-        confirmButton = {
-            Button(onClick = { onSave(note, selectedColor.toArgb()) }) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
+        }
+
+        Spacer(modifier = Modifier.height(height = 16.dp))
+
+        // Note Input
+        OutlinedTextField(
+            value = note,
+            onValueChange = { note = it },
+            label = { Text(text = stringResource(id = R.string.add_note)) },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            maxLines = 5,
+        )
+
+        Spacer(modifier = Modifier.height(height = 24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(text = stringResource(id = R.string.cancel))
             }
-        },
-    )
+            Button(onClick = { onSave(note, selectedColor.toArgb()) }) {
+                Text(text = stringResource(id = R.string.save))
+            }
+        }
+    }
 }

@@ -53,4 +53,18 @@ class AccountScreenTest {
         composeTestRule.onNodeWithText(text = aboutText).performClick()
         assertEquals(AccountScreens.About, clickedScreen)
     }
+
+    @Test
+    fun accountScreen_displaysListPaneInitially() {
+        composeTestRule.setContent {
+            AccountScreen()
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val titleText = context.getString(R.string.account)
+        val settingsText = context.getString(R.string.settings)
+
+        composeTestRule.onNodeWithText(text = titleText).assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = settingsText).assertIsDisplayed()
+    }
 }
