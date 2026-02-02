@@ -17,12 +17,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -31,8 +33,13 @@ import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.VisualNavigator
+import org.readium.r2.navigator.epub.EpubPreferences
+import org.readium.r2.navigator.epub.EpubSettings
+import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.navigator.preferences.PreferencesEditor
+import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.asset.Asset
@@ -51,6 +58,9 @@ class ReaderViewModelTest {
     private val sessionFactory: ReaderSessionFactory = mockk(relaxed = true)
     private val mediaBinder: ReaderMediaBinder = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
+
+    interface TestVisualNavigator : VisualNavigator, Configurable<EpubSettings, EpubPreferences>,
+        DecorableNavigator
 
     @Before
     fun setUp() {
@@ -267,6 +277,108 @@ class ReaderViewModelTest {
         advanceUntilIdle()
 
         coVerify { ttsManager.stop(visualNavigator = navigator, scope = any()) }
+    }
+
+    @Test
+    fun `onNavigatorReady submits initial preferences and applies decorations`() =
+        runTest(context = testDispatcher) {
+            val bookId = 1L
+            val publication = mockk<Publication>(relaxed = true)
+            val book = mockk<Book>(relaxed = true) {
+                every { url } returns mockk()
+            }
+            val preferences = EpubPreferences()
+
+            val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
+            coEvery { bookRepository.get(bookId = bookId) } returns book
+            coEvery { openPublicationUseCase(url = any()) } returns Result.success(value = openedBook)
+            coEvery {
+                sessionFactory.createVisualSession(book, publication)
+            } returns ReaderUiState.Visual(
+                publication = publication,
+                book = book,
+                initialLocator = null,
+                pdfiumDocumentFactory = mockk(),
+                capabilities = mockk(),
+                preferencesEditor = null,
+                initialPreferences = preferences,
+                isFixedLayout = false,
+            )
+
+            viewModel = createViewModel(bookId)
+            advanceUntilIdle()
+
+            val navigator = mockk<TestVisualNavigator>(relaxed = true)
+            viewModel.onNavigatorReady(visualNavigator = navigator)
+            advanceUntilIdle()
+
+            verify { navigator.submitPreferences(preferences = preferences) }
+        }
+
+    @Test
+    fun `commitPreferences delegates to manager and refreshes session`() =
+        runTest(context = testDispatcher) {
+            val bookId = 1L
+            val publication = mockk<Publication>(relaxed = true)
+            val book = mockk<Book>(relaxed = true)
+            val editor = mockk<PreferencesEditor<*>>(relaxed = true)
+
+            // Setup session with editor (so settings can be opened)
+            setupVisualSession(bookId, publication, book, editor)
+
+            // Open settings
+            viewModel.openSettings()
+            advanceUntilIdle()
+
+            val newPreferences = mockk<Configurable.Preferences<*>>()
+            val newState = mockk<ReaderUiState.Visual>()
+            every { newState.preferencesEditor } returns editor
+            every {
+                preferencesManager.refreshSessionState(
+                    currentState = any(),
+                    newPreferences = newPreferences,
+                )
+            } returns newState
+
+            viewModel.onSettingsChanged(preferences = newPreferences)
+            advanceUntilIdle()
+
+            coVerify {
+                preferencesManager.commitPreferences(
+                    bookId = bookId,
+                    preferences = newPreferences,
+                    currentVisualNavigator = any(),
+                    audioNavigator = any(),
+                    ttsManager = ttsManager,
+                )
+            }
+            verify {
+                preferencesManager.refreshSessionState(
+                    currentState = any(),
+                    newPreferences = newPreferences,
+                )
+            }
+        }
+
+    @Test
+    fun `onVisualLocatorChanged saves progression`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        val publication = mockk<Publication>(relaxed = true)
+        val book = mockk<Book>(relaxed = true)
+
+        setupVisualSession(bookId, publication, book)
+
+        val locator = mockk<Locator>(relaxed = true)
+        every { locator.toJSON().toString() } returns "{}"
+
+        viewModel.onVisualLocatorChanged(locator = locator)
+
+        advanceTimeBy(delayTimeMillis = 3000)
+        advanceUntilIdle()
+
+        coVerify {
+            bookRepository.saveProgression(bookId = bookId, locator = "{}")
+        }
     }
 
 

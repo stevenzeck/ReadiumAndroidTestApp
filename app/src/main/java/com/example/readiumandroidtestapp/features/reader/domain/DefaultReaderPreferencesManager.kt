@@ -3,25 +3,19 @@ package com.example.readiumandroidtestapp.features.reader.domain
 import android.app.Application
 import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.BookPreferencesRepository
+import com.example.readiumandroidtestapp.features.reader.data.EpubNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.PdfNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.PreferencesSerializerFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.TtsSettingsSession
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
-import org.readium.adapter.exoplayer.audio.ExoPlayerPreferencesSerializer
-import org.readium.adapter.pdfium.navigator.PdfiumDefaults
-import org.readium.adapter.pdfium.navigator.PdfiumEngineProvider
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
-import org.readium.adapter.pdfium.navigator.PdfiumPreferencesSerializer
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
-import org.readium.navigator.media.tts.android.AndroidTtsPreferencesSerializer
 import org.readium.r2.navigator.VisualNavigator
-import org.readium.r2.navigator.epub.EpubDefaults
-import org.readium.r2.navigator.epub.EpubNavigatorFactory
 import org.readium.r2.navigator.epub.EpubPreferences
-import org.readium.r2.navigator.epub.EpubPreferencesSerializer
-import org.readium.r2.navigator.pdf.PdfNavigatorFactory
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.navigator.preferences.map
@@ -32,6 +26,9 @@ class DefaultReaderPreferencesManager @Inject constructor(
     private val bookPreferencesRepository: BookPreferencesRepository,
     private val audioNavigatorFactory: AppAudioNavigatorFactory,
     private val ttsNavigatorFactoryWrapper: AndroidTtsNavigatorFactoryWrapper,
+    private val epubNavigatorFactoryWrapper: EpubNavigatorFactoryWrapper,
+    private val pdfNavigatorFactoryWrapper: PdfNavigatorFactoryWrapper,
+    private val preferencesSerializerFactory: PreferencesSerializerFactory,
 ) : ReaderPreferencesManager {
 
     /**
@@ -48,29 +45,37 @@ class DefaultReaderPreferencesManager @Inject constructor(
         when (preferences) {
             is EpubPreferences -> {
                 val nav = currentVisualNavigator as? Configurable<*, EpubPreferences>
-                nav?.submitPreferences(preferences)
+                nav?.submitPreferences(preferences = preferences)
             }
 
             is PdfiumPreferences -> {
                 val nav = currentVisualNavigator as? Configurable<*, PdfiumPreferences>
-                nav?.submitPreferences(preferences)
+                nav?.submitPreferences(preferences = preferences)
             }
 
             is ExoPlayerPreferences -> {
                 val nav = audioNavigator as? Configurable<*, ExoPlayerPreferences>
-                nav?.submitPreferences(preferences)
+                nav?.submitPreferences(preferences = preferences)
             }
 
             is AndroidTtsPreferences -> {
-                ttsManager.submitPreferences(preferences)
+                ttsManager.submitPreferences(preferences = preferences)
             }
         }
 
         val json = when (preferences) {
-            is EpubPreferences -> EpubPreferencesSerializer().serialize(preferences)
-            is PdfiumPreferences -> PdfiumPreferencesSerializer().serialize(preferences)
-            is AndroidTtsPreferences -> AndroidTtsPreferencesSerializer().serialize(preferences)
-            is ExoPlayerPreferences -> ExoPlayerPreferencesSerializer().serialize(preferences)
+            is EpubPreferences -> preferencesSerializerFactory.createEpubSerializer()
+                .serialize(preferences = preferences)
+
+            is PdfiumPreferences -> preferencesSerializerFactory.createPdfiumSerializer()
+                .serialize(preferences = preferences)
+
+            is AndroidTtsPreferences -> preferencesSerializerFactory.createAndroidTtsSerializer()
+                .serialize(preferences = preferences)
+
+            is ExoPlayerPreferences -> preferencesSerializerFactory.createExoPlayerSerializer()
+                .serialize(preferences = preferences)
+
             else -> null
         }
 
@@ -101,21 +106,17 @@ class DefaultReaderPreferencesManager @Inject constructor(
     ): PreferencesEditor<*>? {
         return when (preferences) {
             is EpubPreferences -> {
-                val factory = EpubNavigatorFactory(
+                epubNavigatorFactoryWrapper.createPreferencesEditor(
                     publication = publication,
-                    configuration = EpubNavigatorFactory.Configuration(defaults = EpubDefaults()),
+                    initialPreferences = preferences,
                 )
-                factory.createPreferencesEditor(currentPreferences = preferences)
             }
 
             is PdfiumPreferences -> {
-                val factory = PdfNavigatorFactory(
+                pdfNavigatorFactoryWrapper.createPreferencesEditor(
                     publication = publication,
-                    pdfEngineProvider = PdfiumEngineProvider(
-                        defaults = PdfiumDefaults(),
-                    ),
+                    initialPreferences = preferences,
                 )
-                factory.createPreferencesEditor(initialPreferences = preferences)
             }
 
             is ExoPlayerPreferences -> {
@@ -139,10 +140,14 @@ class DefaultReaderPreferencesManager @Inject constructor(
         val json = bookPreferencesRepository.getPreferences(bookId)
 
         return if (publication.conformsTo(profile = Publication.Profile.EPUB)) {
-            json?.let { EpubPreferencesSerializer().deserialize(preferences = it) }
+            json?.let {
+                preferencesSerializerFactory.createEpubSerializer().deserialize(preferences = it)
+            }
                 ?: EpubPreferences()
         } else if (publication.conformsTo(profile = Publication.Profile.PDF)) {
-            json?.let { PdfiumPreferencesSerializer().deserialize(preferences = it) }
+            json?.let {
+                preferencesSerializerFactory.createPdfiumSerializer().deserialize(preferences = it)
+            }
                 ?: PdfiumPreferences()
         } else {
             EpubPreferences()
@@ -151,7 +156,9 @@ class DefaultReaderPreferencesManager @Inject constructor(
 
     override suspend fun loadAudiobookPreferences(bookId: Long): ExoPlayerPreferences {
         val json = bookPreferencesRepository.getAudiobookPreferences(bookId)
-        return json?.let { ExoPlayerPreferencesSerializer().deserialize(preferences = it) }
+        return json?.let {
+            preferencesSerializerFactory.createExoPlayerSerializer().deserialize(preferences = it)
+        }
             ?: ExoPlayerPreferences()
     }
 
@@ -166,7 +173,10 @@ class DefaultReaderPreferencesManager @Inject constructor(
     ): TtsSettingsSession? {
         val json = bookPreferencesRepository.getTtsPreferences(bookId)
         val preferences =
-            json?.let { AndroidTtsPreferencesSerializer().deserialize(preferences = it) }
+            json?.let {
+                preferencesSerializerFactory.createAndroidTtsSerializer()
+                    .deserialize(preferences = it)
+            }
                 ?: AndroidTtsPreferences()
 
         val factory = ttsNavigatorFactoryWrapper.createFactory(

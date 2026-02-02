@@ -2,8 +2,14 @@ package com.example.readiumandroidtestapp.features.reader.di
 
 import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.DefaultAndroidTtsNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.DefaultEpubNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.DefaultPdfNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.DefaultPreferencesSerializerFactory
 import com.example.readiumandroidtestapp.features.reader.data.DefaultSearchGateway
 import com.example.readiumandroidtestapp.features.reader.data.DefaultTtsServiceGateway
+import com.example.readiumandroidtestapp.features.reader.data.EpubNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.PdfNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.PreferencesSerializerFactory
 import com.example.readiumandroidtestapp.features.reader.domain.DefaultOpenPublicationUseCase
 import com.example.readiumandroidtestapp.features.reader.domain.DefaultReaderDecorationManager
 import com.example.readiumandroidtestapp.features.reader.domain.DefaultReaderPreferencesManager
@@ -102,4 +108,19 @@ abstract class ReaderModule {
     abstract fun bindMediaSessionFactory(
         factory: DefaultMediaSessionFactory,
     ): MediaSessionFactory
+
+    @Binds
+    abstract fun bindEpubNavigatorFactoryWrapper(
+        wrapper: DefaultEpubNavigatorFactoryWrapper,
+    ): EpubNavigatorFactoryWrapper
+
+    @Binds
+    abstract fun bindPdfNavigatorFactoryWrapper(
+        wrapper: DefaultPdfNavigatorFactoryWrapper,
+    ): PdfNavigatorFactoryWrapper
+
+    @Binds
+    abstract fun bindPreferencesSerializerFactory(
+        factory: DefaultPreferencesSerializerFactory,
+    ): PreferencesSerializerFactory
 }
