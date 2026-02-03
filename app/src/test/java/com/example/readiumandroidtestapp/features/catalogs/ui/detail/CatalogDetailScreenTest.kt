@@ -85,7 +85,7 @@ class CatalogDetailScreenTest {
 
         composeTestRule.setContent {
             CatalogDetailContent(
-                feedState = FeedState.Success(feed),
+                feedState = FeedState.Success(feed = feed),
                 catalog = catalog,
                 showBackButton = true,
                 onNavigateBack = {},
@@ -103,7 +103,7 @@ class CatalogDetailScreenTest {
     fun `shows navigation section when feed has navigation links`() {
         val navigationTitle = context.getString(R.string.navigation)
         val linkTitle = "Sub Feed"
-        val link = Link(href = Url("sub")!!, title = linkTitle)
+        val link = Link(href = Url(url = "sub")!!, title = linkTitle)
 
         val feed = mockk<Feed>(relaxed = true) {
             every { publications } returns emptyList()
@@ -113,7 +113,7 @@ class CatalogDetailScreenTest {
 
         composeTestRule.setContent {
             CatalogDetailContent(
-                feedState = FeedState.Success(feed),
+                feedState = FeedState.Success(feed = feed),
                 catalog = catalog,
                 showBackButton = true,
                 onNavigateBack = {},
@@ -145,7 +145,7 @@ class CatalogDetailScreenTest {
 
         composeTestRule.setContent {
             CatalogDetailContent(
-                feedState = FeedState.Success(feed),
+                feedState = FeedState.Success(feed = feed),
                 catalog = catalog,
                 showBackButton = true,
                 onNavigateBack = {},
@@ -161,7 +161,7 @@ class CatalogDetailScreenTest {
     @Test
     fun `invokes onSubFeedClick when navigation link is clicked`() {
         val linkTitle = "Sub Feed"
-        val link = Link(href = Url("sub")!!, title = linkTitle)
+        val link = Link(href = Url(url = "sub")!!, title = linkTitle)
         val onSubFeedClick = mockk<(Catalog) -> Unit>(relaxed = true)
 
         val feed = mockk<Feed>(relaxed = true) {
@@ -170,7 +170,7 @@ class CatalogDetailScreenTest {
 
         composeTestRule.setContent {
             CatalogDetailContent(
-                feedState = FeedState.Success(feed),
+                feedState = FeedState.Success(feed = feed),
                 catalog = catalog,
                 showBackButton = true,
                 onNavigateBack = {},
@@ -200,7 +200,7 @@ class CatalogDetailScreenTest {
 
         composeTestRule.setContent {
             CatalogDetailContent(
-                feedState = FeedState.Success(feed),
+                feedState = FeedState.Success(feed = feed),
                 catalog = catalog,
                 showBackButton = true,
                 onNavigateBack = {},
@@ -234,4 +234,36 @@ class CatalogDetailScreenTest {
         composeTestRule.onNodeWithContentDescription(label = backDescription).performClick()
         verify { onNavigateBack() }
     }
+
+    @Test
+    fun `clicking group header triggers sub feed navigation`() {
+        val groupTitle = "Group Title"
+        val groupLink = Link(href = Url(url = "group/self")!!)
+        val group = mockk<Group>(relaxed = true) {
+            every { metadata.title } returns groupTitle
+            every { links } returns listOf(groupLink.copy(rels = setOf("self")))
+        }
+        val feed = mockk<Feed>(relaxed = true) {
+            every { groups } returns listOf(group)
+            every { navigation } returns emptyList()
+            every { publications } returns emptyList()
+        }
+        val onSubFeedClick = mockk<(Catalog) -> Unit>(relaxed = true)
+
+        composeTestRule.setContent {
+            CatalogDetailContent(
+                feedState = FeedState.Success(feed),
+                catalog = catalog,
+                showBackButton = true,
+                onNavigateBack = {},
+                onSubFeedClick = onSubFeedClick,
+                onPublicationClick = {},
+                onImportBook = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(text = groupTitle).performClick()
+        verify { onSubFeedClick(match { it.href == "group/self" }) }
+    }
+
 }
