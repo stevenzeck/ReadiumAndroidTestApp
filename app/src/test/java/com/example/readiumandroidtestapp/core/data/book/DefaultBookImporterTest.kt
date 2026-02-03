@@ -1,6 +1,8 @@
 package com.example.readiumandroidtestapp.core.data.book
 
 import android.net.Uri
+import android.os.Build
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
 import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
@@ -8,84 +10,78 @@ import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import com.example.readiumandroidtestapp.core.domain.network.HttpResult
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.asset.Asset
 import org.readium.r2.shared.util.format.Format
 import org.readium.r2.shared.util.mediatype.MediaType
-import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.InputStream
+import java.io.IOException
 
-@OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [Build.VERSION_CODES.Q])
 class DefaultBookImporterTest {
 
-    private val storageGateway: StorageGateway = mockk(relaxed = true)
-    private val booksDao: BooksDao = mockk(relaxed = true)
+    private val storageGateway: StorageGateway = mockk()
+    private val booksDao: BooksDao = mockk()
     private val assetRetriever: AssetRetrieverGateway = mockk()
     private val publicationOpener: PublicationOpenerGateway = mockk()
     private val httpGateway: HttpGateway = mockk()
     private val coverImageSaver: CoverImageSaver = mockk()
-    private val testDispatcher = UnconfinedTestDispatcher()
+    private val dispatcher = StandardTestDispatcher()
 
-    private val importer = DefaultBookImporter(
-        storageGateway = storageGateway,
-        booksDao = booksDao,
-        assetRetriever = assetRetriever,
-        publicationOpener = publicationOpener,
-        httpGateway = httpGateway,
-        coverImageSaver = coverImageSaver,
-        ioDispatcher = testDispatcher,
-    )
+    private lateinit var importer: DefaultBookImporter
+
+    @Before
+    fun setup() {
+        importer = DefaultBookImporter(
+            storageGateway,
+            booksDao,
+            assetRetriever,
+            publicationOpener,
+            httpGateway,
+            coverImageSaver,
+            dispatcher,
+        )
+    }
 
     @Test
-    fun `importFromUrl success`() = runTest {
-        val url = AbsoluteUrl(url = "http://example.com/book.epub")!!
-        val file = File("book.epub")
-        val localUrl = AbsoluteUrl(url = "file:///book.epub")!!
+    fun `importFromUrl success`() = runTest(dispatcher) {
+        val url = Url(url = "http://example.com/book.epub")!! as AbsoluteUrl
+        val httpResult = HttpResult(body = ByteArray(0), contentType = "application/epub+zip")
+        val savedFile = File("saved.epub")
+        val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
         val asset = mockk<Asset>()
+        val publication = mockk<Publication>()
+        val metadata = mockk<Metadata>(relaxed = true)
         val format = mockk<Format>()
-        val publication = mockk<Publication>(relaxed = true)
-        val coverPath = "cover.jpg"
-        val bookId = 123L
 
-        // HttpGateway
-        coEvery { httpGateway.fetch(url = url) } returns Try.success(
-            success = HttpResult(
-                body = ByteArray(0),
-                contentType = "application/epub+zip",
-            ),
-        )
-
-        // StorageGateway
+        coEvery { httpGateway.fetch(url) } returns Try.success(success = httpResult)
         every { storageGateway.resolveExtensionFromMimeType(mimeType = "application/epub+zip") } returns "epub"
         coEvery {
             storageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
-        } returns Try.success(success = file)
-        every { storageGateway.toUrl(file = file) } returns localUrl
+        } returns Try.success(success = savedFile)
 
-        // AssetRetriever
-        coEvery { assetRetriever.retrieve(url = localUrl) } returns Result.success(value = asset)
-        every { asset.format } returns format
-        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
-
-        // PublicationOpener
+        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(
                 asset = asset,
@@ -93,56 +89,61 @@ class DefaultBookImporterTest {
             )
         } returns Result.success(value = publication)
 
-        // CoverImageSaver
-        coEvery { coverImageSaver.saveCover(publication = publication) } returns coverPath
+        every { publication.metadata } returns metadata
+        every { metadata.title } returns "Test Book"
+        every { metadata.authors } returns emptyList()
+        every { metadata.identifier } returns "id"
+        every { publication.close() } returns Unit
 
-        // BooksDao
-        coEvery { booksDao.insertBook(book = any()) } returns bookId
+        every { asset.format } returns format
+        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
 
-        // Run
-        val result = importer.importFromUrl(url = url)
+        coEvery { coverImageSaver.saveCover(publication) } returns "cover.jpg"
+        coEvery { booksDao.insertBook(book = any()) } returns 1L
 
-        assertTrue(result.isSuccess)
-        val book = result.getOrNull()
-        assertEquals(bookId, book?.id)
+        val result = importer.importFromUrl(url)
 
-        // Verification
-        coVerify { httpGateway.fetch(url = url) }
-        coVerify { storageGateway.saveFileFromStream(input = any(), extension = "epub") }
-        coVerify { publicationOpener.open(asset = asset, allowUserInteraction = false) }
-        coVerify { booksDao.insertBook(book = any()) }
+        assertTrue(result is Try.Success)
+        val book = (result as Try.Success).value
+        assertEquals("Test Book", book.title)
+        assertEquals(1L, book.id)
+
         verify { publication.close() }
     }
 
     @Test
-    fun `importFromUri success`() = runTest {
-        val uri = mockk<Uri>()
-        val file = File("book.epub")
-        val localUrl = AbsoluteUrl("file:///book.epub")!!
-        val asset = mockk<Asset>()
-        val format = mockk<Format>()
-        val publication = mockk<Publication>(relaxed = true)
-        val coverPath = "cover.jpg"
-        val bookId = 123L
-        val inputStream = mockk<InputStream>(relaxed = true)
+    fun `importFromUrl fails on network error`() = runTest(context = dispatcher) {
+        val url = Url(url = "http://example.com/book.epub")!! as AbsoluteUrl
+        coEvery { httpGateway.fetch(url) } returns Try.failure(failure = Exception("Network error"))
 
-        // StorageGateway
+        val result = importer.importFromUrl(url = url)
+
+        assertTrue(result is Try.Failure)
+        assertTrue((result as Try.Failure).value is ImportError.Network)
+    }
+
+    @Test
+    fun `importFromUri success`() = runTest(context = dispatcher) {
+        val uri = mockk<Uri>()
+        val inputStream = ByteArrayInputStream(ByteArray(0))
+        val savedFile = File("saved.epub")
+        val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
+        val asset = mockk<Asset>()
+        val publication = mockk<Publication>()
+        val metadata = mockk<Metadata>(relaxed = true)
+        val format = mockk<Format>()
+
         every { storageGateway.openInputStream(uri = uri) } returns inputStream
         every { storageGateway.resolveExtension(uri = uri) } returns "epub"
         coEvery {
             storageGateway.saveFileFromStream(
-                input = inputStream,
+                input = any(),
                 extension = "epub",
             )
-        } returns Try.success(success = file)
-        every { storageGateway.toUrl(file = file) } returns localUrl
+        } returns Try.success(success = savedFile)
 
-        // AssetRetriever
-        coEvery { assetRetriever.retrieve(url = localUrl) } returns Result.success(value = asset)
-        every { asset.format } returns format
-        every { format.mediaType } returns MediaType("application/epub+zip")!!
-
-        // PublicationOpener
+        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(
                 asset = asset,
@@ -150,24 +151,32 @@ class DefaultBookImporterTest {
             )
         } returns Result.success(value = publication)
 
-        // CoverImageSaver
-        coEvery { coverImageSaver.saveCover(publication = publication) } returns coverPath
+        every { publication.metadata } returns metadata
+        every { metadata.title } returns "URI Book"
+        every { metadata.authors } returns emptyList()
+        every { metadata.identifier } returns "id"
+        every { publication.close() } returns Unit
 
-        // BooksDao
-        coEvery { booksDao.insertBook(book = any()) } returns bookId
+        every { asset.format } returns format
+        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
 
-        // Run
+        coEvery { coverImageSaver.saveCover(publication = publication) } returns null
+        coEvery { booksDao.insertBook(book = any()) } returns 2L
+
         val result = importer.importFromUri(uri = uri)
 
-        assertTrue(result.isSuccess)
-        val book = result.getOrNull()
-        assertEquals(bookId, book?.id)
+        assertTrue(result is Try.Success)
+        assertEquals("URI Book", (result as Try.Success).value.title)
+    }
 
-        // Verification
-        coVerify { storageGateway.openInputStream(uri = uri) }
-        coVerify { storageGateway.saveFileFromStream(input = inputStream, extension = "epub") }
-        coVerify { publicationOpener.open(asset = asset, allowUserInteraction = false) }
-        coVerify { booksDao.insertBook(book = any()) }
-        verify { publication.close() }
+    @Test
+    fun `importFromUri fails on storage error`() = runTest(context = dispatcher) {
+        val uri = mockk<Uri>()
+        every { storageGateway.openInputStream(uri) } throws IOException("Disk error")
+
+        val result = importer.importFromUri(uri)
+
+        assertTrue(result is Try.Failure)
+        assertTrue((result as Try.Failure).value is ImportError.Storage)
     }
 }

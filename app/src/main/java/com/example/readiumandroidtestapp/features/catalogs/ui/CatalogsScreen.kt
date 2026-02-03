@@ -30,14 +30,35 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
+import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.navigation.api.CatalogScreens
 import com.example.readiumandroidtestapp.features.catalogs.ui.detail.CatalogDetailScreen
 import com.example.readiumandroidtestapp.features.catalogs.ui.feed.CatalogFeedScreen
 import com.example.readiumandroidtestapp.features.catalogs.ui.publication.PublicationDetailScreen
 import kotlinx.coroutines.launch
+import org.readium.r2.shared.publication.Publication
 
 @Composable
-fun CatalogsScreen() {
+fun CatalogsScreen(
+    feedScreen: @Composable (onCatalogClick: (Catalog) -> Unit) -> Unit = { onCatalogClick ->
+        CatalogFeedScreen(onCatalogClick = onCatalogClick)
+    },
+    detailScreen: @Composable (Catalog, () -> Unit, Boolean, (Catalog) -> Unit, (Publication) -> Unit) -> Unit = { catalog, onNavigateBack, showBackButton, onSubFeedClick, onPublicationClick ->
+        CatalogDetailScreen(
+            catalog = catalog,
+            onNavigateBack = onNavigateBack,
+            showBackButton = showBackButton,
+            onSubFeedClick = onSubFeedClick,
+            onPublicationClick = onPublicationClick,
+        )
+    },
+    publicationScreen: @Composable (String, () -> Unit) -> Unit = { manifestJson, onNavigateBack ->
+        PublicationDetailScreen(
+            manifestJson = manifestJson,
+            onNavigateBack = onNavigateBack,
+        )
+    },
+) {
     val navigator = rememberListDetailPaneScaffoldNavigator<CatalogScreens>()
     val backNavigationBehavior = BackNavigationBehavior.PopUntilContentChange
     val scope = rememberCoroutineScope()
@@ -61,16 +82,14 @@ fun CatalogsScreen() {
         defaultBackBehavior = backNavigationBehavior,
         listPane = {
             AnimatedPane {
-                CatalogFeedScreen(
-                    onCatalogClick = { catalog ->
-                        scope.launch {
-                            navigator.navigateTo(
-                                pane = ListDetailPaneScaffoldRole.Detail,
-                                contentKey = CatalogScreens.CatalogDetail(catalog),
-                            )
-                        }
-                    },
-                )
+                feedScreen { catalog ->
+                    scope.launch {
+                        navigator.navigateTo(
+                            pane = ListDetailPaneScaffoldRole.Detail,
+                            contentKey = CatalogScreens.CatalogDetail(catalog),
+                        )
+                    }
+                }
             }
         },
         detailPane = {
@@ -91,15 +110,15 @@ fun CatalogsScreen() {
                 ) { screen ->
                     when (screen) {
                         is CatalogScreens.CatalogDetail -> {
-                            CatalogDetailScreen(
-                                catalog = screen.catalog,
-                                onNavigateBack = {
+                            detailScreen(
+                                screen.catalog,
+                                {
                                     scope.launch {
                                         navigator.navigateBack(backNavigationBehavior)
                                     }
                                 },
-                                showBackButton = isInternalBackEnabled,
-                                onSubFeedClick = { subCatalog ->
+                                isInternalBackEnabled,
+                                { subCatalog ->
                                     scope.launch {
                                         navigator.navigateTo(
                                             pane = ListDetailPaneScaffoldRole.Detail,
@@ -107,7 +126,7 @@ fun CatalogsScreen() {
                                         )
                                     }
                                 },
-                                onPublicationClick = { publication ->
+                                { publication ->
                                     scope.launch {
                                         // Serialize Manifest to JSON String for safe arguments
                                         val jsonString = publication.manifest.toJSON().toString()
@@ -124,14 +143,13 @@ fun CatalogsScreen() {
                         }
 
                         is CatalogScreens.PublicationDetail -> {
-                            PublicationDetailScreen(
-                                manifestJson = screen.manifestJson,
-                                onNavigateBack = {
-                                    scope.launch {
-                                        navigator.navigateBack(backNavigationBehavior)
-                                    }
-                                },
-                            )
+                            publicationScreen(
+                                screen.manifestJson,
+                            ) {
+                                scope.launch {
+                                    navigator.navigateBack(backNavigationBehavior)
+                                }
+                            }
                         }
 
                         null -> {
