@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.ui.common.BookItem
+import com.example.readiumandroidtestapp.core.designsystem.components.BookItem
 import java.io.File
 
 /**

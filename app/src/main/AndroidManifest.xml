@@ -21,7 +21,7 @@
     </queries>
 
     <application
-        android:name=".app.Application"
+        android:name=".main.Application"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -33,7 +33,7 @@
         android:theme="@style/Theme.ReadiumAndroidTestApp">
 
         <activity
-            android:name="com.example.readiumandroidtestapp.app.MainActivity"
+            android:name="com.example.readiumandroidtestapp.main.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
             android:exported="true">
             <intent-filter>

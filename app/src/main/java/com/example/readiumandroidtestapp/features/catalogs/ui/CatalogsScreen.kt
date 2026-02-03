@@ -31,7 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
-import com.example.readiumandroidtestapp.core.navigation.api.CatalogScreens
+import com.example.readiumandroidtestapp.core.navigation.route.CatalogScreens
 import com.example.readiumandroidtestapp.features.catalogs.ui.detail.CatalogDetailScreen
 import com.example.readiumandroidtestapp.features.catalogs.ui.feed.CatalogFeedScreen
 import com.example.readiumandroidtestapp.features.catalogs.ui.publication.PublicationDetailScreen

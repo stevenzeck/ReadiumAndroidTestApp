@@ -2,8 +2,8 @@ package com.example.readiumandroidtestapp.features.account.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.readiumandroidtestapp.core.data.settings.SettingsRepository
-import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
+import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
+import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn

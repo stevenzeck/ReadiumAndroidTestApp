@@ -18,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.navigation.api.AccountScreens
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.navigation.route.AccountScreens
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 import com.example.readiumandroidtestapp.features.account.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
 

@@ -23,7 +23,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.ui.common.SingleTextInputDialog
+import com.example.readiumandroidtestapp.core.designsystem.components.SingleTextInputDialog
 
 /**
  * A specialized Floating Action Button menu for importing books.

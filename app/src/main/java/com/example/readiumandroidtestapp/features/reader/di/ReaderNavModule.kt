@@ -1,8 +1,8 @@
 package com.example.readiumandroidtestapp.features.reader.di
 
 import com.example.readiumandroidtestapp.core.navigation.LocalNavigator
-import com.example.readiumandroidtestapp.core.navigation.api.NavEntryBuilder
-import com.example.readiumandroidtestapp.core.navigation.api.Reader
+import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
+import com.example.readiumandroidtestapp.core.navigation.route.Reader
 import com.example.readiumandroidtestapp.features.reader.ui.screens.ReaderScreen
 import dagger.Module
 import dagger.Provides

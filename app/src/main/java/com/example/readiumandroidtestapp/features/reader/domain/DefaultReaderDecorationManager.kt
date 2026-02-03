@@ -1,6 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
-import com.example.readiumandroidtestapp.core.data.book.BookRepository
+import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -14,7 +14,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 
 @Composable
 fun AboutInfoScreen() {

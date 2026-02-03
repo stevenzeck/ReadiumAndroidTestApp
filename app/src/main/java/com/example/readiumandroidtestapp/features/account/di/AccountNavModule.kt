@@ -1,7 +1,7 @@
 package com.example.readiumandroidtestapp.features.account.di
 
-import com.example.readiumandroidtestapp.core.navigation.api.Account
-import com.example.readiumandroidtestapp.core.navigation.api.NavEntryBuilder
+import com.example.readiumandroidtestapp.core.navigation.route.Account
+import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.features.account.ui.AccountScreen
 import dagger.Module
 import dagger.Provides

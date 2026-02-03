@@ -8,7 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
+import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

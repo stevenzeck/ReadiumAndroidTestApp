@@ -1,7 +1,7 @@
 package com.example.readiumandroidtestapp.features.catalogs.di
 
-import com.example.readiumandroidtestapp.core.navigation.api.Catalogs
-import com.example.readiumandroidtestapp.core.navigation.api.NavEntryBuilder
+import com.example.readiumandroidtestapp.core.navigation.route.Catalogs
+import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.features.catalogs.ui.CatalogsScreen
 import dagger.Module
 import dagger.Provides

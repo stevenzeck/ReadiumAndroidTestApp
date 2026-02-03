@@ -49,7 +49,7 @@ class PublicationDetailScreenTest {
             PublicationDetailScreen(
                 manifestJson = "{ invalid_json }",
                 onNavigateBack = {},
-                appViewModel = mockk(relaxed = true),
+                mainViewModel = mockk(relaxed = true),
             )
         }
 

@@ -1,5 +1,7 @@
 package com.example.readiumandroidtestapp.core.data.settings
 
+import com.example.readiumandroidtestapp.core.data.repository.DataStoreSettingsRepository
+import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

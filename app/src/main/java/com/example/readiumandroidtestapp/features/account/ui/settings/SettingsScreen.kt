@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
-import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 
 @Composable
 fun SettingsScreen(

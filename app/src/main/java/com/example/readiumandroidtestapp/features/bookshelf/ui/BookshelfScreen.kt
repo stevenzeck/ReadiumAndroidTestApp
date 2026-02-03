@@ -25,14 +25,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.app.AppViewModel
+import com.example.readiumandroidtestapp.main.MainViewModel
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.ui.common.EmptyView
-import com.example.readiumandroidtestapp.core.ui.common.ErrorView
-import com.example.readiumandroidtestapp.core.ui.common.LoadingView
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
-import com.example.readiumandroidtestapp.features.bookshelf.BookshelfUiState
-import com.example.readiumandroidtestapp.features.bookshelf.BookshelfViewModel
+import com.example.readiumandroidtestapp.core.designsystem.components.EmptyView
+import com.example.readiumandroidtestapp.core.designsystem.components.ErrorView
+import com.example.readiumandroidtestapp.core.designsystem.components.LoadingView
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 import com.example.readiumandroidtestapp.features.bookshelf.ui.components.BooksGrid
 import com.example.readiumandroidtestapp.features.bookshelf.ui.components.BookshelfFab
 
@@ -48,7 +46,7 @@ import com.example.readiumandroidtestapp.features.bookshelf.ui.components.Booksh
 fun BookshelfScreen(
     onOpenBook: (Long) -> Unit,
     viewModel: BookshelfViewModel = hiltViewModel(),
-    appViewModel: AppViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var bookToDelete by remember { mutableStateOf<Book?>(value = null) }
@@ -59,13 +57,13 @@ fun BookshelfScreen(
     val deviceImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
     ) { uri ->
-        uri?.let { appViewModel.importBook(uri = it) }
+        uri?.let { mainViewModel.importBook(uri = it) }
     }
 
     val sharedStorageImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
-        uri?.let { appViewModel.importBook(uri = it) }
+        uri?.let { mainViewModel.importBook(uri = it) }
     }
 
     ReadiumScaffold(
@@ -78,7 +76,7 @@ fun BookshelfScreen(
                 onExpandedChange = { fabExpanded = it },
                 onImportFromDevice = { deviceImportLauncher.launch(input = "*/*") },
                 onImportFromStorage = { sharedStorageImportLauncher.launch(input = arrayOf("*/*")) },
-                onImportFromUrl = { url -> appViewModel.importBook(url = url) },
+                onImportFromUrl = { url -> mainViewModel.importBook(url = url) },
             )
         },
     ) {

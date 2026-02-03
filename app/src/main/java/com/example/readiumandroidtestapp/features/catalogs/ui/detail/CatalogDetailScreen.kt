@@ -40,10 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.app.AppViewModel
+import com.example.readiumandroidtestapp.main.MainViewModel
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
-import com.example.readiumandroidtestapp.core.ui.common.BookItem
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.designsystem.components.BookItem
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 import org.readium.r2.shared.opds.Group
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Publication
@@ -61,7 +61,7 @@ fun CatalogDetailScreen(
             factory.create(catalog)
         },
     ),
-    appViewModel: AppViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val feedState by viewModel.feedState.collectAsState()
 
@@ -72,7 +72,7 @@ fun CatalogDetailScreen(
         onNavigateBack = onNavigateBack,
         onSubFeedClick = onSubFeedClick,
         onPublicationClick = onPublicationClick,
-        onImportBook = appViewModel::importBook,
+        onImportBook = mainViewModel::importBook,
     )
 }
 

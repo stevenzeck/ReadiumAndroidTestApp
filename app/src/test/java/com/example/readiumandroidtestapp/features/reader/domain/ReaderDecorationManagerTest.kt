@@ -1,6 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
-import com.example.readiumandroidtestapp.core.data.book.BookRepository
+import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import io.mockk.coEvery
 import io.mockk.coVerify

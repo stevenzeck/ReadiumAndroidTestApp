@@ -1,7 +1,7 @@
 package com.example.readiumandroidtestapp.features.account.ui.settings
 
-import com.example.readiumandroidtestapp.core.data.settings.SettingsRepository
-import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
+import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
+import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk

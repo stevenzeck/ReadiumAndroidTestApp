@@ -1,9 +1,9 @@
 package com.example.readiumandroidtestapp.features.bookshelf.di
 
 import com.example.readiumandroidtestapp.core.navigation.LocalNavigator
-import com.example.readiumandroidtestapp.core.navigation.api.Bookshelf
-import com.example.readiumandroidtestapp.core.navigation.api.NavEntryBuilder
-import com.example.readiumandroidtestapp.core.navigation.api.Reader
+import com.example.readiumandroidtestapp.core.navigation.route.Bookshelf
+import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
+import com.example.readiumandroidtestapp.core.navigation.route.Reader
 import com.example.readiumandroidtestapp.features.bookshelf.ui.BookshelfScreen
 import dagger.Module
 import dagger.Provides

@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.foundation.ExperimentalFoundationApi
-import com.example.readiumandroidtestapp.app.MainActivity
+import com.example.readiumandroidtestapp.main.MainActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.readium.navigator.media.audio.AudioNavigator
 import timber.log.Timber

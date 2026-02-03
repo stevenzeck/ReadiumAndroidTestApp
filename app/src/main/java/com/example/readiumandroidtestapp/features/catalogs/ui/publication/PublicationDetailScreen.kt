@@ -27,9 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.app.AppViewModel
-import com.example.readiumandroidtestapp.core.ui.common.BookItem
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
+import com.example.readiumandroidtestapp.main.MainViewModel
+import com.example.readiumandroidtestapp.core.designsystem.components.BookItem
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 import org.json.JSONObject
 import org.readium.r2.shared.publication.Manifest
 import timber.log.Timber
@@ -38,7 +38,7 @@ import timber.log.Timber
 fun PublicationDetailScreen(
     manifestJson: String,
     onNavigateBack: () -> Unit,
-    appViewModel: AppViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel(),
 ) {
     val manifestJsonObj = remember(key1 = manifestJson) {
         try {
@@ -56,7 +56,7 @@ fun PublicationDetailScreen(
     PublicationDetailContent(
         manifest = manifest,
         onNavigateBack = onNavigateBack,
-        onImportBook = appViewModel::importBook,
+        onImportBook = mainViewModel::importBook,
     )
 }
 

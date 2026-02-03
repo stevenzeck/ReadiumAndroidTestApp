@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.ui.common.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioCoverArt
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioPlayerControls
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioProgressBar

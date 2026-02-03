@@ -11,11 +11,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.app.AppViewModel
+import com.example.readiumandroidtestapp.main.MainViewModel
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.ui.theme.AppTheme
-import com.example.readiumandroidtestapp.features.bookshelf.BookshelfUiState
-import com.example.readiumandroidtestapp.features.bookshelf.BookshelfViewModel
+import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -36,19 +34,19 @@ class BookshelfScreenTest {
     val composeTestRule = createComposeRule()
 
     private val bookshelfViewModel: BookshelfViewModel = mockk(relaxed = true)
-    private val appViewModel: AppViewModel = mockk(relaxed = true)
+    private val mainViewModel: MainViewModel = mockk(relaxed = true)
 
     @Test
     fun `shows loading state`() {
         every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Loading)
-        every { appViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
-        every { appViewModel.userMessages } returns flowOf()
+        every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
+        every { mainViewModel.userMessages } returns flowOf()
 
         composeTestRule.setContent {
             BookshelfScreen(
                 onOpenBook = {},
                 viewModel = bookshelfViewModel,
-                appViewModel = appViewModel,
+                mainViewModel = mainViewModel,
             )
         }
 
@@ -58,14 +56,14 @@ class BookshelfScreenTest {
     @Test
     fun `shows empty state`() {
         every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Empty)
-        every { appViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
-        every { appViewModel.userMessages } returns flowOf()
+        every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
+        every { mainViewModel.userMessages } returns flowOf()
 
         composeTestRule.setContent {
             BookshelfScreen(
                 onOpenBook = {},
                 viewModel = bookshelfViewModel,
-                appViewModel = appViewModel,
+                mainViewModel = mainViewModel,
             )
         }
 
@@ -77,14 +75,14 @@ class BookshelfScreenTest {
     @Test
     fun `shows error state`() {
         every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Error)
-        every { appViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
-        every { appViewModel.userMessages } returns flowOf()
+        every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
+        every { mainViewModel.userMessages } returns flowOf()
 
         composeTestRule.setContent {
             BookshelfScreen(
                 onOpenBook = {},
                 viewModel = bookshelfViewModel,
-                appViewModel = appViewModel,
+                mainViewModel = mainViewModel,
             )
         }
 
@@ -110,14 +108,14 @@ class BookshelfScreenTest {
                 books = books,
             ),
         )
-        every { appViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
-        every { appViewModel.userMessages } returns flowOf()
+        every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
+        every { mainViewModel.userMessages } returns flowOf()
 
         composeTestRule.setContent {
             BookshelfScreen(
                 onOpenBook = {},
                 viewModel = bookshelfViewModel,
-                appViewModel = appViewModel,
+                mainViewModel = mainViewModel,
             )
         }
 
@@ -143,14 +141,14 @@ class BookshelfScreenTest {
     @Test
     fun `handles FAB import from URL`() {
         every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Empty)
-        every { appViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
-        every { appViewModel.userMessages } returns flowOf()
+        every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
+        every { mainViewModel.userMessages } returns flowOf()
 
         composeTestRule.setContent {
             BookshelfScreen(
                 onOpenBook = {},
                 viewModel = bookshelfViewModel,
-                appViewModel = appViewModel,
+                mainViewModel = mainViewModel,
             )
         }
 
@@ -173,6 +171,6 @@ class BookshelfScreenTest {
         val importAction = context.getString(R.string.import_action)
         composeTestRule.onNodeWithText(text = importAction).performClick()
 
-        verify { appViewModel.importBook(url = "http://example.com/book.epub") }
+        verify { mainViewModel.importBook(url = "http://example.com/book.epub") }
     }
 }

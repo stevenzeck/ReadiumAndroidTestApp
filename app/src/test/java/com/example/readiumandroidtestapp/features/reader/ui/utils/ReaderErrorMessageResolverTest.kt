@@ -1,7 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.ui.utils
 
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.ui.utils.UiText
+import com.example.readiumandroidtestapp.core.designsystem.utils.UiText
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderError
 import org.junit.Assert.assertEquals
 import org.junit.Test
