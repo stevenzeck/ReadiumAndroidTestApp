@@ -94,6 +94,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 # --- Paging ---
 androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "androidx-paging" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "androidx-paging" }
+androidx-paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "androidx-paging"}
 
 # --- Media & Coil ---
 androidx-media3-common = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "androidx-media3" }
@@ -181,5 +182,6 @@ test-unit = [
     "kotlinx-coroutines-test",
     "hilt-android-testing",
     "robolectric",
-    "androidx-compose-ui-test-junit4"
+    "androidx-compose-ui-test-junit4",
+    "androidx-paging-testing"
 ]

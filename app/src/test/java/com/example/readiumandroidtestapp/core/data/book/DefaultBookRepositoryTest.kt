@@ -4,6 +4,7 @@ import android.net.Uri
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
+import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -126,6 +127,29 @@ class DefaultBookRepositoryTest {
     }
 
     @Test
+    fun `deleteBook failure on file deletion is suppressed and returns success`() = runTest {
+        val bookId = 1L
+        val book = Book(
+            id = bookId,
+            href = "path/to/book.epub",
+            title = "Title",
+            author = "Author",
+            identifier = "id",
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            cover = "path/to/cover.jpg",
+        )
+
+        coEvery { booksDao.get(bookId = bookId) } returns book
+        coEvery { booksDao.deleteBook(bookId = bookId) } just Runs
+        every { storageGateway.deleteFile(path = any()) } throws RuntimeException("Delete failed")
+
+        val result = repository.deleteBook(bookId = bookId)
+
+        assertTrue(result.isSuccess)
+        coVerify { booksDao.deleteBook(bookId = bookId) }
+    }
+
+    @Test
     fun `saveProgression calls dao`() = runTest {
         val bookId = 1L
         val locator = "locator-json"
@@ -134,6 +158,25 @@ class DefaultBookRepositoryTest {
 
         assertTrue(result.isSuccess)
         coVerify { booksDao.saveProgression(bookId = bookId, locator = locator) }
+    }
+
+    @Test
+    fun `saveProgression failure returns Try Failure`() = runTest {
+        val bookId = 1L
+        val locator = "locator-json"
+        val exception = RuntimeException("DAO error")
+
+        coEvery {
+            booksDao.saveProgression(
+                bookId = bookId,
+                locator = locator,
+            )
+        } throws exception
+
+        val result = repository.saveProgression(bookId = bookId, locator = locator)
+
+        assertTrue(result.isFailure)
+        assertEquals(exception, (result as Try.Failure).value)
     }
 
     @Test
@@ -206,5 +249,124 @@ class DefaultBookRepositoryTest {
 
         assertEquals(bookmarks, collected)
         job.cancel()
+    }
+
+    @Test
+    fun `deleteBookmark success calls dao`() = runTest {
+        val bookmarkId = 123L
+        coEvery { booksDao.deleteBookmark(id = bookmarkId) } just Runs
+
+        repository.deleteBookmark(bookmarkId = bookmarkId)
+
+        coVerify { booksDao.deleteBookmark(id = bookmarkId) }
+    }
+
+    @Test
+    fun `highlightsForBook returns flow from dao`() = runTest {
+        val bookId = 1L
+        val highlights = listOf(mockk<Highlight>())
+        every { booksDao.getHighlightsForBook(bookId = bookId) } returns flowOf(value = highlights)
+
+        val result = repository.highlightsForBook(bookId = bookId)
+
+        var collected: List<Highlight>? = null
+        val job = backgroundScope.launch(context = testDispatcher) {
+            result.collect { collected = it }
+        }
+
+        assertEquals(highlights, collected)
+        job.cancel()
+    }
+
+    @Test
+    fun `addHighlight calls dao with correct data`() = runTest {
+        val bookId = 1L
+        val style = Highlight.Style.HIGHLIGHT
+        val tint = 123456
+        val locator = Locator(
+            href = Url("chapter1.html")!!,
+            mediaType = MediaType(string = "text/html")!!,
+            title = "Chapter 1",
+        )
+        val annotation = "My Note"
+
+        coEvery { booksDao.insertHighlight(highlight = any()) } returns 99L
+
+        val result = repository.addHighlight(
+            bookId = bookId,
+            style = style,
+            tint = tint,
+            locator = locator,
+            annotation = annotation,
+        )
+
+        assertEquals(99L, result)
+
+        val highlightSlot = slot<Highlight>()
+        coVerify { booksDao.insertHighlight(highlight = capture(lst = highlightSlot)) }
+
+        val captured = highlightSlot.captured
+        assertEquals(bookId, captured.bookId)
+        assertEquals(style, captured.style)
+        assertEquals(tint, captured.tint)
+        assertEquals(locator.href.toString(), captured.href)
+        assertEquals(annotation, captured.annotation)
+    }
+
+    @Test
+    fun `updateHighlightAnnotation success calls dao`() = runTest {
+        val highlightId = 100L
+        val newAnnotation = "Updated Note"
+
+        coEvery {
+            booksDao.updateHighlightAnnotation(
+                id = highlightId,
+                annotation = newAnnotation,
+            )
+        } just Runs
+
+        repository.updateHighlightAnnotation(id = highlightId, annotation = newAnnotation)
+
+        coVerify {
+            booksDao.updateHighlightAnnotation(
+                id = highlightId,
+                annotation = newAnnotation,
+            )
+        }
+    }
+
+    @Test
+    fun `updateHighlightStyle success calls dao`() = runTest {
+        val highlightId = 100L
+        val newStyle = Highlight.Style.UNDERLINE
+        val newTint = 654321
+
+        coEvery {
+            booksDao.updateHighlightStyle(
+                id = highlightId,
+                style = newStyle,
+                tint = newTint,
+            )
+        } just Runs
+
+        repository.updateHighlightStyle(id = highlightId, style = newStyle, tint = newTint)
+
+        coVerify {
+            booksDao.updateHighlightStyle(
+                id = highlightId,
+                style = newStyle,
+                tint = newTint,
+            )
+        }
+    }
+
+    @Test
+    fun `deleteHighlight success calls dao`() = runTest {
+        val highlightId = 100L
+        coEvery { booksDao.deleteHighlight(id = highlightId) } just Runs
+
+        repository.deleteHighlight(id = highlightId)
+
+        coVerify { booksDao.deleteHighlight(id = highlightId) }
     }
 }
