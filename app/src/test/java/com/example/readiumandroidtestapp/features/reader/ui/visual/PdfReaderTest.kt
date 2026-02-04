@@ -8,20 +8,23 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentFactory
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.adapter.pdfium.navigator.PdfiumPreferences
+import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
+import org.readium.adapter.pdfium.navigator.PdfiumSettings
 import org.readium.r2.navigator.VisualNavigator
-import org.readium.r2.navigator.epub.EpubNavigatorFactory
-import org.readium.r2.navigator.epub.EpubPreferences
+import org.readium.r2.navigator.pdf.PdfNavigatorFactory
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class EpubReaderTest {
+class PdfReaderTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<FragmentActivity>()
@@ -31,18 +34,18 @@ class EpubReaderTest {
     }
 
     @Test
-    fun epubReader_rendersWithoutCrash() {
+    fun pdfReader_rendersWithoutCrash() {
         val publication = mockk<Publication>(relaxed = true)
-        val preferences = EpubPreferences()
+        val preferences = PdfiumPreferences()
         val fragmentFactory = mockk<FragmentFactory>(relaxed = true)
         val testFragment = TestFragment()
-        val epubNavigatorFactory = mockk<EpubNavigatorFactory>()
+        val pdfNavigatorFactory =
+            mockk<PdfNavigatorFactory<PdfiumSettings, PdfiumPreferences, PdfiumPreferencesEditor>>()
 
         every {
-            epubNavigatorFactory.createFragmentFactory(
+            pdfNavigatorFactory.createFragmentFactory(
                 initialLocator = any(),
                 initialPreferences = any(),
-                configuration = any(),
             )
         } returns fragmentFactory
 
@@ -54,18 +57,24 @@ class EpubReaderTest {
         } returns testFragment
 
         composeTestRule.setContent {
-            EpubReader(
+            PdfReader(
                 publication = publication,
                 initialLocator = null,
                 initialPreferences = preferences,
                 onLocatorChanged = {},
+                pdfNavigatorFactory = pdfNavigatorFactory,
                 onTap = {},
                 onNavigatorReady = {},
-                onHighlight = {},
-                epubNavigatorFactory = epubNavigatorFactory,
             )
         }
 
-        composeTestRule.onNodeWithTag(testTag = "EpubNavigatorHost").assertIsDisplayed()
+        composeTestRule.onNodeWithTag(testTag = "PdfNavigatorHost").assertIsDisplayed()
+
+        verify {
+            pdfNavigatorFactory.createFragmentFactory(
+                initialLocator = null,
+                initialPreferences = preferences,
+            )
+        }
     }
 }

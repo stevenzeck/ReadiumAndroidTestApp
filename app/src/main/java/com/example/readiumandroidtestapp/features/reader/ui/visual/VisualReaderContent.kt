@@ -35,7 +35,10 @@ import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import org.readium.adapter.pdfium.navigator.PdfiumDefaults
 import org.readium.adapter.pdfium.navigator.PdfiumEngineProvider
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
+import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
+import org.readium.adapter.pdfium.navigator.PdfiumSettings
 import org.readium.r2.navigator.VisualNavigator
+import org.readium.r2.navigator.epub.EpubNavigatorFactory
 import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.navigator.pdf.PdfNavigatorFactory
 import org.readium.r2.navigator.preferences.Configurable
@@ -69,6 +72,8 @@ fun VisualReaderContent(
     onSearchQueryChanged: (String) -> Unit,
     saveHighlight: (String, Int) -> Unit,
     dismissHighlightDialog: () -> Unit,
+    epubNavigatorFactory: EpubNavigatorFactory? = null,
+    pdfNavigatorFactory: PdfNavigatorFactory<PdfiumSettings, PdfiumPreferences, PdfiumPreferencesEditor>? = null,
 ) {
     var showOverlay by rememberSaveable { mutableStateOf(value = false) }
     var showTocBottomSheet by rememberSaveable { mutableStateOf(value = false) }
@@ -127,9 +132,10 @@ fun VisualReaderContent(
                     onNavigatorReady(it)
                 },
                 onHighlight = onHighlightAction,
+                epubNavigatorFactory = epubNavigatorFactory,
             )
         } else if (uiState.publication.conformsTo(profile = Publication.Profile.PDF)) {
-            val pdfFactory = remember(uiState.pdfiumDocumentFactory) {
+            val pdfFactory = pdfNavigatorFactory ?: remember(uiState.pdfiumDocumentFactory) {
                 PdfNavigatorFactory(
                     publication = uiState.publication,
                     pdfEngineProvider = PdfiumEngineProvider(

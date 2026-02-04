@@ -39,6 +39,7 @@ fun EpubReader(
     onTap: () -> Unit,
     onNavigatorReady: (VisualNavigator) -> Unit,
     onHighlight: (Locator) -> Unit,
+    epubNavigatorFactory: EpubNavigatorFactory? = null,
 ) {
     val context = LocalContext.current
     val fragmentActivity = context as? FragmentActivity
@@ -64,7 +65,8 @@ fun EpubReader(
             selectionActionModeCallback = actionModeCallback
         }
 
-        val factory = EpubNavigatorFactory(publication = publication).createFragmentFactory(
+        val factory = (epubNavigatorFactory
+            ?: EpubNavigatorFactory(publication = publication)).createFragmentFactory(
             initialLocator = initialLocator,
             initialPreferences = initialPreferences,
             configuration = config,
