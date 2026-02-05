@@ -11,6 +11,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +25,7 @@ import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
+import org.readium.r2.navigator.preferences.PreferencesEditor
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -280,6 +282,26 @@ class AudioReaderTest {
         composeTestRule.onNodeWithContentDescription(label = back).performClick()
 
         assertTrue(backClicked)
+    }
+
+    @Test
+    fun audioReader_displaysSettingsSheet_whenStateIsConfigurable() {
+        val navigator = createMockNavigator()
+
+        val mockEditor = mockk<PreferencesEditor<ExoPlayerPreferences>>(relaxed = true)
+        val settingsState = ReaderSettingsSheet.Configurable(mockEditor)
+
+        composeTestRule.setContent {
+            AudioReader(
+                book = book,
+                navigator = navigator,
+                settingsSheetState = settingsState,
+                onNavigateBack = {},
+                onSettingsClick = {},
+                onSettingsChange = {},
+                onSettingsDismiss = {},
+            )
+        }
     }
 
     private fun createMockNavigator(

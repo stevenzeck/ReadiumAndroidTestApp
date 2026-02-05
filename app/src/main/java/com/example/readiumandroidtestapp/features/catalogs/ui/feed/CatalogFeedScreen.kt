@@ -28,11 +28,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.designsystem.components.EmptyView
 import com.example.readiumandroidtestapp.core.designsystem.components.ErrorView
 import com.example.readiumandroidtestapp.core.designsystem.components.LoadingView
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.features.catalogs.ui.feed.components.AddCatalogDialog
 import com.example.readiumandroidtestapp.features.catalogs.ui.feed.components.CatalogItem
 

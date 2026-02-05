@@ -40,10 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.main.MainViewModel
-import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.designsystem.components.BookItem
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.domain.model.Catalog
+import com.example.readiumandroidtestapp.main.MainViewModel
 import org.readium.r2.shared.opds.Group
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Publication

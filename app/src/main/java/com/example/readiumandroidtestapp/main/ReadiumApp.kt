@@ -37,12 +37,12 @@ import androidx.navigation3.ui.NavDisplay
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.navigation.LocalNavigator
 import com.example.readiumandroidtestapp.core.navigation.Navigator
+import com.example.readiumandroidtestapp.core.navigation.rememberNavigationState
 import com.example.readiumandroidtestapp.core.navigation.route.Account
 import com.example.readiumandroidtestapp.core.navigation.route.Bookshelf
 import com.example.readiumandroidtestapp.core.navigation.route.Catalogs
 import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.core.navigation.route.Reader
-import com.example.readiumandroidtestapp.core.navigation.rememberNavigationState
 import com.example.readiumandroidtestapp.core.navigation.toEntries
 
 /**

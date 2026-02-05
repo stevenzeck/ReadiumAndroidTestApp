@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.example.readiumandroidtestapp.R
@@ -152,5 +153,38 @@ class CatalogFeedScreenTest {
             .performClick()
 
         verify { onDeleteCatalog(catalog) }
+    }
+
+    @Test
+    fun `handles edit catalog`() {
+        val catalog = Catalog(id = 1, title = "Test Catalog", href = "http://example.com", type = 1)
+        val onEditCatalog = mockk<(Catalog, String) -> Unit>(relaxed = true)
+
+        composeTestRule.setContent {
+            CatalogFeedContent(
+                feedUiState = CatalogFeedUiState.Success(catalogs = listOf(catalog)),
+                onCatalogClick = {},
+                onAddCatalog = { _, _ -> },
+                onEditCatalog = onEditCatalog,
+                onDeleteCatalog = {},
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val editFeedDesc = context.getString(R.string.edit_feed)
+        val saveText = context.getString(R.string.save)
+        val titleLabel = context.getString(R.string.feed_name)
+
+        // Click edit icon
+        composeTestRule.onNodeWithContentDescription(label = editFeedDesc).performClick()
+
+        composeTestRule.onNodeWithText(text = titleLabel).performTextClearance()
+        composeTestRule.onNodeWithText(text = titleLabel)
+            .performTextInput(text = "Test Catalog Updated")
+
+        // Click save
+        composeTestRule.onNodeWithText(text = saveText).performClick()
+
+        verify { onEditCatalog(catalog, "Test Catalog Updated") }
     }
 }

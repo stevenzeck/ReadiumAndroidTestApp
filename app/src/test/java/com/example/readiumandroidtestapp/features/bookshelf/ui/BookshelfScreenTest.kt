@@ -11,9 +11,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.main.MainViewModel
-import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
+import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.main.MainViewModel
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

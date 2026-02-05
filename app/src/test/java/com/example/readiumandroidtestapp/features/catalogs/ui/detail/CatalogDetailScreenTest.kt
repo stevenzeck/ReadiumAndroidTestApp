@@ -266,4 +266,67 @@ class CatalogDetailScreenTest {
         verify { onSubFeedClick(match { it.href == "group/self" }) }
     }
 
+    @Test
+    fun `group header is not clickable without self link`() {
+        val groupTitle = "Group Title"
+        val group = mockk<Group>(relaxed = true) {
+            every { metadata.title } returns groupTitle
+            every { links } returns emptyList()
+        }
+        val feed = mockk<Feed>(relaxed = true) {
+            every { groups } returns listOf(group)
+            every { navigation } returns emptyList()
+            every { publications } returns emptyList()
+        }
+        val onSubFeedClick = mockk<(Catalog) -> Unit>(relaxed = true)
+
+        composeTestRule.setContent {
+            CatalogDetailContent(
+                feedState = FeedState.Success(feed = feed),
+                catalog = catalog,
+                showBackButton = true,
+                onNavigateBack = {},
+                onSubFeedClick = onSubFeedClick,
+                onPublicationClick = {},
+                onImportBook = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(text = groupTitle).performClick()
+        verify(exactly = 0) { onSubFeedClick(any()) }
+    }
+
+    @Test
+    fun `renders nested navigation links in group`() {
+        val groupTitle = "Group Title"
+        val nestedLinkTitle = "Nested Link"
+        val nestedLink = Link(href = Url(url = "nested")!!, title = nestedLinkTitle)
+
+        val group = mockk<Group>(relaxed = true) {
+            every { metadata.title } returns groupTitle
+            every { navigation } returns listOf(nestedLink)
+            every { links } returns emptyList()
+            every { publications } returns emptyList()
+        }
+        val feed = mockk<Feed>(relaxed = true) {
+            every { groups } returns listOf(group)
+            every { navigation } returns emptyList()
+            every { publications } returns emptyList()
+        }
+
+        composeTestRule.setContent {
+            CatalogDetailContent(
+                feedState = FeedState.Success(feed = feed),
+                catalog = catalog,
+                showBackButton = true,
+                onNavigateBack = {},
+                onSubFeedClick = {},
+                onPublicationClick = {},
+                onImportBook = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(text = nestedLinkTitle).assertIsDisplayed()
+    }
+
 }

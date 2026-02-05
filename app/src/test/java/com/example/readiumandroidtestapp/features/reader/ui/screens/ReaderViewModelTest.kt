@@ -429,7 +429,12 @@ class ReaderViewModelTest {
         val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
         coEvery { bookRepository.get(bookId = bookId) } returns book
         coEvery { openPublicationUseCase(url = bookUrl) } returns Result.success(value = openedBook)
-        coEvery { sessionFactory.createAudioSession(book = book, publication = publication) } returns Result.success(audioState)
+        coEvery {
+            sessionFactory.createAudioSession(
+                book = book,
+                publication = publication,
+            )
+        } returns Result.success(audioState)
 
         viewModel = createViewModel(bookId = bookId)
         advanceUntilIdle()

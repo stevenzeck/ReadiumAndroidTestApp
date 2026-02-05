@@ -25,14 +25,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.main.MainViewModel
-import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.designsystem.components.EmptyView
 import com.example.readiumandroidtestapp.core.designsystem.components.ErrorView
 import com.example.readiumandroidtestapp.core.designsystem.components.LoadingView
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.bookshelf.ui.components.BooksGrid
 import com.example.readiumandroidtestapp.features.bookshelf.ui.components.BookshelfFab
+import com.example.readiumandroidtestapp.main.MainViewModel
 
 /**
  * The main screen of the application, displaying a grid of imported books.

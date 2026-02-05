@@ -1,8 +1,8 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk

@@ -27,9 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.main.MainViewModel
 import com.example.readiumandroidtestapp.core.designsystem.components.BookItem
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
+import com.example.readiumandroidtestapp.main.MainViewModel
 import org.json.JSONObject
 import org.readium.r2.shared.publication.Manifest
 import timber.log.Timber

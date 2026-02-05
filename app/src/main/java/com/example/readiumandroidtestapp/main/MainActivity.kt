@@ -9,8 +9,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
+import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
