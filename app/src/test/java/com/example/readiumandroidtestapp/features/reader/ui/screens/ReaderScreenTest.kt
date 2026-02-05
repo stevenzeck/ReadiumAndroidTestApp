@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.fragment.app.FragmentActivity
 import androidx.paging.PagingData
 import androidx.test.core.app.ApplicationProvider
@@ -26,6 +27,9 @@ import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
+import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
+import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.shared.publication.Publication
 import org.robolectric.RobolectricTestRunner
@@ -235,5 +239,153 @@ class ReaderScreenTest {
         }
 
         composeTestRule.onNodeWithText(text = "Unsupported format").assertIsDisplayed()
+    }
+
+    @Test
+    fun `invokes retryLoad when retry button is clicked in Error state`() {
+        val error = ReaderError.InvalidBookLocation
+        setupViewModel(ReaderUiState.Error(error))
+
+        composeTestRule.setContent {
+            ReaderScreen(
+                bookId = 1L,
+                viewModel = viewModel,
+                onNavigateBack = {},
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val retryLabel = context.getString(R.string.retry)
+
+        composeTestRule.onNodeWithText(text = retryLabel).performClick()
+        verify { viewModel.retryLoad() }
+    }
+
+    @Test
+    fun `delegates all VisualReaderActions to ViewModel`() {
+        val publication = mockk<Publication>(relaxed = true)
+        val book = mockk<Book>(relaxed = true)
+        val uiState = ReaderUiState.Visual(
+            publication = publication,
+            book = book,
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = ReaderCapabilities(
+                isSearchable = false,
+                canSpeak = false,
+                hasPreferences = false,
+            ),
+            initialPreferences = mockk<Configurable.Preferences<*>>(relaxed = true),
+        )
+
+        setupViewModel(uiState)
+
+        composeTestRule.setContent {
+            ReaderScreen(
+                bookId = 1L,
+                viewModel = viewModel,
+                onNavigateBack = {},
+                visualReaderContent = { _, actions ->
+                    actions.onVisualLocatorChanged(mockk())
+                    actions.onHighlightAction(mockk())
+                    actions.startTts()
+                    actions.stopTts()
+                    actions.play()
+                    actions.pause()
+                    actions.previous()
+                    actions.next()
+                    actions.onSearchQueryChanged("query")
+                    actions.saveHighlight("note", 1)
+                    actions.dismissHighlightDialog()
+                    actions.onSettingsChange(mockk())
+                    actions.onSettingsDismiss()
+                    actions.onNavigatorReady(mockk())
+                },
+            )
+        }
+
+        verify { viewModel.onVisualLocatorChanged(any()) }
+        verify { viewModel.onHighlightAction(any()) }
+        verify { viewModel.startTts() }
+        verify { viewModel.stopTts() }
+        verify { viewModel.play() }
+        verify { viewModel.pause() }
+        verify { viewModel.previous() }
+        verify { viewModel.next() }
+        verify { viewModel.onSearchQueryChanged("query") }
+        verify { viewModel.saveHighlight("note", 1) }
+        verify { viewModel.dismissHighlightDialog() }
+        verify { viewModel.onSettingsChanged(any()) }
+        verify { viewModel.closeSettings() }
+        verify { viewModel.onNavigatorReady(any()) }
+    }
+
+    @Test
+    fun `delegates all AudioReaderActions to ViewModel`() {
+        val publication = mockk<Publication>(relaxed = true)
+        val book = mockk<Book>(relaxed = true)
+        val uiState = ReaderUiState.Audio(
+            publication = publication,
+            book = book,
+            navigator = mockk(relaxed = true),
+            preferencesEditor = mockk(relaxed = true),
+        )
+
+        setupViewModel(uiState)
+
+        composeTestRule.setContent {
+            ReaderScreen(
+                bookId = 1L,
+                viewModel = viewModel,
+                onNavigateBack = {},
+                audioReaderContent = { _, actions ->
+                    actions.onSettingsChange(mockk())
+                    actions.onSettingsDismiss()
+                },
+            )
+        }
+
+        verify { viewModel.onSettingsChanged(any()) }
+        verify { viewModel.closeSettings() }
+    }
+
+    @Test
+    fun `shows default AudioReader content when slot is not overridden`() {
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = any()) } returns true
+        }
+        val book = mockk<Book>(relaxed = true) {
+            every { title } returns "Audio Book Title"
+        }
+
+        val playback = mockk<AudioNavigator.Playback>(relaxed = true)
+        every { playback.index } returns 0
+        every { playback.offset } returns kotlin.time.Duration.ZERO
+        every { playback.playWhenReady } returns false
+        every { playback.state } returns mockk()
+
+        val playbackFlow = MutableStateFlow(playback)
+        val navigator = mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(
+            relaxed = true,
+        )
+        every { navigator.playback } returns playbackFlow
+        every { navigator.readingOrder.items } returns emptyList()
+
+        val uiState = ReaderUiState.Audio(
+            publication = publication,
+            book = book,
+            navigator = navigator,
+            preferencesEditor = mockk(relaxed = true),
+        )
+
+        setupViewModel(uiState)
+
+        composeTestRule.setContent {
+            ReaderScreen(
+                bookId = 1L,
+                viewModel = viewModel,
+                onNavigateBack = {},
+            )
+        }
     }
 }

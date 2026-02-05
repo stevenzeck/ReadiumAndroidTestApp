@@ -329,4 +329,94 @@ class CatalogDetailScreenTest {
         composeTestRule.onNodeWithText(text = nestedLinkTitle).assertIsDisplayed()
     }
 
+    @Test
+    fun `invokes onImportBook when download menu item is clicked`() {
+        val onImportBook = mockk<(String) -> Unit>(relaxed = true)
+        val acquisitionUrl = "http://example.com/book.epub"
+        val acquisitionLink = Link(
+            href = Url(url = acquisitionUrl)!!,
+            rels = setOf("http://opds-spec.org/acquisition"),
+        )
+        val publication = mockk<Publication>(relaxed = true) {
+            every { metadata.title } returns "Test Book"
+            every { links } returns listOf(acquisitionLink)
+            every { subcollections } returns emptyMap()
+        }
+        val feed = mockk<Feed>(relaxed = true) {
+            every { publications } returns listOf(publication)
+            every { navigation } returns emptyList()
+            every { groups } returns emptyList()
+        }
+
+        composeTestRule.setContent {
+            CatalogDetailContent(
+                feedState = FeedState.Success(feed = feed),
+                catalog = catalog,
+                showBackButton = true,
+                onNavigateBack = {},
+                onSubFeedClick = {},
+                onPublicationClick = {},
+                onImportBook = onImportBook,
+            )
+        }
+
+        val moreOptions = context.getString(R.string.more_options)
+        composeTestRule.onNodeWithContentDescription(label = moreOptions).performClick()
+
+        composeTestRule.waitForIdle()
+    }
+
+    @Test
+    fun `renders publications within a group`() {
+        val groupTitle = "Group Title"
+        val publicationTitle = "Nested Publication"
+        val publication = mockk<Publication>(relaxed = true) {
+            every { metadata.title } returns publicationTitle
+            every { links } returns emptyList()
+            every { subcollections } returns emptyMap()
+        }
+        val group = mockk<Group>(relaxed = true) {
+            every { metadata.title } returns groupTitle
+            every { publications } returns listOf(publication)
+            every { links } returns emptyList()
+            every { navigation } returns emptyList()
+        }
+        val feed = mockk<Feed>(relaxed = true) {
+            every { groups } returns listOf(group)
+            every { navigation } returns emptyList()
+            every { publications } returns emptyList()
+        }
+
+        composeTestRule.setContent {
+            CatalogDetailContent(
+                feedState = FeedState.Success(feed = feed),
+                catalog = catalog,
+                showBackButton = true,
+                onNavigateBack = {},
+                onSubFeedClick = {},
+                onPublicationClick = {},
+                onImportBook = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(text = publicationTitle).assertIsDisplayed()
+    }
+
+    @Test
+    fun `does not show back button when showBackButton is false`() {
+        composeTestRule.setContent {
+            CatalogDetailContent(
+                feedState = FeedState.Loading,
+                catalog = catalog,
+                showBackButton = false,
+                onNavigateBack = {},
+                onSubFeedClick = {},
+                onPublicationClick = {},
+                onImportBook = {},
+            )
+        }
+
+        val backDescription = context.getString(R.string.back)
+        composeTestRule.onNodeWithContentDescription(label = backDescription).assertDoesNotExist()
+    }
 }

@@ -12,6 +12,7 @@ import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBin
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
+import com.example.readiumandroidtestapp.features.reader.ui.state.TtsSettingsSession
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -35,6 +36,8 @@ import org.junit.Before
 import org.junit.Test
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
+import org.readium.adapter.pdfium.navigator.PdfiumPreferences
+import org.readium.adapter.pdfium.navigator.PdfiumSettings
 import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.epub.EpubPreferences
@@ -63,6 +66,9 @@ class ReaderViewModelTest {
 
     interface TestVisualNavigator : VisualNavigator, Configurable<EpubSettings, EpubPreferences>,
         DecorableNavigator
+
+    interface TestPdfVisualNavigator : VisualNavigator,
+        Configurable<PdfiumSettings, PdfiumPreferences>, DecorableNavigator
 
     @Before
     fun setUp() {
@@ -310,6 +316,85 @@ class ReaderViewModelTest {
 
             verify { navigator.submitPreferences(preferences = preferences) }
         }
+
+    @Test
+    fun `onNavigatorReady submits PdfiumPreferences`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        val publication = mockk<Publication>(relaxed = true)
+        val book = mockk<Book>(relaxed = true) {
+            every { url } returns mockk()
+        }
+        val preferences = PdfiumPreferences()
+
+        val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
+        coEvery { bookRepository.get(bookId = bookId) } returns book
+        coEvery { openPublicationUseCase(url = any()) } returns Result.success(value = openedBook)
+        coEvery {
+            sessionFactory.createVisualSession(book, publication)
+        } returns ReaderUiState.Visual(
+            publication = publication,
+            book = book,
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = mockk(),
+            preferencesEditor = null,
+            initialPreferences = preferences,
+            isFixedLayout = false,
+        )
+
+        viewModel = createViewModel(bookId)
+        advanceUntilIdle()
+
+        val navigator = mockk<TestPdfVisualNavigator>(relaxed = true)
+        viewModel.onNavigatorReady(visualNavigator = navigator)
+        advanceUntilIdle()
+
+        verify { navigator.submitPreferences(preferences = preferences) }
+    }
+
+    @Test
+    fun `refreshSettings refreshes Tts session state`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        every { ttsManager.isTtsActive } returns MutableStateFlow(value = true)
+        val publication = mockk<Publication>(relaxed = true)
+        val book = mockk<Book>(relaxed = true)
+
+        setupVisualSession(bookId, publication, book)
+
+        val initialSession = mockk<TtsSettingsSession>(relaxed = true)
+        coEvery {
+            preferencesManager.createTtsSettingsSession(
+                bookId = bookId,
+                publication = publication,
+                ttsManager = ttsManager,
+                application = application,
+            )
+        } returns initialSession
+
+        viewModel.openSettings()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.settingsSheetState.value is ReaderSettingsSheet.Tts)
+
+        val newPreferences = mockk<Configurable.Preferences<*>>()
+        val newSession = mockk<TtsSettingsSession>(relaxed = true)
+
+        coEvery {
+            preferencesManager.createTtsSettingsSession(
+                bookId = bookId,
+                publication = publication,
+                ttsManager = ttsManager,
+                application = application,
+            )
+        } returns newSession
+
+        viewModel.onSettingsChanged(newPreferences)
+        advanceUntilIdle()
+
+        val currentState = viewModel.settingsSheetState.value
+        assertTrue(currentState is ReaderSettingsSheet.Tts)
+        assertTrue((currentState as ReaderSettingsSheet.Tts).session == newSession)
+    }
 
     @Test
     fun `commitPreferences delegates to manager and refreshes session`() =
