@@ -16,6 +16,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,6 +25,7 @@ import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class AudioReaderTest {
@@ -184,6 +186,100 @@ class AudioReaderTest {
         composeTestRule.waitForIdle()
 
         coVerify { navigator.skipTo(index = any(), offset = any()) }
+    }
+
+    @Test
+    fun audioReader_rewinds() {
+        val navigator = createMockNavigator()
+
+        composeTestRule.setContent {
+            AudioReader(
+                book = book,
+                navigator = navigator,
+                settingsSheetState = null,
+                onNavigateBack = {},
+                onSettingsClick = {},
+                onSettingsChange = {},
+                onSettingsDismiss = {},
+            )
+        }
+
+        val rewind = context.getString(R.string.rewind_30)
+        composeTestRule.onNodeWithContentDescription(label = rewind).performClick()
+
+        composeTestRule.waitForIdle()
+
+        coVerify { navigator.skip(duration = (-30).seconds) }
+    }
+
+    @Test
+    fun audioReader_forwards() {
+        val navigator = createMockNavigator()
+
+        composeTestRule.setContent {
+            AudioReader(
+                book = book,
+                navigator = navigator,
+                settingsSheetState = null,
+                onNavigateBack = {},
+                onSettingsClick = {},
+                onSettingsChange = {},
+                onSettingsDismiss = {},
+            )
+        }
+
+        val forward = context.getString(R.string.forward_30)
+        composeTestRule.onNodeWithContentDescription(label = forward).performClick()
+
+        composeTestRule.waitForIdle()
+
+        coVerify { navigator.skip(duration = 30.seconds) }
+    }
+
+    @Test
+    fun audioReader_settingsClick_triggersCallback() {
+        val navigator = createMockNavigator()
+        var settingsClicked = false
+
+        composeTestRule.setContent {
+            AudioReader(
+                book = book,
+                navigator = navigator,
+                settingsSheetState = null,
+                onNavigateBack = {},
+                onSettingsClick = { settingsClicked = true },
+                onSettingsChange = {},
+                onSettingsDismiss = {},
+            )
+        }
+
+        val settings = context.getString(R.string.reading_preferences)
+        composeTestRule.onNodeWithContentDescription(label = settings).performClick()
+
+        assertTrue(settingsClicked)
+    }
+
+    @Test
+    fun audioReader_backClick_triggersCallback() {
+        val navigator = createMockNavigator()
+        var backClicked = false
+
+        composeTestRule.setContent {
+            AudioReader(
+                book = book,
+                navigator = navigator,
+                settingsSheetState = null,
+                onNavigateBack = { backClicked = true },
+                onSettingsClick = {},
+                onSettingsChange = {},
+                onSettingsDismiss = {},
+            )
+        }
+
+        val back = context.getString(R.string.back)
+        composeTestRule.onNodeWithContentDescription(label = back).performClick()
+
+        assertTrue(backClicked)
     }
 
     private fun createMockNavigator(

@@ -74,8 +74,8 @@ class MediaService : MediaSessionService() {
 
         fun closeSession() {
             mediaSession?.run {
-                release()
                 removeSession(this)
+                release()
                 mediaSession = null
             }
         }
