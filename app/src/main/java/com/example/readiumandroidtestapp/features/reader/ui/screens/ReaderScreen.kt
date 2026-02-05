@@ -9,10 +9,61 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.readiumandroidtestapp.core.domain.model.Bookmark
+import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AudioReader
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
+import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import com.example.readiumandroidtestapp.features.reader.ui.visual.VisualReaderContent
+import org.readium.r2.navigator.VisualNavigator
+import org.readium.r2.navigator.preferences.Configurable
+import org.readium.r2.shared.publication.Locator
+
+data class VisualReaderActions(
+    val onSettingsClick: () -> Unit,
+    val onSettingsChange: (Configurable.Preferences<*>) -> Unit,
+    val onSettingsDismiss: () -> Unit,
+    val onVisualLocatorChanged: (Locator) -> Unit,
+    val onNavigatorReady: (VisualNavigator) -> Unit,
+    val onHighlightAction: (Locator) -> Unit,
+    val startTts: () -> Unit,
+    val stopTts: () -> Unit,
+    val play: () -> Unit,
+    val pause: () -> Unit,
+    val previous: () -> Unit,
+    val next: () -> Unit,
+    val onSearchQueryChanged: (String) -> Unit,
+    val saveHighlight: (String, Int) -> Unit,
+    val dismissHighlightDialog: () -> Unit,
+    val onNavigateBack: () -> Unit,
+)
+
+data class VisualReaderState(
+    val uiState: ReaderUiState.Visual,
+    val settingsSheetState: ReaderSettingsSheet?,
+    val bookmarks: List<Bookmark>,
+    val highlights: List<Highlight>,
+    val searchResults: LazyPagingItems<SearchItem>,
+    val searchQuery: String?,
+    val isTtsActive: Boolean,
+    val isPlaying: Boolean,
+    val showHighlightDialog: Boolean,
+)
+
+data class AudioReaderActions(
+    val onSettingsClick: () -> Unit,
+    val onSettingsChange: (Configurable.Preferences<*>) -> Unit,
+    val onSettingsDismiss: () -> Unit,
+    val onNavigateBack: () -> Unit,
+)
+
+data class AudioReaderState(
+    val uiState: ReaderUiState.Audio,
+    val settingsSheetState: ReaderSettingsSheet?,
+)
 
 /**
  * The main UI composable for the Reader feature.
@@ -35,13 +86,16 @@ fun ReaderScreen(
         },
     ),
     onNavigateBack: () -> Unit,
+    audioReaderContent: @Composable (AudioReaderState, AudioReaderActions) -> Unit = { state, actions ->
+        DefaultAudioReaderContent(state = state, actions = actions)
+    },
+    visualReaderContent: @Composable (VisualReaderState, VisualReaderActions) -> Unit = { state, actions ->
+        DefaultVisualReaderContent(state = state, actions = actions)
+    },
 ) {
-
-    // State Collection
     val state by viewModel.uiState.collectAsState()
     val settingsSheetState by viewModel.settingsSheetState.collectAsState()
 
-    // Auxiliary State (Bookmarks, Highlights, Search, TTS)
     val bookmarks by viewModel.bookmarks.collectAsState(initial = emptyList())
     val highlights by viewModel.highlights.collectAsState(initial = emptyList())
     val searchResults = viewModel.searchResults.collectAsLazyPagingItems()
@@ -64,55 +118,108 @@ fun ReaderScreen(
             }
 
             is ReaderUiState.Audio -> {
-                // Delegate to Audio Reader UI
-                AudioReader(
-                    book = uiState.book,
-                    navigator = uiState.navigator,
-                    settingsSheetState = settingsSheetState,
-                    onNavigateBack = onNavigateBack,
-                    onSettingsClick = viewModel::openAudiobookSettings,
-                    onSettingsChange = viewModel::onSettingsChanged,
-                    onSettingsDismiss = viewModel::closeSettings,
+                audioReaderContent(
+                    AudioReaderState(
+                        uiState = uiState,
+                        settingsSheetState = settingsSheetState,
+                    ),
+                    AudioReaderActions(
+                        onSettingsClick = viewModel::openAudiobookSettings,
+                        onSettingsChange = viewModel::onSettingsChanged,
+                        onSettingsDismiss = viewModel::closeSettings,
+                        onNavigateBack = onNavigateBack,
+                    ),
                 )
             }
 
             is ReaderUiState.Visual -> {
-                // Delegate to Visual Reader UI (Epub, PDF)
-                // We hoist the 'onNavigatorReady' callback here to give the ViewModel access
-                // to the underlying Readium VisualNavigator instance for controlling things like TTS.
-                VisualReaderContent(
-                    uiState = uiState,
-                    settingsSheetState = settingsSheetState,
-                    onSettingsClick = viewModel::openSettings,
-                    onSettingsChange = viewModel::onSettingsChanged,
-                    onSettingsDismiss = viewModel::closeSettings,
-                    bookmarks = bookmarks,
-                    highlights = highlights,
-                    searchResults = searchResults,
-                    searchQuery = searchQuery,
-                    isTtsActive = isTtsActive,
-                    isPlaying = isPlaying,
-                    showHighlightDialog = showHighlightDialog,
-                    onNavigateBack = onNavigateBack,
-                    onVisualLocatorChanged = viewModel::onVisualLocatorChanged,
-                    onNavigatorReady = { viewModel.onNavigatorReady(visualNavigator = it) },
-                    onHighlightAction = viewModel::onHighlightAction,
-                    startTts = viewModel::startTts,
-                    stopTts = viewModel::stopTts,
-                    play = viewModel::play,
-                    pause = viewModel::pause,
-                    previous = viewModel::previous,
-                    next = viewModel::next,
-                    onSearchQueryChanged = viewModel::onSearchQueryChanged,
-                    saveHighlight = { note, color ->
-                        viewModel.saveHighlight(
-                            note = note,
-                            color = color,
-                        )
-                    },
-                    dismissHighlightDialog = viewModel::dismissHighlightDialog,
+                visualReaderContent(
+                    VisualReaderState(
+                        uiState = uiState,
+                        settingsSheetState = settingsSheetState,
+                        bookmarks = bookmarks,
+                        highlights = highlights,
+                        searchResults = searchResults,
+                        searchQuery = searchQuery,
+                        isTtsActive = isTtsActive,
+                        isPlaying = isPlaying,
+                        showHighlightDialog = showHighlightDialog,
+                    ),
+                    VisualReaderActions(
+                        onSettingsClick = viewModel::openSettings,
+                        onSettingsChange = viewModel::onSettingsChanged,
+                        onSettingsDismiss = viewModel::closeSettings,
+                        onVisualLocatorChanged = viewModel::onVisualLocatorChanged,
+                        onNavigatorReady = { viewModel.onNavigatorReady(visualNavigator = it) },
+                        onHighlightAction = viewModel::onHighlightAction,
+                        startTts = viewModel::startTts,
+                        stopTts = viewModel::stopTts,
+                        play = viewModel::play,
+                        pause = viewModel::pause,
+                        previous = viewModel::previous,
+                        next = viewModel::next,
+                        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+                        saveHighlight = { note, color ->
+                            viewModel.saveHighlight(
+                                note = note,
+                                color = color,
+                            )
+                        },
+                        dismissHighlightDialog = viewModel::dismissHighlightDialog,
+                        onNavigateBack = onNavigateBack,
+                    ),
                 )
             }
         }
     }
+}
+
+@Composable
+private fun DefaultAudioReaderContent(
+    state: AudioReaderState,
+    actions: AudioReaderActions,
+) {
+    AudioReader(
+        book = state.uiState.book,
+        navigator = state.uiState.navigator,
+        settingsSheetState = state.settingsSheetState,
+        onNavigateBack = actions.onNavigateBack,
+        onSettingsClick = actions.onSettingsClick,
+        onSettingsChange = actions.onSettingsChange,
+        onSettingsDismiss = actions.onSettingsDismiss,
+    )
+}
+
+@Composable
+private fun DefaultVisualReaderContent(
+    state: VisualReaderState,
+    actions: VisualReaderActions,
+) {
+    VisualReaderContent(
+        uiState = state.uiState,
+        settingsSheetState = state.settingsSheetState,
+        onSettingsClick = actions.onSettingsClick,
+        onSettingsChange = actions.onSettingsChange,
+        onSettingsDismiss = actions.onSettingsDismiss,
+        bookmarks = state.bookmarks,
+        highlights = state.highlights,
+        searchResults = state.searchResults,
+        searchQuery = state.searchQuery,
+        isTtsActive = state.isTtsActive,
+        isPlaying = state.isPlaying,
+        showHighlightDialog = state.showHighlightDialog,
+        onNavigateBack = actions.onNavigateBack,
+        onVisualLocatorChanged = actions.onVisualLocatorChanged,
+        onNavigatorReady = actions.onNavigatorReady,
+        onHighlightAction = actions.onHighlightAction,
+        startTts = actions.startTts,
+        stopTts = actions.stopTts,
+        play = actions.play,
+        pause = actions.pause,
+        previous = actions.previous,
+        next = actions.next,
+        onSearchQueryChanged = actions.onSearchQueryChanged,
+        saveHighlight = actions.saveHighlight,
+        dismissHighlightDialog = actions.dismissHighlightDialog,
+    )
 }

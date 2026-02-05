@@ -1,8 +1,8 @@
 package com.example.readiumandroidtestapp.features.reader.ui.screens
 
 import android.app.Application
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
 import com.example.readiumandroidtestapp.features.reader.domain.OpenedBook
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
@@ -34,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
+import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.epub.EpubPreferences
@@ -472,6 +473,129 @@ class ReaderViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.settingsSheetState.value == null)
+    }
+
+    @Test
+    fun `onSearchQueryChanged delegates to searchManager`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        coEvery { bookRepository.get(bookId = bookId) } returns mockk(relaxed = true)
+        coEvery { openPublicationUseCase(url = any()) } returns Result.failure(Exception("Skip load"))
+        viewModel = createViewModel(bookId = bookId)
+        val query = "test"
+
+        viewModel.onSearchQueryChanged(query = query)
+
+        verify { searchManager.onSearchQueryChanged(query = query) }
+    }
+
+    @Test
+    fun `onHighlightAction delegates to decorationManager`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        coEvery { bookRepository.get(bookId = bookId) } returns mockk(relaxed = true)
+        coEvery { openPublicationUseCase(url = any()) } returns Result.failure(Exception("Skip load"))
+        viewModel = createViewModel(bookId = bookId)
+        val locator = mockk<Locator>()
+
+        viewModel.onHighlightAction(selection = locator)
+
+        verify { decorationManager.onHighlightAction(selection = locator) }
+    }
+
+    @Test
+    fun `dismissHighlightDialog delegates to decorationManager`() =
+        runTest(context = testDispatcher) {
+            val bookId = 1L
+            coEvery { bookRepository.get(bookId = bookId) } returns mockk(relaxed = true)
+            coEvery { openPublicationUseCase(url = any()) } returns Result.failure(Exception("Skip load"))
+            viewModel = createViewModel(bookId = bookId)
+
+            viewModel.dismissHighlightDialog()
+
+            verify { decorationManager.dismissHighlightDialog() }
+        }
+
+    @Test
+    fun `saveHighlight delegates to decorationManager`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        coEvery { bookRepository.get(bookId = bookId) } returns mockk(relaxed = true)
+        coEvery { openPublicationUseCase(url = any()) } returns Result.failure(Exception("Skip load"))
+        viewModel = createViewModel(bookId = bookId)
+        val note = "Note"
+        val color = 123
+
+        viewModel.saveHighlight(note = note, color = color)
+        advanceUntilIdle()
+
+        coVerify { decorationManager.saveHighlight(bookId = bookId, note = note, color = color) }
+    }
+
+    @Test
+    fun `audio session creation failure emits Error`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        val bookUrl = mockk<AbsoluteUrl>()
+        val book = mockk<Book>(relaxed = true) {
+            every { url } returns bookUrl
+        }
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = Publication.Profile.AUDIOBOOK) } returns true
+        }
+        val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
+
+        coEvery { bookRepository.get(bookId = bookId) } returns book
+        coEvery { openPublicationUseCase(url = bookUrl) } returns Result.success(value = openedBook)
+        coEvery {
+            sessionFactory.createAudioSession(book = book, publication = publication)
+        } returns Result.failure(Exception("Audio Fail"))
+
+        viewModel = createViewModel(bookId = bookId)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is ReaderUiState.Error)
+    }
+
+    @Test
+    fun `audio locator observation saves progression`() = runTest(context = testDispatcher) {
+        val bookId = 1L
+        val bookUrl = mockk<AbsoluteUrl>()
+        val book = mockk<Book>(relaxed = true) {
+            every { url } returns bookUrl
+        }
+        val publication = mockk<Publication>(relaxed = true) {
+            every { conformsTo(profile = Publication.Profile.AUDIOBOOK) } returns true
+        }
+        val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
+
+        val navigator =
+            mockk<org.readium.navigator.media.audio.AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(
+                relaxed = true,
+            )
+        val locatorFlow = MutableStateFlow(mockk<Locator>(relaxed = true))
+        every { navigator.currentLocator } returns locatorFlow
+
+        val audioState = ReaderUiState.Audio(
+            publication = publication,
+            book = book,
+            navigator = navigator,
+            preferencesEditor = mockk(relaxed = true),
+        )
+
+        coEvery { bookRepository.get(bookId = bookId) } returns book
+        coEvery { openPublicationUseCase(url = bookUrl) } returns Result.success(value = openedBook)
+        coEvery {
+            sessionFactory.createAudioSession(book = book, publication = publication)
+        } returns Result.success(value = audioState)
+
+        viewModel = createViewModel(bookId = bookId)
+        advanceUntilIdle()
+
+        val newLocator = mockk<Locator>(relaxed = true)
+        every { newLocator.toJSON().toString() } returns "{\"audio\":true}"
+        locatorFlow.value = newLocator
+
+        advanceTimeBy(delayTimeMillis = 3000)
+        advanceUntilIdle()
+
+        coVerify { bookRepository.saveProgression(bookId = bookId, locator = "{\"audio\":true}") }
     }
 
     private fun TestScope.setupVisualSession(

@@ -11,9 +11,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.r2.shared.publication.Publication
 
 @RunWith(AndroidJUnit4::class)
 class CatalogsScreenTest {
@@ -79,7 +82,7 @@ class CatalogsScreenTest {
                     Text(
                         text = "Feed",
                         modifier = Modifier
-                            .testTag("feed")
+                            .testTag(tag = "feed")
                             .clickable { onCatalogClick(dummyCatalog) },
                     )
                 },
@@ -87,7 +90,7 @@ class CatalogsScreenTest {
                     Text(
                         text = "Back",
                         modifier = Modifier
-                            .testTag("back_button")
+                            .testTag(tag = "back_button")
                             .clickable { onNavigateBack() },
                     )
                 },
@@ -101,5 +104,81 @@ class CatalogsScreenTest {
 
         composeTestRule.onNodeWithTag(testTag = "feed").assertIsDisplayed()
         composeTestRule.onNodeWithTag(testTag = "back_button").assertDoesNotExist()
+    }
+
+    @Test
+    fun navigates_to_sub_catalog_detail() {
+        val subCatalog = Catalog(id = 2L, title = "Sub Catalog", href = "sub", type = 1)
+
+        composeTestRule.setContent {
+            CatalogsScreen(
+                feedScreen = { onCatalogClick ->
+                    Text(
+                        text = "Feed",
+                        modifier = Modifier
+                            .testTag(tag = "feed")
+                            .clickable { onCatalogClick(dummyCatalog) },
+                    )
+                },
+                detailScreen = { catalog, _, _, onSubFeedClick, _ ->
+                    if (catalog.id == dummyCatalog.id) {
+                        Text(
+                            text = "Detail 1",
+                            modifier = Modifier
+                                .testTag(tag = "detail_1")
+                                .clickable { onSubFeedClick(subCatalog) },
+                        )
+                    } else if (catalog.id == subCatalog.id) {
+                        Text(
+                            text = "Detail 2",
+                            modifier = Modifier.testTag(tag = "detail_2"),
+                        )
+                    }
+                },
+            )
+        }
+
+        composeTestRule.onNodeWithTag(testTag = "feed").performClick()
+        composeTestRule.onNodeWithTag(testTag = "detail_1").performClick()
+
+        composeTestRule.onNodeWithTag(testTag = "detail_2").assertIsDisplayed()
+    }
+
+    @Test
+    fun navigates_to_publication_detail() {
+        val publication = mockk<Publication>(relaxed = true)
+        every { publication.manifest.toJSON().toString() } returns "{}"
+
+        composeTestRule.setContent {
+            CatalogsScreen(
+                feedScreen = { onCatalogClick ->
+                    Text(
+                        text = "Feed",
+                        modifier = Modifier
+                            .testTag(tag = "feed")
+                            .clickable { onCatalogClick(dummyCatalog) },
+                    )
+                },
+                detailScreen = { _, _, _, _, onPublicationClick ->
+                    Text(
+                        text = "Detail",
+                        modifier = Modifier
+                            .testTag(tag = "detail")
+                            .clickable { onPublicationClick(publication) },
+                    )
+                },
+                publicationScreen = { _, _ ->
+                    Text(
+                        text = "Publication",
+                        modifier = Modifier.testTag(tag = "publication"),
+                    )
+                },
+            )
+        }
+
+        composeTestRule.onNodeWithTag(testTag = "feed").performClick()
+        composeTestRule.onNodeWithTag(testTag = "detail").performClick()
+
+        composeTestRule.onNodeWithTag(testTag = "publication").assertIsDisplayed()
     }
 }

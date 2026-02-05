@@ -18,13 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.navigation.route.AccountScreens
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
+import com.example.readiumandroidtestapp.core.navigation.route.AccountScreens
 import com.example.readiumandroidtestapp.features.account.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 @Composable
-fun AccountScreen() {
+fun AccountScreen(
+    settingsScreen: @Composable () -> Unit = { SettingsScreen() },
+    aboutScreen: @Composable () -> Unit = { AboutInfoScreen() },
+) {
     val navigator = rememberListDetailPaneScaffoldNavigator<AccountScreens>()
     val scope = rememberCoroutineScope()
 
@@ -53,8 +56,8 @@ fun AccountScreen() {
                 val detail = navigator.currentDestination?.contentKey
                 if (detail != null) {
                     when (detail) {
-                        AccountScreens.Settings -> SettingsScreen()
-                        AccountScreens.About -> AboutInfoScreen()
+                        AccountScreens.Settings -> settingsScreen()
+                        AccountScreens.About -> aboutScreen()
                     }
                 }
             }
