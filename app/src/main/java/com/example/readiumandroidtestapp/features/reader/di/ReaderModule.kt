@@ -1,6 +1,8 @@
 package com.example.readiumandroidtestapp.features.reader.di
 
+import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryProvider
 import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryWrapper
+import com.example.readiumandroidtestapp.features.reader.data.DefaultAndroidTtsNavigatorFactoryProvider
 import com.example.readiumandroidtestapp.features.reader.data.DefaultAndroidTtsNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.DefaultEpubNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.DefaultPdfNavigatorFactoryWrapper
@@ -58,6 +60,11 @@ abstract class ReaderModule {
     abstract fun bindAndroidTtsNavigatorFactoryWrapper(
         wrapper: DefaultAndroidTtsNavigatorFactoryWrapper,
     ): AndroidTtsNavigatorFactoryWrapper
+
+    @Binds
+    abstract fun bindAndroidTtsNavigatorFactoryProvider(
+        provider: DefaultAndroidTtsNavigatorFactoryProvider,
+    ): AndroidTtsNavigatorFactoryProvider
 
     @Binds
     abstract fun bindSearchGateway(

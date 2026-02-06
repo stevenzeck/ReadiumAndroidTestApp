@@ -8,8 +8,9 @@ import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import javax.inject.Inject
 
-class DefaultAndroidTtsNavigatorFactoryWrapper @Inject constructor() :
-    AndroidTtsNavigatorFactoryWrapper {
+class DefaultAndroidTtsNavigatorFactoryWrapper @Inject constructor(
+    private val factoryProvider: AndroidTtsNavigatorFactoryProvider,
+) : AndroidTtsNavigatorFactoryWrapper {
 
     override suspend fun createNavigator(
         application: Application,
@@ -17,17 +18,17 @@ class DefaultAndroidTtsNavigatorFactoryWrapper @Inject constructor() :
         initialLocator: Locator,
         listener: TtsNavigator.Listener,
     ): Result<AndroidTtsNavigator> {
-        val factory = AndroidTtsNavigatorFactory(
+        val factory = factoryProvider.create(
             application = application,
             publication = publication,
-        ) ?: return Result.failure(Exception("Failed to create TTS Factory"))
+        ) ?: return Result.failure(exception = Exception("Failed to create TTS Factory"))
 
         return factory.createNavigator(
             initialLocator = initialLocator,
             listener = listener,
         ).fold(
             onSuccess = { Result.success(value = it) },
-            onFailure = { Result.failure(Exception("TTS creation failed: $it")) },
+            onFailure = { Result.failure(exception = Exception("TTS creation failed: $it")) },
         )
     }
 
@@ -35,6 +36,6 @@ class DefaultAndroidTtsNavigatorFactoryWrapper @Inject constructor() :
         application: Application,
         publication: Publication,
     ): AndroidTtsNavigatorFactory? {
-        return AndroidTtsNavigatorFactory(application, publication)
+        return factoryProvider.create(application = application, publication = publication)
     }
 }

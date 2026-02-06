@@ -166,7 +166,8 @@ class EpubSettingsSheetTest {
 
         // Scroll Mode
         composeTestRule.onNodeWithText("Scroll Mode").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithText("Scroll Mode").onParent().onChildren().filter(isToggleable()).onFirst().performClick()
+        composeTestRule.onNodeWithText("Scroll Mode").onParent().onChildren().filter(isToggleable())
+            .onFirst().performClick()
         verify { scrollPref.set(any()) }
         verify(atLeast = 1) { onCommit(any()) }
 
