@@ -1,69 +1,35 @@
 package com.example.readiumandroidtestapp.core.data.book
 
-import android.net.Uri
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
+import com.example.readiumandroidtestapp.core.data.storage.FakeStorageGateway
 import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
 import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
 import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import com.example.readiumandroidtestapp.core.domain.network.HttpResult
-import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(AndroidJUnit4::class)
 class BookImporterTest {
 
     private val tempDir = Files.createTempDirectory("test_storage").toFile()
-    private val mockUrl = mockk<AbsoluteUrl>()
 
-    private val fakeGateway = object : StorageGateway {
-        override val filesDir = tempDir
-
-        override fun openInputStream(uri: Uri): InputStream {
-            return ByteArrayInputStream("Fake Book Content".toByteArray())
-        }
-
-        override fun resolveExtension(uri: Uri) = "epub"
-
-        override fun resolveExtensionFromMimeType(mimeType: String): String? {
-            return if (mimeType == "application/epub+zip") "epub" else null
-        }
-
-        override fun toUrl(file: File): AbsoluteUrl {
-            return mockUrl
-        }
-
-        override fun deleteFile(path: String): Boolean {
-            return File(path).delete()
-        }
-
-        override fun saveFileFromStream(
-            input: InputStream,
-            extension: String?,
-        ): Try<File, Exception> {
-            val name = "test_${System.nanoTime()}.${extension ?: "epub"}"
-            val file = File(filesDir, name)
-            java.io.FileOutputStream(file).use { output ->
-                input.copyTo(output)
-            }
-            return Try.success(success = file)
-        }
-    }
+    private val fakeGateway = FakeStorageGateway(filesDir = tempDir)
 
     private val booksDao: BooksDao = mockk(relaxed = true)
     private val assetRetriever: AssetRetrieverGateway = mockk()
@@ -89,7 +55,7 @@ class BookImporterTest {
 
         coEvery {
             assetRetriever.retrieve(
-                url = mockUrl,
+                url = any(),
             )
         } returns Result.success(value = mockAsset)
 
@@ -117,8 +83,7 @@ class BookImporterTest {
 
     @Test
     fun `importFromUrl downloads and saves file`() = runTest {
-        val remoteUrl = mockk<AbsoluteUrl>()
-        every { remoteUrl.extension } returns null
+        val remoteUrl = AbsoluteUrl(url = "http://example.com/book")!!
 
         val httpResult = HttpResult(
             body = "Fake Remote Content".toByteArray(),
@@ -132,7 +97,7 @@ class BookImporterTest {
 
         coEvery {
             assetRetriever.retrieve(
-                url = mockUrl,
+                url = any(),
             )
         } returns Result.success(value = mockAsset)
 
@@ -167,7 +132,7 @@ class BookImporterTest {
 
         coEvery {
             assetRetriever.retrieve(
-                url = mockUrl,
+                url = any(),
             )
         } returns Result.success(value = mockAsset)
 

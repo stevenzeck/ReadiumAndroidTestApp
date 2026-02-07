@@ -191,15 +191,10 @@ class ReaderViewModelTest {
         coEvery { openPublicationUseCase(url = book.url!!) } returns Result.success(value = openedBook)
 
         if (isVisual) {
-            val visualState = ReaderUiState.Visual(
+            val visualState = createVisualState(
                 publication = publication,
                 book = book,
-                initialLocator = null,
-                pdfiumDocumentFactory = mockk(),
-                capabilities = mockk(),
                 preferencesEditor = preferencesEditor,
-                initialPreferences = mockk(),
-                isFixedLayout = false,
             )
             coEvery {
                 sessionFactory.createVisualSession(
@@ -237,4 +232,19 @@ class ReaderViewModelTest {
             bookId = bookId,
         )
     }
+
+    private fun createVisualState(
+        publication: Publication = mockk(relaxed = true),
+        book: Book = mockk(relaxed = true),
+        preferencesEditor: PreferencesEditor<*>? = null,
+    ) = ReaderUiState.Visual(
+        publication = publication,
+        book = book,
+        initialLocator = null,
+        pdfiumDocumentFactory = mockk(),
+        capabilities = mockk(),
+        preferencesEditor = preferencesEditor,
+        initialPreferences = mockk(),
+        isFixedLayout = false,
+    )
 }

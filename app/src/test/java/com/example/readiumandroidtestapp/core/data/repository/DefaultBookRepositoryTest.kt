@@ -196,12 +196,18 @@ class DefaultBookRepositoryTest {
         val bookmarkSlot = slot<Bookmark>()
         coVerify { booksDao.insertBookmark(bookmark = capture(lst = bookmarkSlot)) }
 
-        val captured = bookmarkSlot.captured
-        assertEquals(bookId, captured.bookId)
-        assertEquals("chapter1.html", captured.resourceHref)
-        assertEquals(0L, captured.resourceIndex)
-        assertEquals("text/html", captured.resourceType)
-        assertEquals("Chapter 1", captured.resourceTitle)
+        val expectedBookmark = Bookmark(
+            creation = 0L,
+            bookId = bookId,
+            resourceHref = locator.href.toString(),
+            resourceIndex = 0L,
+            resourceType = locator.mediaType.toString(),
+            resourceTitle = locator.title.orEmpty(),
+            location = locator.locations.toJSON().toString(),
+            locatorText = Locator.Text().toJSON().toString(),
+        )
+        val actualWithNeutralTimestamp = bookmarkSlot.captured.copy(creation = 0L)
+        assertEquals(expectedBookmark, actualWithNeutralTimestamp)
     }
 
     @Test
@@ -230,12 +236,17 @@ class DefaultBookRepositoryTest {
 
         val highlightSlot = slot<Highlight>()
         coVerify { booksDao.insertHighlight(highlight = capture(lst = highlightSlot)) }
-
-        val captured = highlightSlot.captured
-        assertEquals(bookId, captured.bookId)
-        assertEquals(style, captured.style)
-        assertEquals(tint, captured.tint)
-        assertEquals(locator.href.toString(), captured.href)
-        assertEquals(annotation, captured.annotation)
+        val expectedHighlight = Highlight(
+            creation = 0L,
+            bookId = bookId,
+            style = Highlight.Style.HIGHLIGHT,
+            tint = tint,
+            href = locator.href.toString(),
+            type = locator.mediaType.toString(),
+            title = locator.title,
+            annotation = annotation,
+        )
+        val actualWithNeutralTimestamp = highlightSlot.captured.copy(creation = 0L)
+        assertEquals(expectedHighlight, actualWithNeutralTimestamp)
     }
 }
