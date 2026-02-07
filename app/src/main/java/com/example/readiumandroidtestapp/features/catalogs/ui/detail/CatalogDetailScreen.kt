@@ -114,8 +114,7 @@ fun CatalogDetailContent(
         },
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
         ) {
             when (feedState) {
                 is FeedState.Loading -> {
@@ -304,10 +303,7 @@ fun PublicationItem(
                     )
                 },
                 onClick = {
-                    val acquisitionLink = publication.links.firstOrNull { link ->
-                        link.rels.any { it.startsWith("http://opds-spec.org/acquisition") } || link.mediaType?.isOpds == true
-                    }
-                    val acquisitionUrl = acquisitionLink?.href?.toString()
+                    val acquisitionUrl = findAcquisitionUrl(publication = publication)
 
                     if (acquisitionUrl != null) {
                         onImportBook(acquisitionUrl)
@@ -325,6 +321,13 @@ fun PublicationItem(
             )
         },
     )
+}
+
+internal fun findAcquisitionUrl(publication: Publication): String? {
+    val acquisitionLink = publication.links.firstOrNull { link ->
+        link.rels.any { it.startsWith("http://opds-spec.org/acquisition") } || link.mediaType?.isOpds == true
+    }
+    return acquisitionLink?.href?.toString()
 }
 
 /**

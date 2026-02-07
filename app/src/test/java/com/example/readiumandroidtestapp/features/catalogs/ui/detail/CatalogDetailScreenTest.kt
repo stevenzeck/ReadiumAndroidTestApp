@@ -9,9 +9,11 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
+import com.example.readiumandroidtestapp.main.MainViewModel
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -330,40 +332,21 @@ class CatalogDetailScreenTest {
     }
 
     @Test
-    fun `invokes onImportBook when download menu item is clicked`() {
-        val onImportBook = mockk<(String) -> Unit>(relaxed = true)
-        val acquisitionUrl = "http://example.com/book.epub"
-        val acquisitionLink = Link(
-            href = Url(url = acquisitionUrl)!!,
-            rels = setOf("http://opds-spec.org/acquisition"),
-        )
-        val publication = mockk<Publication>(relaxed = true) {
-            every { metadata.title } returns "Test Book"
-            every { links } returns listOf(acquisitionLink)
-            every { subcollections } returns emptyMap()
-        }
-        val feed = mockk<Feed>(relaxed = true) {
-            every { publications } returns listOf(publication)
-            every { navigation } returns emptyList()
-            every { groups } returns emptyList()
-        }
-
+    fun `shows no feed data message when feed is null`() {
         composeTestRule.setContent {
             CatalogDetailContent(
-                feedState = FeedState.Success(feed = feed),
+                feedState = FeedState.Success(feed = null),
                 catalog = catalog,
                 showBackButton = true,
                 onNavigateBack = {},
                 onSubFeedClick = {},
                 onPublicationClick = {},
-                onImportBook = onImportBook,
+                onImportBook = {},
             )
         }
 
-        val moreOptions = context.getString(R.string.more_options)
-        composeTestRule.onNodeWithContentDescription(label = moreOptions).performClick()
-
-        composeTestRule.waitForIdle()
+        val errorText = context.getString(R.string.error_no_feed_data)
+        composeTestRule.onNodeWithText(text = errorText).assertIsDisplayed()
     }
 
     @Test
@@ -418,5 +401,79 @@ class CatalogDetailScreenTest {
 
         val backDescription = context.getString(R.string.back)
         composeTestRule.onNodeWithContentDescription(label = backDescription).assertDoesNotExist()
+    }
+
+    @Test
+    fun `CatalogDetailScreen connects ViewModel state to Content`() {
+        val viewModel = mockk<CatalogDetailViewModel>(relaxed = true)
+        val mainViewModel = mockk<MainViewModel>(relaxed = true)
+        val feed = mockk<Feed>(relaxed = true) {
+            every { navigation } returns emptyList()
+            every { groups } returns emptyList()
+            every { publications } returns emptyList()
+        }
+        val feedStateFlow = MutableStateFlow<FeedState>(value = FeedState.Success(feed = feed))
+        every { viewModel.feedState } returns feedStateFlow
+
+        composeTestRule.setContent {
+            CatalogDetailScreen(
+                catalog = catalog,
+                onNavigateBack = {},
+                showBackButton = true,
+                onSubFeedClick = {},
+                onPublicationClick = {},
+                viewModel = viewModel,
+                mainViewModel = mainViewModel,
+            )
+        }
+
+        verify { viewModel.feedState }
+    }
+
+    @Test
+    fun `findAcquisitionUrl returns correct url for rel match`() {
+        val acquisitionUrl = "http://example.com/book.epub"
+        val acquisitionLink = Link(
+            href = Url(url = acquisitionUrl)!!,
+            rels = setOf("http://opds-spec.org/acquisition"),
+        )
+        val publication = mockk<Publication>(relaxed = true) {
+            every { links } returns listOf(acquisitionLink)
+        }
+
+        val result = findAcquisitionUrl(publication = publication)
+
+        org.junit.Assert.assertEquals(acquisitionUrl, result)
+    }
+
+    @Test
+    fun `findAcquisitionUrl returns correct url for mediaType match`() {
+        val acquisitionUrl = "http://example.com/book.epub"
+        val acquisitionLink = Link(
+            href = Url(url = acquisitionUrl)!!,
+            mediaType = org.readium.r2.shared.util.mediatype.MediaType(string = "application/atom+xml;profile=opds-catalog"),
+        )
+        val publication = mockk<Publication>(relaxed = true) {
+            every { links } returns listOf(acquisitionLink)
+        }
+
+        val result = findAcquisitionUrl(publication = publication)
+
+        org.junit.Assert.assertEquals(acquisitionUrl, result)
+    }
+
+    @Test
+    fun `findAcquisitionUrl returns null when no match`() {
+        val link = Link(
+            href = Url(url = "http://example.com/cover.jpg")!!,
+            rels = setOf("cover"),
+        )
+        val publication = mockk<Publication>(relaxed = true) {
+            every { links } returns listOf(link)
+        }
+
+        val result = findAcquisitionUrl(publication = publication)
+
+        org.junit.Assert.assertNull(result)
     }
 }

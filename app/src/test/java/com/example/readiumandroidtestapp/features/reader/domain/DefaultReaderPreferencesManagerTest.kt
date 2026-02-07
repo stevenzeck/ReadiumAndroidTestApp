@@ -85,6 +85,44 @@ class DefaultReaderPreferencesManagerTest {
     interface ConfigurablePdfNavigator : VisualNavigator,
         Configurable<PdfiumSettings, PdfiumPreferences>
 
+    class UnknownPreferences : Configurable.Preferences<UnknownPreferences> {
+        override fun plus(other: UnknownPreferences): UnknownPreferences = this
+    }
+
+    @Test
+    fun `commitPreferences ignores unknown preferences`() = runTest {
+        val bookId = 1L
+        val preferences = UnknownPreferences()
+
+        manager.commitPreferences(
+            bookId = bookId,
+            preferences = preferences,
+            currentVisualNavigator = null,
+            audioNavigator = null,
+            ttsManager = ttsManager,
+        )
+
+        // Verify nothing was saved
+        coVerify(exactly = 0) {
+            bookPreferencesRepository.savePreferences(
+                bookId = any(),
+                preferencesJson = any(),
+            )
+        }
+        coVerify(exactly = 0) {
+            bookPreferencesRepository.saveTtsPreferences(
+                bookId = any(),
+                preferencesJson = any(),
+            )
+        }
+        coVerify(exactly = 0) {
+            bookPreferencesRepository.saveAudiobookPreferences(
+                bookId = any(),
+                preferencesJson = any(),
+            )
+        }
+    }
+
     @Test
     fun `commitPreferences saves epub preferences`() = runTest {
         val bookId = 1L
@@ -246,6 +284,17 @@ class DefaultReaderPreferencesManagerTest {
     }
 
     @Test
+    fun `createPreferencesEditor returns null for unknown preferences`() {
+        val publication = mockk<Publication>()
+        val preferences = UnknownPreferences()
+
+        val result =
+            manager.createPreferencesEditor(publication = publication, preferences = preferences)
+
+        assertNull(result)
+    }
+
+    @Test
     fun `loadPreferences for EPUB`() = runTest {
         val bookId = 1L
         val publication = mockk<Publication> {
@@ -281,6 +330,21 @@ class DefaultReaderPreferencesManagerTest {
     }
 
     @Test
+    fun `loadPreferences returns default EpubPreferences for unknown publication type`() = runTest {
+        val bookId = 1L
+        val publication = mockk<Publication> {
+            every { conformsTo(profile = Publication.Profile.EPUB) } returns false
+            every { conformsTo(profile = Publication.Profile.PDF) } returns false
+        }
+
+        coEvery { bookPreferencesRepository.getPreferences(bookId = bookId) } returns "{}"
+
+        val result = manager.loadPreferences(bookId = bookId, publication = publication)
+
+        assertEquals(EpubPreferences(), result)
+    }
+
+    @Test
     fun `loadAudiobookPreferences returns deserialized preferences`() = runTest {
         val bookId = 1L
         val json = "{}"
@@ -292,6 +356,16 @@ class DefaultReaderPreferencesManagerTest {
         val result = manager.loadAudiobookPreferences(bookId = bookId)
 
         assertEquals(preferences, result)
+    }
+
+    @Test
+    fun `loadAudiobookPreferences returns empty preferences when repo returns null`() = runTest {
+        val bookId = 1L
+        coEvery { bookPreferencesRepository.getAudiobookPreferences(bookId = bookId) } returns null
+
+        val result = manager.loadAudiobookPreferences(bookId = bookId)
+
+        assertEquals(ExoPlayerPreferences(), result)
     }
 
     @Test
@@ -317,8 +391,7 @@ class DefaultReaderPreferencesManagerTest {
         every { languagePref.value } returns null
         every { editor.language } returns languagePref
 
-        val voicesPref =
-            mockk<Preference<Map<Language, AndroidTtsEngine.Voice.Id>>>(relaxed = true)
+        val voicesPref = mockk<Preference<Map<Language, AndroidTtsEngine.Voice.Id>>>(relaxed = true)
         every { voicesPref.value } returns emptyMap()
         every { editor.voices } returns voicesPref
 
@@ -332,6 +405,70 @@ class DefaultReaderPreferencesManagerTest {
         )
 
         assertNotNull(session)
+    }
+
+    @Test
+    fun `createTtsSettingsSession voice preference logic`() = runTest {
+        val bookId = 1L
+        val publication = mockk<Publication>(relaxed = true)
+        val factory = mockk<AndroidTtsNavigatorFactory>(relaxed = true)
+        val editor = mockk<AndroidTtsPreferencesEditor>(relaxed = true)
+        val preferences = AndroidTtsPreferences()
+
+        coEvery {
+            ttsNavigatorFactoryWrapper.createFactory(
+                application = application,
+                publication = publication,
+            )
+        } returns factory
+        coEvery { bookPreferencesRepository.getTtsPreferences(bookId = bookId) } returns "{}"
+        every { ttsSerializer.deserialize(preferences = "{}") } returns preferences
+        every { factory.createPreferencesEditor(preferences = preferences) } returns editor
+
+        // Setup voices
+        val enVoice = AndroidTtsEngine.Voice(
+            id = AndroidTtsEngine.Voice.Id(value = "en-id"),
+            language = Language(code = "en"),
+            quality = AndroidTtsEngine.Voice.Quality.Normal,
+            requiresNetwork = false,
+        )
+        val frVoice = AndroidTtsEngine.Voice(
+            id = AndroidTtsEngine.Voice.Id(value = "fr-id"),
+            language = Language(code = "fr"),
+            quality = AndroidTtsEngine.Voice.Quality.Normal,
+            requiresNetwork = false,
+        )
+        every { ttsManager.voices } returns setOf(enVoice, frVoice)
+
+        // Mock editor properties
+        val languagePref = mockk<Preference<Language?>>(relaxed = true)
+        every { languagePref.value } returns Language(code = "en")
+        every { editor.language } returns languagePref
+
+        // The underlying voices preference stores map of Language -> VoiceId
+        val underlyingVoicesMap = mapOf(Language(code = "en") to enVoice.id)
+        val voicesPref = mockk<Preference<Map<Language, AndroidTtsEngine.Voice.Id>>>(relaxed = true)
+        every { voicesPref.value } returns underlyingVoicesMap
+        every { editor.voices } returns voicesPref
+
+        val session = manager.createTtsSettingsSession(
+            bookId = bookId,
+            publication = publication,
+            ttsManager = ttsManager,
+            application = application,
+        )!!
+
+        val selectedVoice = session.voice.value
+        assertEquals(enVoice, selectedVoice)
+
+        session.voice.set(frVoice)
+        verify {
+            voicesPref.set(
+                match { map ->
+                    map[Language(code = "en")] == frVoice.id
+                },
+            )
+        }
     }
 
     @Test
@@ -411,5 +548,44 @@ class DefaultReaderPreferencesManagerTest {
 
         assertNotNull(newState)
         assertEquals(editor, (newState as ReaderUiState.Audio).preferencesEditor)
+    }
+
+    @Test
+    fun `refreshSessionState returns null for unknown state`() {
+        val currentState = ReaderUiState.Loading
+        val preferences = EpubPreferences()
+
+        val result =
+            manager.refreshSessionState(currentState = currentState, newPreferences = preferences)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `refreshSessionState returns null when editor creation fails`() {
+        val publication = mockk<Publication>()
+        val preferences = EpubPreferences()
+        val currentState = ReaderUiState.Visual(
+            publication = publication,
+            book = mockk(),
+            initialLocator = null,
+            pdfiumDocumentFactory = mockk(),
+            capabilities = ReaderCapabilities(
+                isSearchable = true,
+                canSpeak = true,
+                hasPreferences = true,
+            ),
+            initialPreferences = preferences,
+        )
+
+        // Pass UnknownPreferences to force createPreferencesEditor to return null
+        val unknownPreferences = UnknownPreferences()
+
+        val result = manager.refreshSessionState(
+            currentState = currentState,
+            newPreferences = unknownPreferences,
+        )
+
+        assertNull(result)
     }
 }

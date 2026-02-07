@@ -4,7 +4,7 @@ agp = "9.0.0"
 desugar-jdk-libs = "2.1.5"
 
 # -- Kotlin --
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
