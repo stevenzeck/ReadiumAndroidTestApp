@@ -25,6 +25,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.mediatype.MediaType
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookshelfViewModelTest {
@@ -50,7 +51,24 @@ class BookshelfViewModelTest {
 
     @Test
     fun `uiState emits Success when books exist`() = runTest(context = testDispatcher) {
-        val books = listOf(mockk<Book>())
+        val book1 = Book(
+            id = 1L,
+            href = "path/book1.epub",
+            title = "Book 1",
+            identifier = "id1",
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            cover = null,
+        )
+        val book2 = Book(
+            id = 2L,
+            href = "path/book2.epub",
+            title = "Book 2",
+            identifier = "id2",
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            cover = null,
+        )
+        val books = listOf(book1, book2)
+
         every { bookRepository.books } returns MutableStateFlow(value = books)
 
         viewModel = BookshelfViewModel(
@@ -107,9 +125,7 @@ class BookshelfViewModelTest {
         // Given
         val bookId = 123L
         coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.failure(
-            failure = Exception(
-                "Fail",
-            ),
+            failure = Exception("Fail"),
         )
 
         // When

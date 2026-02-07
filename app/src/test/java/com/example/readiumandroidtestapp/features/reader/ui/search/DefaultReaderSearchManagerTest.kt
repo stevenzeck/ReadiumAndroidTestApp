@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.ListUpdateCallback
 import com.example.readiumandroidtestapp.features.reader.domain.SearchGateway
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +33,8 @@ import org.readium.r2.shared.publication.LocatorCollection
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.search.SearchIterator
 import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.Url
+import org.readium.r2.shared.util.mediatype.MediaType
 import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -101,16 +102,20 @@ class DefaultReaderSearchManagerTest {
         val publication = mockk<Publication>()
         val publicationFlow = MutableStateFlow<Publication?>(value = publication)
 
-        val locator1 = mockk<Locator>(relaxed = true) {
-            every { title } returns "Chapter 1"
-        }
-        val locator2 = mockk<Locator>(relaxed = true) {
-            every { title } returns "Chapter 2"
-        }
+        val locator1 = Locator(
+            href = Url(url = "chapter1.html")!!,
+            mediaType = MediaType(string = "text/html")!!,
+            title = "Chapter 1",
+        )
+        val locator2 = Locator(
+            href = Url(url = "chapter2.html")!!,
+            mediaType = MediaType(string = "text/html")!!,
+            title = "Chapter 2",
+        )
 
-        val collection = mockk<LocatorCollection> {
-            every { locators } returns listOf(locator1, locator2)
-        }
+        val collection = LocatorCollection(
+            locators = listOf(locator1, locator2),
+        )
 
         val iterator = mockk<SearchIterator>()
         coEvery { iterator.next() } returns Try.success(success = collection) andThen Try.success(

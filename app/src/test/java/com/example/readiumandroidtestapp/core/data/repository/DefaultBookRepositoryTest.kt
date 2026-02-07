@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.core.data.repository
 
+import android.graphics.Color
 import android.net.Uri
 import com.example.readiumandroidtestapp.core.data.book.BookImporter
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
@@ -73,7 +74,7 @@ class DefaultBookRepositoryTest {
 
     @Test
     fun `addBook from Uri success`() = runTest {
-        val uri = mockk<Uri>()
+        val uri = Uri.parse("content://com.example/book.epub")
         val book = Book(
             id = 1,
             href = "path/to/book.epub",
@@ -204,7 +205,7 @@ class DefaultBookRepositoryTest {
     fun `insertBookmark inserts bookmark with correct data`() = runTest {
         val bookId = 1L
         val locator = Locator(
-            href = Url("chapter1.html")!!,
+            href = Url(url = "chapter1.html")!!,
             mediaType = MediaType(string = "text/html")!!,
             title = "Chapter 1",
             locations = Locator.Locations(progression = 0.5),
@@ -212,7 +213,7 @@ class DefaultBookRepositoryTest {
         )
         val publication = mockk<Publication>()
 
-        val link = Link(href = Url("chapter1.html")!!)
+        val link = Link(href = Url(url = "chapter1.html")!!)
         every { publication.readingOrder } returns listOf(link)
 
         coEvery { booksDao.insertBookmark(bookmark = any()) } returns 123L
@@ -239,7 +240,18 @@ class DefaultBookRepositoryTest {
     @Test
     fun `bookmarksForBook returns flow from dao`() = runTest {
         val bookId = 1L
-        val bookmarks = listOf(mockk<Bookmark>())
+        val bookmark = Bookmark(
+            id = 1L,
+            bookId = bookId,
+            resourceIndex = 0,
+            resourceHref = "chapter1.html",
+            resourceType = "text/html",
+            resourceTitle = "Chapter 1",
+            location = "{}",
+            locatorText = "{}"
+        )
+        val bookmarks = listOf(bookmark)
+
         every { booksDao.getBookmarksForBook(bookId = bookId) } returns flowOf(value = bookmarks)
 
         val result = repository.bookmarksForBook(bookId = bookId)
@@ -266,7 +278,17 @@ class DefaultBookRepositoryTest {
     @Test
     fun `highlightsForBook returns flow from dao`() = runTest {
         val bookId = 1L
-        val highlights = listOf(mockk<Highlight>())
+        val highlight = Highlight(
+            id = 100L,
+            bookId = bookId,
+            style = Highlight.Style.HIGHLIGHT,
+            tint = Color.YELLOW,
+            href = "chapter1.html",
+            type = "text/html",
+            title = "Chapter 1",
+            annotation = "Note"
+        )
+        val highlights = listOf(highlight)
         every { booksDao.getHighlightsForBook(bookId = bookId) } returns flowOf(value = highlights)
 
         val result = repository.highlightsForBook(bookId = bookId)
