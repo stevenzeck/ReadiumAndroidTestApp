@@ -8,6 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.readium.r2.shared.publication.LocalizedString
+import org.readium.r2.shared.publication.Manifest
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Try
@@ -22,25 +23,23 @@ class DefaultPublicationOpenerGatewayTest {
     @Test
     fun `open returns success when opener succeeds`() = runTest {
         val asset = mockk<Asset>()
-        val publication = mockk<Publication>()
-        val metadata = Metadata(
-            localizedTitle = LocalizedString(value = "Open Book"),
-            identifier = "urn:uuid:12345",
+        val realPublication = Publication(
+            manifest = Manifest(metadata = Metadata(localizedTitle = LocalizedString(value = "Open Book"))),
         )
-        every { publication.metadata } returns metadata
 
         coEvery {
             publicationOpener.open(
                 asset = asset,
                 allowUserInteraction = true,
             )
-        } returns Try.success(success = publication)
+        } returns Try.success(success = realPublication)
 
         val result = gateway.open(asset = asset, allowUserInteraction = true)
 
         assertTrue(result.isSuccess)
         val resultPub = result.getOrNull()
-        assertEquals(publication, resultPub)
+
+        assertEquals(realPublication, resultPub)
         assertEquals("Open Book", resultPub?.metadata?.title)
     }
 

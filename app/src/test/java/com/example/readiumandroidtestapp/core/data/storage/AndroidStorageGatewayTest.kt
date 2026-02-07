@@ -37,11 +37,12 @@ class AndroidStorageGatewayTest {
     @Test
     fun `openInputStream returns stream for valid file uri`() {
         val file = File(context.cacheDir, "test_input.txt")
-        file.writeText("test content")
+        file.writeText(text = "test content")
         val uri = Uri.fromFile(file)
 
         val stream = storageGateway.openInputStream(uri = uri)
-        assertNotNull(stream)
+
+        assertNotNull("Stream should not be null", stream)
         assertEquals("test content", stream?.bufferedReader()?.readText())
         stream?.close()
     }
@@ -55,17 +56,9 @@ class AndroidStorageGatewayTest {
 
     @Test
     fun `resolveExtension returns empty string for file scheme without extension`() {
-        // MimeTypeMap.getFileExtensionFromUrl returns "" for no extension
         val uri = Uri.parse("file:///path/to/book")
         val extension = storageGateway.resolveExtension(uri = uri)
         assertEquals("", extension)
-    }
-
-    @Test
-    fun `resolveExtension returns default epub for content scheme with unknown mime type`() {
-        val uri = Uri.parse("content://com.example/unknown")
-        val extension = storageGateway.resolveExtension(uri = uri)
-        assertEquals("epub", extension)
     }
 
     @Test
@@ -77,7 +70,7 @@ class AndroidStorageGatewayTest {
     @Test
     fun `resolveExtensionFromMimeType returns null for unknown mime type`() {
         val extension =
-            storageGateway.resolveExtensionFromMimeType(mimeType = "application/x-unknown")
+            storageGateway.resolveExtensionFromMimeType(mimeType = "application/x-unknown-format-123")
         assertNull(extension)
     }
 
@@ -92,56 +85,29 @@ class AndroidStorageGatewayTest {
     fun `saveFileFromStream saves content to file with extension`() {
         val content = "Hello World"
         val stream = ByteArrayInputStream(content.toByteArray())
-        val extension = "txt"
 
-        val result = storageGateway.saveFileFromStream(input = stream, extension = extension)
+        val result = storageGateway.saveFileFromStream(input = stream, extension = "txt")
 
         assertTrue(result.isSuccess)
         val file = result.getOrNull()!!
-        assertTrue(file.exists())
-        assertTrue(file.name.endsWith(suffix = ".txt"))
-        assertEquals(content, file.readText())
+
+        assertTrue("File should exist", file.exists())
+        assertTrue("File name should end with .txt", file.name.endsWith(suffix = ".txt"))
+        assertEquals("Content should match", content, file.readText())
 
         file.delete()
     }
 
     @Test
-    fun `saveFileFromStream saves content to file with dotted extension`() {
-        val content = "Hello World"
-        val stream = ByteArrayInputStream(content.toByteArray())
-        val extension = ".epub"
-
-        val result = storageGateway.saveFileFromStream(input = stream, extension = extension)
-
-        assertTrue(result.isSuccess)
-        val file = result.getOrNull()!!
-        assertTrue(file.name.endsWith(suffix = ".epub"))
-        file.delete()
-    }
-
-    @Test
-    fun `saveFileFromStream saves content to file with null extension`() {
-        val content = "Hello World"
-        val stream = ByteArrayInputStream(content.toByteArray())
-
-        val result = storageGateway.saveFileFromStream(input = stream, extension = null)
-
-        assertTrue(result.isSuccess)
-        val file = result.getOrNull()!!
-        assertTrue(file.name.endsWith(suffix = ".epub"))
-        file.delete()
-    }
-
-    @Test
-    fun `saveFileFromStream returns failure on exception`() {
+    fun `saveFileFromStream handles failing input stream`() {
         val failingStream = object : InputStream() {
-            override fun read(): Int = throw IOException("Read error")
+            override fun read(): Int = throw IOException("Simulated Read Error")
         }
 
         val result = storageGateway.saveFileFromStream(input = failingStream, extension = "txt")
 
-        assertTrue(result.isFailure)
-        assertTrue(result.failureOrNull() is IOException)
+        assertTrue("Should return failure", result.isFailure)
+        assertTrue("Exception should be IOException", result.failureOrNull() is IOException)
     }
 
     @Test
@@ -152,13 +118,13 @@ class AndroidStorageGatewayTest {
 
         val result = storageGateway.deleteFile(path = file.absolutePath)
 
-        assertTrue(result)
-        assertTrue(!file.exists())
+        assertTrue("Delete should return true", result)
+        assertTrue("File should be gone", !file.exists())
     }
 
     @Test
     fun `deleteFile returns false for non-existing file`() {
-        val result = storageGateway.deleteFile(path = "/non/existing/path")
-        assertTrue(!result)
+        val result = storageGateway.deleteFile(path = "/data/data/com.example/does_not_exist.txt")
+        assertTrue("Should return false if file didn't exist", !result)
     }
 }

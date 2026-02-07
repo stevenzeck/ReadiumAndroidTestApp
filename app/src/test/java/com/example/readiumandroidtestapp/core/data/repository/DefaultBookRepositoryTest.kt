@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.book.BookImporter
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
+import com.example.readiumandroidtestapp.core.data.storage.FakeStorageGateway
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
@@ -15,37 +16,49 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.publication.Manifest
+import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
+import java.io.File
+import java.nio.file.Files
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class DefaultBookRepositoryTest {
 
+    private val tempDir = Files.createTempDirectory("repo_test").toFile()
+    private val fakeGateway = FakeStorageGateway(filesDir = tempDir)
+
     private val booksDao: BooksDao = mockk(relaxed = true)
     private val bookImporter: BookImporter = mockk()
-    private val storageGateway: StorageGateway = mockk(relaxed = true)
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private val repository = DefaultBookRepository(
         booksDao = booksDao,
         bookImporter = bookImporter,
-        storageGateway = storageGateway,
+        storageGateway = fakeGateway,
         ioDispatcher = testDispatcher,
     )
+
+    @After
+    fun tearDown() {
+        tempDir.deleteRecursively()
+    }
 
     @Test
     fun `addBook from Url success`() = runTest {
@@ -93,26 +106,33 @@ class DefaultBookRepositoryTest {
 
     @Test
     fun `deleteBook success removes files and db entry`() = runTest {
+        // Given
+        val bookFile = File(tempDir, "book.epub").apply { createNewFile() }
+        val coverFile = File(tempDir, "cover.jpg").apply { createNewFile() }
+
         val bookId = 1L
         val book = Book(
             id = bookId,
-            href = "path/to/book.epub",
+            href = bookFile.absolutePath,
             title = "Title",
             author = "Author",
             identifier = "id",
             mediaType = MediaType(string = "application/epub+zip")!!,
-            cover = "path/to/cover.jpg",
+            cover = coverFile.absolutePath,
         )
 
         coEvery { booksDao.get(bookId = bookId) } returns book
         coEvery { booksDao.deleteBook(bookId = bookId) } just Runs
 
+        // When
         val result = repository.deleteBook(bookId = bookId)
 
+        // Then
         assertTrue(result.isSuccess)
         coVerify { booksDao.deleteBook(bookId = bookId) }
-        verify { storageGateway.deleteFile(path = book.href) }
-        verify { storageGateway.deleteFile(path = book.cover!!) }
+
+        assertFalse("Book file should be deleted", bookFile.exists())
+        assertFalse("Cover file should be deleted", coverFile.exists())
     }
 
     @Test
@@ -128,6 +148,16 @@ class DefaultBookRepositoryTest {
 
     @Test
     fun `deleteBook failure on file deletion is suppressed and returns success`() = runTest {
+        val mockGateway = mockk<StorageGateway>()
+        every { mockGateway.deleteFile(path = any()) } throws RuntimeException("Delete failed")
+
+        val repoWithMock = DefaultBookRepository(
+            booksDao = booksDao,
+            bookImporter = bookImporter,
+            storageGateway = mockGateway,
+            ioDispatcher = testDispatcher,
+        )
+
         val bookId = 1L
         val book = Book(
             id = bookId,
@@ -141,9 +171,8 @@ class DefaultBookRepositoryTest {
 
         coEvery { booksDao.get(bookId = bookId) } returns book
         coEvery { booksDao.deleteBook(bookId = bookId) } just Runs
-        every { storageGateway.deleteFile(path = any()) } throws RuntimeException("Delete failed")
 
-        val result = repository.deleteBook(bookId = bookId)
+        val result = repoWithMock.deleteBook(bookId = bookId)
 
         assertTrue(result.isSuccess)
         coVerify { booksDao.deleteBook(bookId = bookId) }
@@ -171,6 +200,7 @@ class DefaultBookRepositoryTest {
     @Test
     fun `insertBookmark inserts bookmark with correct data`() = runTest {
         val bookId = 1L
+        val hrefUrl = Url(url = "chapter1.html")!!
         val locator = Locator(
             href = Url(url = "chapter1.html")!!,
             mediaType = MediaType(string = "text/html")!!,
@@ -178,10 +208,15 @@ class DefaultBookRepositoryTest {
             locations = Locator.Locations(progression = 0.5),
             text = Locator.Text(highlight = "highlight"),
         )
-        val publication = mockk<Publication>()
 
-        val link = Link(href = Url(url = "chapter1.html")!!)
-        every { publication.readingOrder } returns listOf(link)
+        val publication = Publication(
+            manifest = Manifest(
+                readingOrder = listOf(
+                    Link(href = hrefUrl, mediaType = MediaType.HTML),
+                ),
+                metadata = Metadata(),
+            ),
+        )
 
         coEvery { booksDao.insertBookmark(bookmark = any()) } returns 123L
 
@@ -200,12 +235,13 @@ class DefaultBookRepositoryTest {
             creation = 0L,
             bookId = bookId,
             resourceHref = locator.href.toString(),
-            resourceIndex = 0L,
+            resourceIndex = 0,
             resourceType = locator.mediaType.toString(),
             resourceTitle = locator.title.orEmpty(),
             location = locator.locations.toJSON().toString(),
             locatorText = Locator.Text().toJSON().toString(),
         )
+
         val actualWithNeutralTimestamp = bookmarkSlot.captured.copy(creation = 0L)
         assertEquals(expectedBookmark, actualWithNeutralTimestamp)
     }
@@ -216,7 +252,7 @@ class DefaultBookRepositoryTest {
         val style = Highlight.Style.HIGHLIGHT
         val tint = 123456
         val locator = Locator(
-            href = Url("chapter1.html")!!,
+            href = Url(url = "chapter1.html")!!,
             mediaType = MediaType(string = "text/html")!!,
             title = "Chapter 1",
         )
@@ -236,6 +272,7 @@ class DefaultBookRepositoryTest {
 
         val highlightSlot = slot<Highlight>()
         coVerify { booksDao.insertHighlight(highlight = capture(lst = highlightSlot)) }
+
         val expectedHighlight = Highlight(
             creation = 0L,
             bookId = bookId,
@@ -246,6 +283,7 @@ class DefaultBookRepositoryTest {
             title = locator.title,
             annotation = annotation,
         )
+
         val actualWithNeutralTimestamp = highlightSlot.captured.copy(creation = 0L)
         assertEquals(expectedHighlight, actualWithNeutralTimestamp)
     }
