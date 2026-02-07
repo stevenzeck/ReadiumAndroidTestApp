@@ -86,7 +86,7 @@ class DefaultReaderPreferencesManagerTest {
      */
     class FakePreference<T>(
         private var _value: T?,
-        private val _effectiveValue: T
+        private val _effectiveValue: T,
     ) : Preference<T> {
         override val value: T? get() = _value
         override val effectiveValue: T get() = _effectiveValue
@@ -408,7 +408,7 @@ class DefaultReaderPreferencesManagerTest {
 
         val fakeVoices = FakePreference<Map<Language, AndroidTtsEngine.Voice.Id>>(
             _value = emptyMap(),
-            _effectiveValue = emptyMap()
+            _effectiveValue = emptyMap(),
         )
         every { editor.voices } returns fakeVoices
 
@@ -459,14 +459,14 @@ class DefaultReaderPreferencesManagerTest {
 
         val fakeLanguagePref = FakePreference<Language?>(
             _value = Language(code = "en"),
-            _effectiveValue = Language(code = "en")
+            _effectiveValue = Language(code = "en"),
         )
         every { editor.language } returns fakeLanguagePref
 
         val underlyingVoicesMap = mapOf(Language(code = "en") to enVoice.id)
         val fakeVoicesPref = FakePreference(
             _value = underlyingVoicesMap,
-            _effectiveValue = emptyMap()
+            _effectiveValue = emptyMap(),
         )
         every { editor.voices } returns fakeVoicesPref
 

@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import io.mockk.coEvery
@@ -15,10 +16,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.r2.navigator.Decoration
 import org.readium.r2.shared.publication.Locator
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 @Config(manifest = Config.NONE)
 class ReaderDecorationManagerTest {
 

@@ -1,6 +1,7 @@
 package com.example.readiumandroidtestapp.core.data.book
 
 import android.graphics.Bitmap
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.coEvery
 import io.mockk.every
@@ -19,10 +20,9 @@ import org.readium.r2.shared.publication.LocalizedString
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.cover
-import org.robolectric.RobolectricTestRunner
 import java.nio.file.Files
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class CoverImageSaverTest {
 
     private val storageGateway: StorageGateway = mockk()

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.fragment.app.FragmentActivity
 import androidx.paging.PagingData
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabilities
@@ -32,9 +33,8 @@ import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.shared.publication.Publication
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class ReaderScreenTest {
 
     @get:Rule

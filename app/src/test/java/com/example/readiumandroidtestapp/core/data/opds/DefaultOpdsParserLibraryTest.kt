@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.core.data.opds
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -15,9 +16,8 @@ import org.readium.r2.opds.OPDS1Parser
 import org.readium.r2.opds.OPDS2Parser
 import org.readium.r2.shared.opds.ParseData
 import org.readium.r2.shared.util.Try
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class DefaultOpdsParserLibraryTest {
 
     private val library = DefaultOpdsParserLibrary()

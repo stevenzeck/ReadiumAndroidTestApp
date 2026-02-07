@@ -1,6 +1,7 @@
 package com.example.readiumandroidtestapp.core.data.book
 
 import android.net.Uri
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
 import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
@@ -30,12 +31,11 @@ import org.readium.r2.shared.util.format.Format
 import org.readium.r2.shared.util.format.FormatSpecification
 import org.readium.r2.shared.util.format.Specification
 import org.readium.r2.shared.util.mediatype.MediaType
-import org.robolectric.RobolectricTestRunner
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class DefaultBookImporterTest {
 
     private val storageGateway: StorageGateway = mockk()

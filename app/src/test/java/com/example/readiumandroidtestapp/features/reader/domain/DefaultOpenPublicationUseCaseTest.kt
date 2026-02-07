@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
 import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
 import io.mockk.coEvery
@@ -13,9 +14,8 @@ import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.asset.Asset
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class DefaultOpenPublicationUseCaseTest {
 
     private val assetRetriever: AssetRetrieverGateway = mockk()

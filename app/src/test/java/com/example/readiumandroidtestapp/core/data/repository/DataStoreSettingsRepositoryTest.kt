@@ -2,6 +2,7 @@ package com.example.readiumandroidtestapp.core.data.repository
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -9,9 +10,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class DataStoreSettingsRepositoryTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()

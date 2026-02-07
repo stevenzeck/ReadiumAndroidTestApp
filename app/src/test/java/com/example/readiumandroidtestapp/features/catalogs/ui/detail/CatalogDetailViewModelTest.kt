@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.catalogs.ui.detail
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.domain.opds.OpdsParser
 import io.mockk.coEvery
@@ -24,10 +25,9 @@ import org.readium.r2.shared.opds.Feed
 import org.readium.r2.shared.opds.ParseData
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class CatalogDetailViewModelTest {
 
     private lateinit var viewModel: CatalogDetailViewModel

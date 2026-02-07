@@ -2,6 +2,7 @@ package com.example.readiumandroidtestapp.features.reader.ui.audio
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -9,10 +10,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.navigator.media.audio.AudioNavigator
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class ReaderMediaBinderTest {
 
     private lateinit var application: Application

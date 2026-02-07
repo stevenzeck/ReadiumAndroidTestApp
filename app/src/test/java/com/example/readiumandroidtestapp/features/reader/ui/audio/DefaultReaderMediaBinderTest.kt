@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -15,10 +16,9 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.navigator.media.audio.AudioNavigator
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class DefaultReaderMediaBinderTest {
 
     private val application: Application = ApplicationProvider.getApplicationContext()

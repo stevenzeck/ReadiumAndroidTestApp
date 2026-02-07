@@ -1,6 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.ui.preferences
 
 import android.content.res.Resources
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import io.mockk.every
 import io.mockk.mockk
@@ -14,9 +15,8 @@ import org.readium.r2.navigator.preferences.FontFamily
 import org.readium.r2.navigator.preferences.Spread
 import org.readium.r2.navigator.preferences.TextAlign
 import org.readium.r2.navigator.preferences.Theme
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class PreferencesHelpersTest {
 
     private val resources: Resources = mockk()

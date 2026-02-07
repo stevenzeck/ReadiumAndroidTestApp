@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.ui.tts
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.features.reader.domain.TtsNavigatorGateway
 import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
 import io.mockk.coEvery
@@ -26,10 +27,9 @@ import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Language
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class DefaultReaderTtsManagerTest {
 
     private val ttsServiceGateway: TtsServiceGateway = mockk()
