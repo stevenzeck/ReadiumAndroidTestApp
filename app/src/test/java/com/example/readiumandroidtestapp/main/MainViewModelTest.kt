@@ -26,14 +26,11 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.mediatype.MediaType
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class MainViewModelTest {
 
     private val bookRepository: BookRepository = mockk()
@@ -76,8 +73,15 @@ class MainViewModelTest {
 
     @Test
     fun `importBook with URI calls repository and emits success message`() = runTest {
-        val uri = Uri.parse("content://file")
-        val book = mockk<Book>()
+        val uri = mockk<Uri>()
+        val book = Book(
+            id = 1,
+            title = "Title",
+            href = "href",
+            identifier = "id",
+            mediaType = MediaType.EPUB,
+            cover = null,
+        )
         coEvery { bookRepository.addBook(uri = any()) } returns Try.success(success = book)
 
         viewModel.importBook(uri = uri)
@@ -89,7 +93,7 @@ class MainViewModelTest {
 
     @Test
     fun `importBook with URI emits error message on failure`() = runTest {
-        val uri = Uri.parse("content://file")
+        val uri = mockk<Uri>()
         coEvery { bookRepository.addBook(uri = any()) } returns Try.failure(failure = ImportError.InvalidBook)
 
         viewModel.importBook(uri = uri)
@@ -109,7 +113,7 @@ class MainViewModelTest {
             mediaType = MediaType.EPUB,
             cover = null,
         )
-        val absoluteUrl = AbsoluteUrl(url = "http://example.com/book.epub")!!
+        val absoluteUrl = mockk<AbsoluteUrl>()
         every { urlGateway.parseAbsoluteUrl(urlString) } returns absoluteUrl
         coEvery { bookRepository.addBook(url = any()) } returns Try.success(success = book)
 

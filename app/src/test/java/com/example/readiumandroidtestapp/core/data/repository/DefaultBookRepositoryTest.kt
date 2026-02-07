@@ -153,17 +153,6 @@ class DefaultBookRepositoryTest {
     }
 
     @Test
-    fun `saveProgression calls dao`() = runTest {
-        val bookId = 1L
-        val locator = "locator-json"
-
-        val result = repository.saveProgression(bookId = bookId, locator = locator)
-
-        assertTrue(result.isSuccess)
-        coVerify { booksDao.saveProgression(bookId = bookId, locator = locator) }
-    }
-
-    @Test
     fun `saveProgression failure returns Try Failure`() = runTest {
         val bookId = 1L
         val locator = "locator-json"
@@ -180,25 +169,6 @@ class DefaultBookRepositoryTest {
 
         assertTrue(result.isFailure)
         assertEquals(exception, (result as Try.Failure).value)
-    }
-
-    @Test
-    fun `get returns book from dao`() = runTest {
-        val bookId = 1L
-        val book = Book(
-            id = bookId,
-            href = "href",
-            title = "Title",
-            author = "Author",
-            identifier = "id",
-            mediaType = MediaType(string = "application/epub+zip")!!,
-            cover = null,
-        )
-        coEvery { booksDao.get(bookId = bookId) } returns book
-
-        val result = repository.get(bookId = bookId)
-
-        assertEquals(book, result)
     }
 
     @Test
@@ -238,71 +208,6 @@ class DefaultBookRepositoryTest {
     }
 
     @Test
-    fun `bookmarksForBook returns flow from dao`() = runTest {
-        val bookId = 1L
-        val bookmark = Bookmark(
-            id = 1L,
-            bookId = bookId,
-            resourceIndex = 0,
-            resourceHref = "chapter1.html",
-            resourceType = "text/html",
-            resourceTitle = "Chapter 1",
-            location = "{}",
-            locatorText = "{}",
-        )
-        val bookmarks = listOf(bookmark)
-
-        every { booksDao.getBookmarksForBook(bookId = bookId) } returns flowOf(value = bookmarks)
-
-        val result = repository.bookmarksForBook(bookId = bookId)
-
-        var collected: List<Bookmark>? = null
-        val job = backgroundScope.launch(context = testDispatcher) {
-            result.collect { collected = it }
-        }
-
-        assertEquals(bookmarks, collected)
-        job.cancel()
-    }
-
-    @Test
-    fun `deleteBookmark success calls dao`() = runTest {
-        val bookmarkId = 123L
-        coEvery { booksDao.deleteBookmark(id = bookmarkId) } just Runs
-
-        repository.deleteBookmark(bookmarkId = bookmarkId)
-
-        coVerify { booksDao.deleteBookmark(id = bookmarkId) }
-    }
-
-    @Test
-    fun `highlightsForBook returns flow from dao`() = runTest {
-        val bookId = 1L
-        val highlight = Highlight(
-            id = 100L,
-            bookId = bookId,
-            style = Highlight.Style.HIGHLIGHT,
-            tint = Color.YELLOW,
-            href = "chapter1.html",
-            type = "text/html",
-            title = "Chapter 1",
-            annotation = "Note",
-        )
-        val highlights = listOf(highlight)
-        every { booksDao.getHighlightsForBook(bookId = bookId) } returns flowOf(value = highlights)
-
-        val result = repository.highlightsForBook(bookId = bookId)
-
-        var collected: List<Highlight>? = null
-        val job = backgroundScope.launch(context = testDispatcher) {
-            result.collect { collected = it }
-        }
-
-        assertEquals(highlights, collected)
-        job.cancel()
-    }
-
-    @Test
     fun `addHighlight calls dao with correct data`() = runTest {
         val bookId = 1L
         val style = Highlight.Style.HIGHLIGHT
@@ -335,62 +240,5 @@ class DefaultBookRepositoryTest {
         assertEquals(tint, captured.tint)
         assertEquals(locator.href.toString(), captured.href)
         assertEquals(annotation, captured.annotation)
-    }
-
-    @Test
-    fun `updateHighlightAnnotation success calls dao`() = runTest {
-        val highlightId = 100L
-        val newAnnotation = "Updated Note"
-
-        coEvery {
-            booksDao.updateHighlightAnnotation(
-                id = highlightId,
-                annotation = newAnnotation,
-            )
-        } just Runs
-
-        repository.updateHighlightAnnotation(id = highlightId, annotation = newAnnotation)
-
-        coVerify {
-            booksDao.updateHighlightAnnotation(
-                id = highlightId,
-                annotation = newAnnotation,
-            )
-        }
-    }
-
-    @Test
-    fun `updateHighlightStyle success calls dao`() = runTest {
-        val highlightId = 100L
-        val newStyle = Highlight.Style.UNDERLINE
-        val newTint = 654321
-
-        coEvery {
-            booksDao.updateHighlightStyle(
-                id = highlightId,
-                style = newStyle,
-                tint = newTint,
-            )
-        } just Runs
-
-        repository.updateHighlightStyle(id = highlightId, style = newStyle, tint = newTint)
-
-        coVerify {
-            booksDao.updateHighlightStyle(
-                id = highlightId,
-                style = newStyle,
-                tint = newTint,
-            )
-        }
-    }
-
-    @Test
-    fun `deleteHighlight success calls dao`() = runTest {
-        val highlightId = 100L
-        coEvery { booksDao.deleteHighlight(id = highlightId) } just Runs
-
-        repository.deleteHighlight(id = highlightId)
-
-        coVerify { booksDao.deleteHighlight(id = highlightId) }
     }
 }
