@@ -9,10 +9,15 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.readium.r2.shared.opds.Feed
 import org.readium.r2.shared.opds.ParseData
 import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.Url
+import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class DefaultOpdsParserTest {
 
     private val opdsParserLibrary: OpdsParserLibrary = mockk()
@@ -21,7 +26,9 @@ class DefaultOpdsParserTest {
     @Test
     fun `parseUrlString with OPDS 1 type delegates to OPDS 1 parser`() = runTest {
         val url = "http://example.com/opds1"
-        val expectedData = mockk<ParseData>()
+        val feed = Feed(title = "OPDS 1 Feed", type = 1, href = Url(url)!!)
+        val expectedData = ParseData(feed = feed, publication = null, type = 1)
+
         coEvery { opdsParserLibrary.parseOpds1Url(url = url) } returns Try.success(success = expectedData)
 
         val result = parser.parseUrlString(url = url, type = Catalog.TYPE_OPDS_1)
@@ -34,7 +41,9 @@ class DefaultOpdsParserTest {
     @Test
     fun `parseUrlString with OPDS 2 type delegates to OPDS 2 parser`() = runTest {
         val url = "http://example.com/opds2"
-        val expectedData = mockk<ParseData>()
+        val feed = Feed(title = "OPDS 2 Feed", type = 1, href = Url(url)!!)
+        val expectedData = ParseData(feed = feed, publication = null, type = 2)
+
         coEvery { opdsParserLibrary.parseOpds2Url(url = url) } returns Try.success(success = expectedData)
 
         val result = parser.parseUrlString(url = url, type = Catalog.TYPE_OPDS_2)
@@ -47,13 +56,12 @@ class DefaultOpdsParserTest {
     @Test
     fun `parseUrlString with unknown type tries OPDS 2 then OPDS 1`() = runTest {
         val url = "http://example.com/unknown"
-        val expectedData = mockk<ParseData>()
+        val feed = Feed(title = "Fallback Feed", type = 1, href = Url(url)!!)
+        val expectedData = ParseData(feed = feed, publication = null, type = 1)
 
         // OPDS 2 fails
         coEvery { opdsParserLibrary.parseOpds2Url(url = url) } returns Try.failure(
-            failure = Exception(
-                "Not OPDS 2",
-            ),
+            failure = Exception("Not OPDS 2"),
         )
         // OPDS 1 succeeds
         coEvery { opdsParserLibrary.parseOpds1Url(url = url) } returns Try.success(success = expectedData)
@@ -69,7 +77,9 @@ class DefaultOpdsParserTest {
     @Test
     fun `parseUrlString with unknown type returns OPDS 2 success immediately`() = runTest {
         val url = "http://example.com/unknown"
-        val expectedData = mockk<ParseData>()
+
+        val feed = Feed(title = "Immediate Feed", type = 1, href = Url(url)!!)
+        val expectedData = ParseData(feed = feed, publication = null, type = 2)
 
         // OPDS 2 succeeds
         coEvery { opdsParserLibrary.parseOpds2Url(url = url) } returns Try.success(success = expectedData)

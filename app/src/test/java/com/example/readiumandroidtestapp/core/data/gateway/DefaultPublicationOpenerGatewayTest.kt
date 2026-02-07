@@ -7,6 +7,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.readium.r2.shared.publication.LocalizedString
+import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
@@ -21,6 +23,11 @@ class DefaultPublicationOpenerGatewayTest {
     fun `open returns success when opener succeeds`() = runTest {
         val asset = mockk<Asset>()
         val publication = mockk<Publication>()
+        val metadata = Metadata(
+            localizedTitle = LocalizedString(value = "Open Book"),
+            identifier = "urn:uuid:12345",
+        )
+        every { publication.metadata } returns metadata
 
         coEvery {
             publicationOpener.open(
@@ -32,7 +39,9 @@ class DefaultPublicationOpenerGatewayTest {
         val result = gateway.open(asset = asset, allowUserInteraction = true)
 
         assertTrue(result.isSuccess)
-        assertEquals(publication, result.getOrNull())
+        val resultPub = result.getOrNull()
+        assertEquals(publication, resultPub)
+        assertEquals("Open Book", resultPub?.metadata?.title)
     }
 
     @Test

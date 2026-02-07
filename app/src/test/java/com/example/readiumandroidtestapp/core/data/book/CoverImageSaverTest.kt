@@ -15,6 +15,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.r2.shared.publication.LocalizedString
+import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.cover
 import org.robolectric.RobolectricTestRunner
@@ -42,6 +44,7 @@ class CoverImageSaverTest {
     @Test
     fun `saveCover returns null if publication has no cover`() = runTest {
         val publication = mockk<Publication>()
+        every { publication.metadata } returns Metadata(localizedTitle = LocalizedString(value = "Title"))
         coEvery { publication.cover() } returns null
 
         val result = saver.saveCover(publication = publication)
@@ -52,6 +55,8 @@ class CoverImageSaverTest {
     @Test
     fun `saveCover saves bitmap to file and returns path`() = runTest {
         val publication = mockk<Publication>()
+        every { publication.metadata } returns Metadata(localizedTitle = LocalizedString(value = "Title"))
+
         val bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
         coEvery { publication.cover() } returns bitmap
 
