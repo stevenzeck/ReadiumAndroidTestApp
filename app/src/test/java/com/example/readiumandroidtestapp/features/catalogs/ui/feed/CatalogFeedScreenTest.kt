@@ -2,6 +2,7 @@ package com.example.readiumandroidtestapp.features.catalogs.ui.feed
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -186,5 +187,46 @@ class CatalogFeedScreenTest {
         composeTestRule.onNodeWithText(text = saveText).performClick()
 
         verify { onEditCatalog(catalog, "Test Catalog Updated") }
+    }
+
+    @Test
+    fun `handles add catalog with validation`() {
+        val onAddCatalog = mockk<(String, String) -> Unit>(relaxed = true)
+
+        composeTestRule.setContent {
+            CatalogFeedContent(
+                feedUiState = CatalogFeedUiState.Success(catalogs = emptyList()),
+                onCatalogClick = {},
+                onAddCatalog = onAddCatalog,
+                onEditCatalog = { _, _ -> },
+                onDeleteCatalog = {},
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val addText = context.getString(R.string.add_feed)
+        val confirmText = context.getString(R.string.add)
+        val titleLabel = context.getString(R.string.feed_name)
+        val urlLabel = context.getString(R.string.feed_url)
+
+        // 1. Open Dialog
+        composeTestRule.onNodeWithText(text = addText, useUnmergedTree = true).performClick()
+
+        // 2. Verify Button is Disabled Initially
+        composeTestRule.onNodeWithText(text = confirmText).assertIsNotEnabled()
+
+        // 3. Enter Invalid Data & Verify Disabled
+        composeTestRule.onNodeWithText(text = titleLabel).performTextInput(text = "New Catalog")
+        composeTestRule.onNodeWithText(text = urlLabel).performTextInput(text = "invalid-url")
+        composeTestRule.onNodeWithText(text = confirmText).assertIsNotEnabled()
+
+        // 4. Enter Valid Data & Verify Enabled/Submit
+        composeTestRule.onNodeWithText(text = urlLabel).performTextClearance()
+        composeTestRule.onNodeWithText(text = urlLabel)
+            .performTextInput(text = "http://example.com")
+
+        composeTestRule.onNodeWithText(text = confirmText).performClick()
+
+        verify { onAddCatalog("New Catalog", "http://example.com") }
     }
 }
