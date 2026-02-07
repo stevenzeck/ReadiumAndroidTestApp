@@ -79,6 +79,23 @@ class DefaultReaderPreferencesManagerTest {
         )
     }
 
+    /**
+     * A simple fake implementation of [Preference] to avoid mocking.
+     * @param _value The current value (nullable).
+     * @param _effectiveValue The effective value (non-nullable fallback).
+     */
+    class FakePreference<T>(
+        private var _value: T?,
+        private val _effectiveValue: T
+    ) : Preference<T> {
+        override val value: T? get() = _value
+        override val effectiveValue: T get() = _effectiveValue
+        override val isEffective: Boolean = true
+        override fun set(value: T?) {
+            _value = value
+        }
+    }
+
     interface ConfigurableVisualNavigator : VisualNavigator,
         Configurable<EpubSettings, EpubPreferences>
 
@@ -386,14 +403,14 @@ class DefaultReaderPreferencesManagerTest {
         every { ttsSerializer.deserialize(preferences = "{}") } returns preferences
         every { factory.createPreferencesEditor(preferences = preferences) } returns editor
 
-        // Mock editor properties explicitly
-        val languagePref = mockk<Preference<Language?>>(relaxed = true)
-        every { languagePref.value } returns null
-        every { editor.language } returns languagePref
+        val fakeLanguage = FakePreference<Language?>(_value = null, _effectiveValue = null)
+        every { editor.language } returns fakeLanguage
 
-        val voicesPref = mockk<Preference<Map<Language, AndroidTtsEngine.Voice.Id>>>(relaxed = true)
-        every { voicesPref.value } returns emptyMap()
-        every { editor.voices } returns voicesPref
+        val fakeVoices = FakePreference<Map<Language, AndroidTtsEngine.Voice.Id>>(
+            _value = emptyMap(),
+            _effectiveValue = emptyMap()
+        )
+        every { editor.voices } returns fakeVoices
 
         every { ttsManager.voices } returns emptySet()
 
@@ -440,16 +457,18 @@ class DefaultReaderPreferencesManagerTest {
         )
         every { ttsManager.voices } returns setOf(enVoice, frVoice)
 
-        // Mock editor properties
-        val languagePref = mockk<Preference<Language?>>(relaxed = true)
-        every { languagePref.value } returns Language(code = "en")
-        every { editor.language } returns languagePref
+        val fakeLanguagePref = FakePreference<Language?>(
+            _value = Language(code = "en"),
+            _effectiveValue = Language(code = "en")
+        )
+        every { editor.language } returns fakeLanguagePref
 
-        // The underlying voices preference stores map of Language -> VoiceId
         val underlyingVoicesMap = mapOf(Language(code = "en") to enVoice.id)
-        val voicesPref = mockk<Preference<Map<Language, AndroidTtsEngine.Voice.Id>>>(relaxed = true)
-        every { voicesPref.value } returns underlyingVoicesMap
-        every { editor.voices } returns voicesPref
+        val fakeVoicesPref = FakePreference(
+            _value = underlyingVoicesMap,
+            _effectiveValue = emptyMap()
+        )
+        every { editor.voices } returns fakeVoicesPref
 
         val session = manager.createTtsSettingsSession(
             bookId = bookId,
@@ -461,14 +480,12 @@ class DefaultReaderPreferencesManagerTest {
         val selectedVoice = session.voice.value
         assertEquals(enVoice, selectedVoice)
 
+        // Perform Action
         session.voice.set(frVoice)
-        verify {
-            voicesPref.set(
-                match { map ->
-                    map[Language(code = "en")] == frVoice.id
-                },
-            )
-        }
+
+        val updatedMap = fakeVoicesPref.value
+        assertNotNull(updatedMap)
+        assertEquals(frVoice.id, updatedMap?.get(Language(code = "en")))
     }
 
     @Test

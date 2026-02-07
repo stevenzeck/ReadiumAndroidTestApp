@@ -1,7 +1,6 @@
 package com.example.readiumandroidtestapp.core.data.book
 
 import android.net.Uri
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
 import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
@@ -19,19 +18,24 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.r2.shared.publication.LocalizedString
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
+import org.readium.r2.shared.util.FileExtension
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.asset.Asset
 import org.readium.r2.shared.util.format.Format
+import org.readium.r2.shared.util.format.FormatSpecification
+import org.readium.r2.shared.util.format.Specification
 import org.readium.r2.shared.util.mediatype.MediaType
+import org.robolectric.RobolectricTestRunner
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(RobolectricTestRunner::class)
 class DefaultBookImporterTest {
 
     private val storageGateway: StorageGateway = mockk()
@@ -65,8 +69,15 @@ class DefaultBookImporterTest {
         val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
         val asset = mockk<Asset>()
         val publication = mockk<Publication>()
-        val metadata = mockk<Metadata>(relaxed = true)
-        val format = mockk<Format>()
+        val metadata = Metadata(
+            localizedTitle = LocalizedString(value = "Test Book"),
+            identifier = "id",
+        )
+        val format = Format(
+            specification = FormatSpecification(Specification.Epub),
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            fileExtension = FileExtension(value = "epub"),
+        )
 
         coEvery { httpGateway.fetch(url) } returns Try.success(success = httpResult)
         every { storageGateway.resolveExtensionFromMimeType(mimeType = "application/epub+zip") } returns "epub"
@@ -87,13 +98,8 @@ class DefaultBookImporterTest {
         } returns Result.success(value = publication)
 
         every { publication.metadata } returns metadata
-        every { metadata.title } returns "Test Book"
-        every { metadata.authors } returns emptyList()
-        every { metadata.identifier } returns "id"
         every { publication.close() } returns Unit
-
         every { asset.format } returns format
-        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
 
         coEvery { coverImageSaver.saveCover(publication) } returns "cover.jpg"
         coEvery { booksDao.insertBook(book = any()) } returns 1L
@@ -142,14 +148,21 @@ class DefaultBookImporterTest {
 
     @Test
     fun `importFromUri success`() = runTest(context = dispatcher) {
-        val uri = mockk<Uri>()
+        val uri = Uri.parse("content://com.example/book")
         val inputStream = ByteArrayInputStream(ByteArray(0))
         val savedFile = File("saved.epub")
         val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
         val asset = mockk<Asset>()
         val publication = mockk<Publication>()
-        val metadata = mockk<Metadata>(relaxed = true)
-        val format = mockk<Format>()
+        val metadata = Metadata(
+            localizedTitle = LocalizedString(value = "URI Book"),
+            identifier = "id",
+        )
+        val format = Format(
+            specification = FormatSpecification(Specification.Epub),
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            fileExtension = FileExtension(value = "epub"),
+        )
 
         every { storageGateway.openInputStream(uri = uri) } returns inputStream
         every { storageGateway.resolveExtension(uri = uri) } returns "epub"
@@ -170,13 +183,8 @@ class DefaultBookImporterTest {
         } returns Result.success(value = publication)
 
         every { publication.metadata } returns metadata
-        every { metadata.title } returns "URI Book"
-        every { metadata.authors } returns emptyList()
-        every { metadata.identifier } returns "id"
         every { publication.close() } returns Unit
-
         every { asset.format } returns format
-        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
 
         coEvery { coverImageSaver.saveCover(publication = publication) } returns null
         coEvery { booksDao.insertBook(book = any()) } returns 2L
@@ -189,7 +197,7 @@ class DefaultBookImporterTest {
 
     @Test
     fun `importFromUri fails on storage error`() = runTest(context = dispatcher) {
-        val uri = mockk<Uri>()
+        val uri = Uri.parse("content://com.example/book")
         every { storageGateway.openInputStream(uri) } throws IOException("Disk error")
 
         val result = importer.importFromUri(uri)
@@ -201,7 +209,7 @@ class DefaultBookImporterTest {
     @Test
     fun `addBookFromFile fails on invalid book (retriever error)`() =
         runTest(context = dispatcher) {
-            val uri = mockk<Uri>()
+            val uri = Uri.parse("content://com.example/book")
             val inputStream = ByteArrayInputStream(ByteArray(0))
             val savedFile = File("saved.epub")
             val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
@@ -217,9 +225,7 @@ class DefaultBookImporterTest {
 
             every { storageGateway.toUrl(file = savedFile) } returns fileUrl
             coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.failure(
-                exception = Exception(
-                    "Retrieve failed",
-                ),
+                exception = Exception("Retrieve failed"),
             )
 
             val result = importer.importFromUri(uri = uri)
@@ -230,7 +236,7 @@ class DefaultBookImporterTest {
 
     @Test
     fun `addBookFromFile fails on invalid book (opener error)`() = runTest(context = dispatcher) {
-        val uri = mockk<Uri>()
+        val uri = Uri.parse("content://com.example/book")
         val inputStream = ByteArrayInputStream(ByteArray(0))
         val savedFile = File("saved.epub")
         val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
@@ -262,14 +268,22 @@ class DefaultBookImporterTest {
 
     @Test
     fun `addBookFromFile fails on database error`() = runTest(context = dispatcher) {
-        val uri = mockk<Uri>()
+        val uri = Uri.parse("content://com.example/book")
         val inputStream = ByteArrayInputStream(ByteArray(0))
         val savedFile = File("saved.epub")
         val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
         val asset = mockk<Asset>()
         val publication = mockk<Publication>()
-        val metadata = mockk<Metadata>(relaxed = true)
-        val format = mockk<Format>()
+
+        val metadata = Metadata(
+            localizedTitle = LocalizedString("Test Book"),
+            identifier = "id",
+        )
+        val format = Format(
+            specification = FormatSpecification(Specification.Epub),
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            fileExtension = FileExtension(value = "epub"),
+        )
 
         every { storageGateway.openInputStream(uri = uri) } returns inputStream
         every { storageGateway.resolveExtension(uri = uri) } returns "epub"
@@ -290,13 +304,8 @@ class DefaultBookImporterTest {
         } returns Result.success(value = publication)
 
         every { publication.metadata } returns metadata
-        every { metadata.title } returns "Test Book"
-        every { metadata.authors } returns emptyList()
-        every { metadata.identifier } returns "id"
         every { publication.close() } returns Unit
-
         every { asset.format } returns format
-        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
 
         coEvery { coverImageSaver.saveCover(publication = publication) } returns null
         val dbException = RuntimeException("DB error")
@@ -311,14 +320,21 @@ class DefaultBookImporterTest {
 
     @Test
     fun `mapToBook handles missing metadata`() = runTest(context = dispatcher) {
-        val uri = mockk<Uri>()
+        val uri = Uri.parse("content://com.example/fallback_title.epub")
         val inputStream = ByteArrayInputStream(ByteArray(0))
         val savedFile = File("fallback_title.epub")
         val fileUrl = Url(url = "file:///fallback_title.epub")!! as AbsoluteUrl
         val asset = mockk<Asset>()
         val publication = mockk<Publication>()
-        val metadata = mockk<Metadata>(relaxed = true)
-        val format = mockk<Format>()
+        val metadata = Metadata(
+            localizedTitle = null,
+            identifier = null,
+        )
+        val format = Format(
+            specification = FormatSpecification(Specification.Epub),
+            mediaType = MediaType(string = "application/epub+zip")!!,
+            fileExtension = FileExtension(value = "epub"),
+        )
 
         every { storageGateway.openInputStream(uri = uri) } returns inputStream
         every { storageGateway.resolveExtension(uri = uri) } returns "epub"
@@ -339,13 +355,8 @@ class DefaultBookImporterTest {
         } returns Result.success(value = publication)
 
         every { publication.metadata } returns metadata
-        every { metadata.title } returns null
-        every { metadata.authors } returns emptyList()
-        every { metadata.identifier } returns null
         every { publication.close() } returns Unit
-
         every { asset.format } returns format
-        every { format.mediaType } returns MediaType(string = "application/epub+zip")!!
 
         coEvery { coverImageSaver.saveCover(publication = publication) } returns null
         coEvery { booksDao.insertBook(book = any()) } returns 3L
@@ -354,6 +365,7 @@ class DefaultBookImporterTest {
 
         assertTrue(result is Try.Success)
         val book = (result as Try.Success).value
+
         assertEquals("fallback_title", book.title)
         assertEquals("", book.author)
         assertEquals("", book.identifier)

@@ -16,6 +16,7 @@ import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Try
+import org.readium.r2.shared.util.mediatype.MediaType
 
 class ReaderSessionFactoryTest {
 
@@ -29,13 +30,17 @@ class ReaderSessionFactoryTest {
         pdfiumDocumentFactory = pdfiumDocumentFactory,
     )
 
+    private val realBook = Book(
+        id = 1L,
+        href = "href",
+        title = "Title",
+        identifier = "id",
+        mediaType = MediaType.EPUB,
+        cover = null,
+    )
+
     @Test
     fun `createVisualSession returns correct state`() = runTest {
-        val book = mockk<Book>(relaxed = true) {
-            every { id } returns 1L
-            every { progression } returns null
-        }
-
         val publication = mockk<Publication>(relaxed = true) {
             every { conformsTo(profile = any()) } returns true
         }
@@ -54,20 +59,16 @@ class ReaderSessionFactoryTest {
             )
         } returns mockk()
 
-        val result = factory.createVisualSession(book = book, publication = publication)
+        val result = factory.createVisualSession(book = realBook, publication = publication)
 
         assertEquals(publication, result.publication)
-        assertEquals(book, result.book)
+        assertEquals(realBook, result.book)
         assertEquals(pdfiumDocumentFactory, result.pdfiumDocumentFactory)
         assertTrue(result.capabilities.canSpeak)
     }
 
     @Test
     fun `createAudioSession returns success when navigator creation succeeds`() = runTest {
-        val book = mockk<Book>(relaxed = true) {
-            every { id } returns 1L
-            every { progression } returns null
-        }
         val publication = mockk<Publication>(relaxed = true)
         val navigator = mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>()
 
@@ -86,7 +87,7 @@ class ReaderSessionFactoryTest {
             )
         } returns mockk()
 
-        val result = factory.createAudioSession(book = book, publication = publication)
+        val result = factory.createAudioSession(book = realBook, publication = publication)
 
         assertTrue(result.isSuccess)
         assertEquals(navigator, result.getOrThrow().navigator)
