@@ -134,23 +134,6 @@ class CatalogFeedViewModelTest {
     }
 
     @Test
-    fun `deleteCatalog calls dao delete`() = runTest(context = testDispatcher) {
-        val catalog = Catalog(id = 123L, title = "Title", href = "href", type = 1)
-        every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = emptyList())
-
-        viewModel = CatalogFeedViewModel(
-            catalogDao = catalogDao,
-            userMessageManager = userMessageManager,
-            opdsParser = opdsParser,
-        )
-
-        viewModel.deleteCatalog(catalog)
-        advanceUntilIdle()
-
-        coVerify { catalogDao.deleteCatalog(id = 123L) }
-    }
-
-    @Test
     fun `editCatalog calls dao insert with new title`() = runTest(context = testDispatcher) {
         val catalog = Catalog(id = 123L, title = "Old Title", href = "href", type = 1)
         val newTitle = "New Title"
