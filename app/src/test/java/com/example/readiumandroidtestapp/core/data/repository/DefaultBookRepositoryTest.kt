@@ -248,7 +248,7 @@ class DefaultBookRepositoryTest {
             resourceType = "text/html",
             resourceTitle = "Chapter 1",
             location = "{}",
-            locatorText = "{}"
+            locatorText = "{}",
         )
         val bookmarks = listOf(bookmark)
 
@@ -286,7 +286,7 @@ class DefaultBookRepositoryTest {
             href = "chapter1.html",
             type = "text/html",
             title = "Chapter 1",
-            annotation = "Note"
+            annotation = "Note",
         )
         val highlights = listOf(highlight)
         every { booksDao.getHighlightsForBook(bookId = bookId) } returns flowOf(value = highlights)

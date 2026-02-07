@@ -49,7 +49,9 @@ class CatalogFeedViewModelTest {
 
     @Test
     fun `catalogsState emits Success when catalogs exist`() = runTest(context = testDispatcher) {
-        val catalogs = listOf(mockk<Catalog>())
+        val catalogs = listOf(
+            Catalog(id = 1, title = "Feed", href = "http://feed", type = 1),
+        )
         every { catalogDao.getCatalogModels() } returns MutableStateFlow(value = catalogs)
 
         viewModel = CatalogFeedViewModel(

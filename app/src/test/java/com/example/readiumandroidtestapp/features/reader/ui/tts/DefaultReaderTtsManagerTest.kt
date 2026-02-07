@@ -18,11 +18,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.readium.navigator.media.tts.android.AndroidTtsEngine
+import org.readium.navigator.media.tts.android.AndroidTtsEngine.Voice
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.util.Language
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
 import org.robolectric.RobolectricTestRunner
@@ -135,7 +136,10 @@ class DefaultReaderTtsManagerTest {
     @Test
     fun `getVoices returns voices from navigator`() = runTest(context = testDispatcher) {
         startTts()
-        val voice = mockk<AndroidTtsEngine.Voice>()
+        val voice = Voice(
+            id = Voice.Id("en-us-1"),
+            language = Language("en"),
+        )
         every { ttsNavigator.voices } returns setOf(voice)
 
         assertEquals(setOf(voice), manager.voices)

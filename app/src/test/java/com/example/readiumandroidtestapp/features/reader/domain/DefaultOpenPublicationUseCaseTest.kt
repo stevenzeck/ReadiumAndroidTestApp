@@ -9,24 +9,27 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.asset.Asset
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class DefaultOpenPublicationUseCaseTest {
 
     private val assetRetriever: AssetRetrieverGateway = mockk()
     private val publicationOpener: PublicationOpenerGateway = mockk()
     private val testDispatcher = StandardTestDispatcher()
     private val useCase = DefaultOpenPublicationUseCase(
-        assetRetriever,
-        publicationOpener,
-        testDispatcher,
+        assetRetriever = assetRetriever,
+        publicationOpener = publicationOpener,
+        ioDispatcher = testDispatcher,
     )
 
     @Test
     fun `invoke returns OpenedBook on success`() = runTest(context = testDispatcher) {
-        val url = mockk<AbsoluteUrl>()
+        val url = AbsoluteUrl(url = "http://example.com/book.epub")!!
         val asset = mockk<Asset>(relaxed = true)
         val publication = mockk<Publication>(relaxed = true)
 
