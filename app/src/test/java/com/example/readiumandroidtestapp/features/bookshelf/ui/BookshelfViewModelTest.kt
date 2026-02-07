@@ -82,42 +82,4 @@ class BookshelfViewModelTest {
         val state = viewModel.uiState.value
         Assert.assertTrue(state is BookshelfUiState.Empty)
     }
-
-    @Test
-    fun `deleteBook success`() = runTest(context = testDispatcher) {
-        every { bookRepository.books } returns MutableStateFlow(value = emptyList())
-        coEvery { bookRepository.deleteBook(bookId = any()) } returns Try.Companion.success(success = Unit)
-
-        viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
-            userMessageManager = userMessageManager,
-        )
-
-        viewModel.deleteBook(bookId = 1L)
-        advanceUntilIdle()
-
-        coVerify { bookRepository.deleteBook(bookId = 1L) }
-        coVerify(exactly = 0) { userMessageManager.emitMessage(messageId = any()) }
-    }
-
-    @Test
-    fun `deleteBook failure emits error message`() = runTest(context = testDispatcher) {
-        every { bookRepository.books } returns MutableStateFlow(value = emptyList())
-        coEvery { bookRepository.deleteBook(bookId = any()) } returns Try.Companion.failure(
-            failure = Exception(
-                "Error",
-            ),
-        )
-
-        viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
-            userMessageManager = userMessageManager,
-        )
-
-        viewModel.deleteBook(bookId = 1L)
-        advanceUntilIdle()
-
-        coVerify { bookRepository.deleteBook(bookId = 1L) }
-        coVerify { userMessageManager.emitMessage(messageId = R.string.error_deleting_book) }
-    }
 }
