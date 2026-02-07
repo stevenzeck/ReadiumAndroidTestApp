@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.bookshelf.ui
 
+import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
@@ -11,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -98,5 +100,43 @@ class BookshelfViewModelTest {
 
         // Then
         coVerify { bookRepository.deleteBook(bookId = bookId) }
+    }
+
+    @Test
+    fun `deleteBook failure emits error message`() = runTest(testDispatcher) {
+        // Given
+        val bookId = 123L
+        coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.failure(
+            failure = Exception(
+                "Fail",
+            ),
+        )
+
+        // When
+        viewModel.deleteBook(bookId = bookId)
+        advanceUntilIdle()
+
+        // Then
+        coVerify { userMessageManager.emitMessage(R.string.error_deleting_book) }
+    }
+
+    @Test
+    fun `uiState emits Error when repository flow throws exception`() = runTest(testDispatcher) {
+        // Given
+        every { bookRepository.books } returns flow { throw Exception("Crash") }
+        val brokenViewModel = BookshelfViewModel(
+            bookRepository = bookRepository,
+            userMessageManager = userMessageManager,
+        )
+
+        // When
+        val states = mutableListOf<BookshelfUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(scheduler = testScheduler)) {
+            brokenViewModel.uiState.collect { states.add(it) }
+        }
+        advanceUntilIdle()
+
+        // Then
+        Assert.assertTrue(states.last() is BookshelfUiState.Error)
     }
 }
