@@ -1,6 +1,7 @@
 package com.example.readiumandroidtestapp.features.bookshelf.ui
 
 import com.example.readiumandroidtestapp.R
+import com.example.readiumandroidtestapp.core.data.repository.FakeBookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
@@ -10,7 +11,6 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -31,15 +31,16 @@ import org.readium.r2.shared.util.mediatype.MediaType
 class BookshelfViewModelTest {
 
     private lateinit var viewModel: BookshelfViewModel
-    private val bookRepository: BookRepository = mockk(relaxed = true)
+    private lateinit var fakeRepository: FakeBookRepository
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
+        fakeRepository = FakeBookRepository()
         viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
+            bookRepository = fakeRepository,
             userMessageManager = userMessageManager,
         )
     }
@@ -51,28 +52,28 @@ class BookshelfViewModelTest {
 
     @Test
     fun `uiState emits Success when books exist`() = runTest(context = testDispatcher) {
-        val book1 = Book(
-            id = 1L,
-            href = "path/book1.epub",
-            title = "Book 1",
-            identifier = "id1",
-            mediaType = MediaType(string = "application/epub+zip")!!,
-            cover = null,
+        val books = listOf(
+            Book(
+                id = 1L,
+                href = "path1",
+                title = "Book 1",
+                identifier = "id1",
+                mediaType = MediaType.EPUB,
+                cover = null,
+            ),
+            Book(
+                id = 2L,
+                href = "path2",
+                title = "Book 2",
+                identifier = "id2",
+                mediaType = MediaType.EPUB,
+                cover = null,
+            ),
         )
-        val book2 = Book(
-            id = 2L,
-            href = "path/book2.epub",
-            title = "Book 2",
-            identifier = "id2",
-            mediaType = MediaType(string = "application/epub+zip")!!,
-            cover = null,
-        )
-        val books = listOf(book1, book2)
-
-        every { bookRepository.books } returns MutableStateFlow(value = books)
+        fakeRepository.addBooks(*books.toTypedArray())
 
         viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
+            bookRepository = fakeRepository,
             userMessageManager = userMessageManager,
         )
 
@@ -89,10 +90,8 @@ class BookshelfViewModelTest {
 
     @Test
     fun `uiState emits Empty when no books exist`() = runTest(context = testDispatcher) {
-        every { bookRepository.books } returns MutableStateFlow(value = emptyList())
-
         viewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
+            bookRepository = fakeRepository,
             userMessageManager = userMessageManager,
         )
 
@@ -102,57 +101,70 @@ class BookshelfViewModelTest {
 
         advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        Assert.assertTrue(state is BookshelfUiState.Empty)
+        Assert.assertTrue(viewModel.uiState.value is BookshelfUiState.Empty)
     }
 
     @Test
-    fun `deleteBook calls repository`() = runTest(testDispatcher) {
-        // Given
-        val bookId = 123L
-        coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.success(success = Unit)
+    fun `deleteBook removes book from uiState`() = runTest(testDispatcher) {
+        // Given a repository with one book
+        val book = Book(
+            id = 123L,
+            href = "href",
+            title = "Title",
+            identifier = "id",
+            mediaType = MediaType.EPUB,
+            cover = null,
+        )
+        fakeRepository.addBooks(book)
+
+        // Start collecting state
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect()
+        }
+        advanceUntilIdle()
+
+        // Pre-check: Ensure book is there
+        Assert.assertTrue(viewModel.uiState.value is BookshelfUiState.Success)
 
         // When
-        viewModel.deleteBook(bookId = bookId)
+        viewModel.deleteBook(123L)
         advanceUntilIdle()
 
         // Then
-        coVerify { bookRepository.deleteBook(bookId = bookId) }
+        Assert.assertTrue(viewModel.uiState.value is BookshelfUiState.Empty)
     }
 
     @Test
     fun `deleteBook failure emits error message`() = runTest(testDispatcher) {
-        // Given
-        val bookId = 123L
-        coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.failure(
-            failure = Exception("Fail"),
-        )
+        val mockRepo = mockk<BookRepository>(relaxed = true)
+        coEvery { mockRepo.deleteBook(bookId = any()) } returns Try.failure(failure = Exception("Fail"))
 
-        // When
-        viewModel.deleteBook(bookId = bookId)
+        val viewModelWithMock =
+            BookshelfViewModel(bookRepository = mockRepo, userMessageManager = userMessageManager)
+
+        viewModelWithMock.deleteBook(bookId = 123L)
         advanceUntilIdle()
 
-        // Then
-        coVerify { userMessageManager.emitMessage(R.string.error_deleting_book) }
+        coVerify { userMessageManager.emitMessage(messageId = R.string.error_deleting_book) }
     }
 
     @Test
     fun `uiState emits Error when repository flow throws exception`() = runTest(testDispatcher) {
-        // Given
-        every { bookRepository.books } returns flow { throw Exception("Crash") }
+        val brokenRepo: BookRepository = mockk()
+
+        every { brokenRepo.books } returns flow { throw Exception("Crash") }
+
         val brokenViewModel = BookshelfViewModel(
-            bookRepository = bookRepository,
+            bookRepository = brokenRepo,
             userMessageManager = userMessageManager,
         )
 
-        // When
         val states = mutableListOf<BookshelfUiState>()
         backgroundScope.launch(UnconfinedTestDispatcher(scheduler = testScheduler)) {
             brokenViewModel.uiState.collect { states.add(it) }
         }
         advanceUntilIdle()
 
-        // Then
         Assert.assertTrue(states.last() is BookshelfUiState.Error)
     }
 }

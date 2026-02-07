@@ -1,22 +1,25 @@
 package com.example.readiumandroidtestapp.core.data.gateway
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.FileExtension
 import org.readium.r2.shared.util.Try
-import org.readium.r2.shared.util.asset.Asset
 import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.asset.ResourceAsset
 import org.readium.r2.shared.util.format.Format
 import org.readium.r2.shared.util.format.FormatSpecification
 import org.readium.r2.shared.util.format.Specification
 import org.readium.r2.shared.util.mediatype.MediaType
+import org.readium.r2.shared.util.resource.Resource
 
+@RunWith(AndroidJUnit4::class)
 class DefaultAssetRetrieverGatewayTest {
 
     private val assetRetriever: AssetRetriever = mockk()
@@ -24,7 +27,7 @@ class DefaultAssetRetrieverGatewayTest {
 
     @Test
     fun `retrieve returns success when retriever succeeds`() = runTest {
-        val url = mockk<AbsoluteUrl>()
+        val url = AbsoluteUrl(url = "http://example.com/book.epub")!!
 
         val format = Format(
             specification = FormatSpecification(Specification.Epub),
@@ -32,29 +35,36 @@ class DefaultAssetRetrieverGatewayTest {
             fileExtension = FileExtension(value = "epub"),
         )
 
-        val asset = mockk<Asset>()
-        every { asset.format } returns format
+        val resource = mockk<Resource>(relaxed = true)
+        val realAsset = ResourceAsset(format = format, resource = resource)
 
-        coEvery { assetRetriever.retrieve(url = url) } returns Try.success(success = asset)
+        coEvery {
+            assetRetriever.retrieve(url = any())
+        } returns Try.success(success = realAsset)
 
-        val result = gateway.retrieve(url = url)
+        val result = gateway.retrieve(url)
 
         assertTrue(result.isSuccess)
-        assertEquals(asset, result.getOrNull())
-        assertEquals(MediaType.EPUB, result.getOrNull()?.format?.mediaType)
+
+        val returnedAsset = result.getOrNull()
+        assertTrue("Expected ResourceAsset", returnedAsset is ResourceAsset)
+        assertEquals(format, returnedAsset?.format)
+        assertEquals(MediaType.EPUB, returnedAsset?.format?.mediaType)
     }
 
     @Test
     fun `retrieve returns failure when retriever fails`() = runTest {
-        val url = mockk<AbsoluteUrl>()
-        val error = mockk<AssetRetriever.RetrieveUrlError>()
-        every { error.message } returns "Retrieval failed"
+        val url = AbsoluteUrl(url = "http://example.com/book.epub")!!
 
-        coEvery { assetRetriever.retrieve(url = url) } returns Try.failure(failure = error)
+        val error = AssetRetriever.RetrieveUrlError.FormatNotSupported()
 
-        val result = gateway.retrieve(url = url)
+        coEvery {
+            assetRetriever.retrieve(url = any())
+        } returns Try.failure(failure = error)
+
+        val result = gateway.retrieve(url)
 
         assertTrue(result.isFailure)
-        assertEquals("Retrieval failed", result.exceptionOrNull()?.message)
+        assertEquals("Asset format is not supported.", result.exceptionOrNull()?.message)
     }
 }

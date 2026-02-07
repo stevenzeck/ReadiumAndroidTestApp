@@ -1,0 +1,58 @@
+package com.example.readiumandroidtestapp.core.data.repository
+
+import android.net.Uri
+import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.core.domain.model.Bookmark
+import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
+import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.util.AbsoluteUrl
+import org.readium.r2.shared.util.Try
+
+class FakeBookRepository : BookRepository {
+
+    private val _books = MutableStateFlow<List<Book>>(emptyList())
+    override val books: Flow<List<Book>> = _books
+
+    fun addBooks(vararg newBooks: Book) {
+        _books.value += newBooks
+    }
+
+    override suspend fun deleteBook(bookId: Long): Try<Unit, Exception> {
+        val current = _books.value
+        val new = current.filter { it.id != bookId }
+
+        return if (current.size != new.size) {
+            _books.value = new
+            Try.success(success = Unit)
+        } else {
+            Try.failure(failure = Exception("Not found"))
+        }
+    }
+
+    override suspend fun addBook(url: AbsoluteUrl) = TODO()
+    override suspend fun addBook(uri: Uri) = TODO()
+    override suspend fun saveProgression(bookId: Long, locator: String) = TODO()
+    override suspend fun get(bookId: Long) = _books.value.find { it.id == bookId }
+    override fun bookmarksForBook(bookId: Long) = flowOf(emptyList<Bookmark>())
+    override suspend fun insertBookmark(bookId: Long, publication: Publication, locator: Locator) =
+        0L
+
+    override suspend fun deleteBookmark(bookmarkId: Long) {}
+    override fun highlightsForBook(bookId: Long) = flowOf(emptyList<Highlight>())
+    override suspend fun addHighlight(
+        bookId: Long,
+        style: Highlight.Style,
+        tint: Int,
+        locator: Locator,
+        annotation: String,
+    ) = 0L
+
+    override suspend fun updateHighlightAnnotation(id: Long, annotation: String) {}
+    override suspend fun updateHighlightStyle(id: Long, style: Highlight.Style, tint: Int) {}
+    override suspend fun deleteHighlight(id: Long) {}
+}
