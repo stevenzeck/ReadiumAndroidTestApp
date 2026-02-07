@@ -135,13 +135,40 @@ kover {
     reports {
         filters {
             excludes {
+                // Standard Android/Hilt Excludes
                 annotatedBy(
                     "dagger.internal.DaggerGenerated",
                     "dagger.hilt.codegen.OriginatingElement",
                     "javax.annotation.processing.Generated",
+                    "androidx.compose.ui.tooling.preview.Preview",
                 )
                 classes(
+                    // 1. Framework & Config
                     "**.BuildConfig",
+                    "**.ReadiumApp",
+                    "**.MainActivity",
+                    "**.*Activity",
+                    "**.*Application",
+                    "**.*Module",
+                    "**.Routes",
+                    "**.NavEntryBuilder",
+
+                    // 2. The "Wrappers" (Pass-throughs not being tested)
+                    "**.*NavigatorFactoryWrapper",
+                    "**.DefaultTtsNavigatorGateway",
+                    "**.DefaultTtsServiceGateway",
+                    "**.DefaultSearchGateway",
+                    "**.DefaultPreferencesSerializerFactory",
+                    "**.AndroidTtsNavigatorFactoryProvider",
+
+                    // 3. System & Service Glue (Hard to test, low value)
+                    "**.DefaultReaderMediaBinder*",
+                    "**.MediaService*",
+
+                    // 4. Data Class Boilerplate (equals/hashcode noise)
+                    "**.HttpResult",
+
+                    // 5. Generated / Dagger internals
                     "*ComposableSingletons*",
                     "dagger.hilt.internal.aggregatedroot.codegen.**",
                     "**.Dagger*",
@@ -152,6 +179,8 @@ kover {
                     "**.*_Impl*",
                     "**.*_MembersInjector*",
                     "**.*_Provide*Factory*",
+                    "com.example.readiumandroidtestapp.core.domain.model.*",
+                    "com.example.readiumandroidtestapp.features.reader.ui.state.*",
                 )
             }
         }

@@ -1,6 +1,5 @@
 package com.example.readiumandroidtestapp.features.bookshelf.ui
 
-import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
@@ -29,13 +28,17 @@ import org.readium.r2.shared.util.Try
 class BookshelfViewModelTest {
 
     private lateinit var viewModel: BookshelfViewModel
-    private val bookRepository: BookRepository = mockk()
+    private val bookRepository: BookRepository = mockk(relaxed = true)
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
+        viewModel = BookshelfViewModel(
+            bookRepository = bookRepository,
+            userMessageManager = userMessageManager,
+        )
     }
 
     @After
@@ -81,5 +84,19 @@ class BookshelfViewModelTest {
 
         val state = viewModel.uiState.value
         Assert.assertTrue(state is BookshelfUiState.Empty)
+    }
+
+    @Test
+    fun `deleteBook calls repository`() = runTest(testDispatcher) {
+        // Given
+        val bookId = 123L
+        coEvery { bookRepository.deleteBook(bookId = bookId) } returns Try.success(success = Unit)
+
+        // When
+        viewModel.deleteBook(bookId = bookId)
+        advanceUntilIdle()
+
+        // Then
+        coVerify { bookRepository.deleteBook(bookId = bookId) }
     }
 }

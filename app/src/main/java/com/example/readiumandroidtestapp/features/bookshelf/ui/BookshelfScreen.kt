@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.readiumandroidtestapp.R
@@ -116,6 +117,7 @@ fun BookshelfScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .testTag(tag = "fab_scrim")
                         .background(color = Color.Black.copy(alpha = 0.2f))
                         .pointerInput(key1 = Unit) {
                             detectTapGestures(onTap = { fabExpanded = false })

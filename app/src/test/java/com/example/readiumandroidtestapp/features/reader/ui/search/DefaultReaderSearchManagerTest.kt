@@ -72,6 +72,18 @@ class DefaultReaderSearchManagerTest {
     }
 
     @Test
+    fun `getSearchResults returns empty when search is empty string`() = runTest {
+        manager.onSearchQueryChanged(query = "")
+        val publicationFlow = MutableStateFlow<Publication?>(value = mockk())
+        val results =
+            manager.getSearchResults(publicationFlow = publicationFlow, scope = backgroundScope)
+
+        val pagingData = results.first()
+        val items = collectItems(pagingData = pagingData)
+        assertTrue(items.isEmpty())
+    }
+
+    @Test
     fun `getSearchResults returns empty when publication is null`() = runTest {
         manager.onSearchQueryChanged(query = "query")
         val publicationFlow = MutableStateFlow<Publication?>(value = null)

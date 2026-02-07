@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -172,5 +173,33 @@ class BookshelfScreenTest {
         composeTestRule.onNodeWithText(text = importAction).performClick()
 
         verify { mainViewModel.importBook(url = "http://example.com/book.epub") }
+    }
+
+    @Test
+    fun `tapping scrim collapses FAB`() {
+        val mockBookshelfVM = mockk<BookshelfViewModel>(relaxed = true)
+        val mockMainVM = mockk<MainViewModel>(relaxed = true)
+
+        every { mockBookshelfVM.uiState } returns MutableStateFlow(BookshelfUiState.Success(books = emptyList()))
+
+        composeTestRule.setContent {
+            BookshelfScreen(
+                onOpenBook = {},
+                viewModel = mockBookshelfVM,
+                mainViewModel = mockMainVM,
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        // 1. Click FAB to expand it
+        composeTestRule.onNodeWithContentDescription(label = context.getString(R.string.toggle_import_menu))
+            .performClick()
+
+        // 2. Verify Scrim exists and Click it
+        composeTestRule.onNodeWithTag(testTag = "fab_scrim").assertIsDisplayed().performClick()
+
+        // 3. Verify Scrim is gone (FAB collapsed)
+        composeTestRule.onNodeWithTag(testTag = "fab_scrim").assertDoesNotExist()
     }
 }
