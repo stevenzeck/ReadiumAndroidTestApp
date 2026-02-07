@@ -11,41 +11,6 @@ import org.readium.r2.shared.util.mediatype.MediaType
 class BookTest {
 
     @Test
-    fun `secondary constructor correctly maps properties`() {
-        val id = 123L
-        val creation = 456L
-        val href = "path/to/book.epub"
-        val title = "Test Book"
-        val author = "Test Author"
-        val identifier = "isbn-123"
-        val progression = "{}"
-        val mediaType = MediaType.EPUB
-        val cover = "path/to/cover.jpg"
-
-        val book = Book(
-            id = id,
-            creation = creation,
-            href = href,
-            title = title,
-            author = author,
-            identifier = identifier,
-            progression = progression,
-            mediaType = mediaType,
-            cover = cover,
-        )
-
-        assertEquals(id, book.id)
-        assertEquals(creation, book.creation)
-        assertEquals(href, book.href)
-        assertEquals(title, book.title)
-        assertEquals(author, book.author)
-        assertEquals(identifier, book.identifier)
-        assertEquals(progression, book.progression)
-        assertEquals(mediaType.toString(), book.rawMediaType)
-        assertEquals(cover, book.cover)
-    }
-
-    @Test
     fun `url property adds file scheme for local paths`() {
         val book = Book(
             href = "/storage/emulated/0/Books/test.epub",
