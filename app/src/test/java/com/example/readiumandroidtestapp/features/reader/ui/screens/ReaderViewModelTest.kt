@@ -3,7 +3,11 @@ package com.example.readiumandroidtestapp.features.reader.ui.screens
 import android.app.Application
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
-import com.example.readiumandroidtestapp.features.reader.domain.*
+import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
+import com.example.readiumandroidtestapp.features.reader.domain.OpenedBook
+import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
+import com.example.readiumandroidtestapp.features.reader.domain.ReaderPreferencesManager
+import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
@@ -16,11 +20,17 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 
@@ -31,6 +41,7 @@ class ReaderViewModelTest {
     private val bookRepository: BookRepository = mockk(relaxed = true)
     private val openPublicationUseCase: OpenPublicationUseCase = mockk()
     private val sessionFactory: ReaderSessionFactory = mockk(relaxed = true)
+
     private val searchManager: ReaderSearchManager = mockk(relaxed = true)
     private val ttsManager: ReaderTtsManager = mockk(relaxed = true)
     private val preferencesManager: ReaderPreferencesManager = mockk(relaxed = true)
@@ -43,7 +54,6 @@ class ReaderViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-
         every { ttsManager.isTtsActive } returns MutableStateFlow(false)
         every { decorationManager.showHighlightDialog } returns MutableStateFlow(false)
     }
@@ -53,70 +63,63 @@ class ReaderViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // --- State Tests ---
-
     @Test
     fun `initialization loads book and sets Visual state on success`() = runTest(testDispatcher) {
-        // GIVEN a book that opens successfully
-        val bookId = 2L
-        val book = mockk<Book>(relaxed = true)
-        val publication = mockk<Publication>(relaxed = true)
+        val bookId = 1L
+        prepareSuccessfulLoad(bookId = bookId, isVisual = true)
 
-        prepareSuccessfulLoad(bookId = bookId, book = book, publication = publication, isVisual = true)
-
-        // WHEN the ViewModel is created
         viewModel = createViewModel(bookId = bookId)
         advanceUntilIdle()
 
-        // THEN the UI state should be Visual
-        assertTrue("State should be Visual", viewModel.uiState.value is ReaderUiState.Visual)
+        assertTrue(viewModel.uiState.value is ReaderUiState.Visual)
     }
 
     @Test
     fun `initialization sets Error state when loading fails`() = runTest(testDispatcher) {
-        // GIVEN a book that fails to load
         val bookId = 1L
         val book = mockk<Book>(relaxed = true)
 
-        coEvery { bookRepository.get(bookId) } returns book
+        coEvery { bookRepository.get(bookId = bookId) } returns book
         coEvery { openPublicationUseCase(url = any()) } returns Result.failure(Exception("Network Error"))
 
-        // WHEN the ViewModel is created
         viewModel = createViewModel(bookId = bookId)
         advanceUntilIdle()
 
-        // THEN the UI state should be Error
-        assertTrue("State should be Error", viewModel.uiState.value is ReaderUiState.Error)
+        assertTrue(viewModel.uiState.value is ReaderUiState.Error)
     }
 
     @Test
     fun `retryLoad attempts to fetch book data again`() = runTest(testDispatcher) {
-        // GIVEN initial failure
         val bookId = 1L
         val book = mockk<Book>(relaxed = true)
-        coEvery { bookRepository.get(bookId) } returns book
+        coEvery { bookRepository.get(bookId = bookId) } returns book
         coEvery { openPublicationUseCase(url = any()) } returns Result.failure(Exception("Fail"))
 
         viewModel = createViewModel(bookId = bookId)
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value is ReaderUiState.Error)
 
-        // WHEN retry is called with a fixed repository/usecase
-        prepareSuccessfulLoad(bookId = bookId, book = book, publication = mockk(relaxed = true), isVisual = true)
+        // Reset and prepare success for retry
+        prepareSuccessfulLoad(bookId = bookId, book = book, isVisual = true)
         viewModel.retryLoad()
         advanceUntilIdle()
 
-        // THEN we recover to Visual state
         assertTrue(viewModel.uiState.value is ReaderUiState.Visual)
     }
 
-    // --- Interaction / Logic Tests (Medium Value) ---
-
     @Test
     fun `openSettings shows Configurable sheet when TTS is inactive`() = runTest(testDispatcher) {
-        // GIVEN a visual session with TTS off
+        // GIVEN a visual session with TTS off AND a valid PreferencesEditor
         every { ttsManager.isTtsActive } returns MutableStateFlow(false)
-        prepareSuccessfulLoad(bookId = 1L, book = mockk(relaxed = true), publication = mockk(relaxed = true), isVisual = true)
+
+        // Fix: We must provide a mock editor, otherwise openSettings ignores the call
+        val mockEditor = mockk<PreferencesEditor<*>>(relaxed = true)
+
+        prepareSuccessfulLoad(
+            bookId = 1L,
+            isVisual = true,
+            preferencesEditor = mockEditor,
+        )
 
         viewModel = createViewModel(bookId = 1L)
         advanceUntilIdle()
@@ -131,35 +134,36 @@ class ReaderViewModelTest {
 
     @Test
     fun `openSettings shows TTS sheet when TTS is active`() = runTest(testDispatcher) {
-        // GIVEN a visual session with TTS ON
         every { ttsManager.isTtsActive } returns MutableStateFlow(true)
-        prepareSuccessfulLoad(bookId = 1L, book = mockk(relaxed = true), publication = mockk(relaxed = true), isVisual = true)
+        prepareSuccessfulLoad(bookId = 1L, isVisual = true)
 
-        viewModel = createViewModel(bookId = 1L)
-        advanceUntilIdle()
-
-        // WHEN settings are opened
         val mockSession = mockk<TtsSettingsSession>(relaxed = true)
         coEvery {
             preferencesManager.createTtsSettingsSession(
                 bookId = any(),
                 publication = any(),
                 ttsManager = any(),
-                application = any()
+                application = any(),
             )
         } returns mockSession
+
+        viewModel = createViewModel(bookId = 1L)
+        advanceUntilIdle()
 
         viewModel.openSettings()
         advanceUntilIdle()
 
-        // THEN we get the TTS specific sheet
         assertTrue(viewModel.settingsSheetState.value is ReaderSettingsSheet.Tts)
     }
 
     @Test
     fun `closeSettings clears the sheet state`() = runTest(testDispatcher) {
-        // GIVEN settings are open
+        prepareSuccessfulLoad(bookId = 1L, isVisual = true)
+
         viewModel = createViewModel(bookId = 1L)
+        advanceUntilIdle()
+
+        // Open a sheet manually or via method
         viewModel.openAudiobookSettings()
 
         // WHEN closed
@@ -174,21 +178,19 @@ class ReaderViewModelTest {
 
     private fun prepareSuccessfulLoad(
         bookId: Long,
-        book: Book,
-        publication: Publication,
-        isVisual: Boolean
+        book: Book = mockk(relaxed = true),
+        publication: Publication = mockk(relaxed = true),
+        isVisual: Boolean,
+        preferencesEditor: PreferencesEditor<*>? = null,
     ) {
         val bookUrl = mockk<AbsoluteUrl>()
         every { book.url } returns bookUrl
 
-        // Repository returns the book
         coEvery { bookRepository.get(bookId = bookId) } returns book
 
-        // UseCase returns success
         val openedBook = OpenedBook(publication = publication, asset = mockk(relaxed = true))
-        coEvery { openPublicationUseCase(url = bookUrl) } returns Result.success(openedBook)
+        coEvery { openPublicationUseCase(url = bookUrl) } returns Result.success(value = openedBook)
 
-        // SessionFactory returns the correct UI State type
         if (isVisual) {
             val visualState = ReaderUiState.Visual(
                 publication = publication,
@@ -196,19 +198,29 @@ class ReaderViewModelTest {
                 initialLocator = null,
                 pdfiumDocumentFactory = mockk(),
                 capabilities = mockk(),
-                preferencesEditor = null,
+                preferencesEditor = preferencesEditor,
                 initialPreferences = mockk(),
-                isFixedLayout = false
+                isFixedLayout = false,
             )
-            coEvery { sessionFactory.createVisualSession(book = book, publication) } returns visualState
+            coEvery {
+                sessionFactory.createVisualSession(
+                    book = book,
+                    publication = publication,
+                )
+            } returns visualState
         } else {
             val audioState = ReaderUiState.Audio(
                 publication = publication,
                 book = book,
                 navigator = mockk(relaxed = true),
-                preferencesEditor = mockk(relaxed = true)
+                preferencesEditor = mockk(relaxed = true),
             )
-            coEvery { sessionFactory.createAudioSession(book = book, publication) } returns Result.success(audioState)
+            coEvery {
+                sessionFactory.createAudioSession(
+                    book = book,
+                    publication = publication,
+                )
+            } returns Result.success(value = audioState)
         }
     }
 
@@ -223,7 +235,7 @@ class ReaderViewModelTest {
             decorationManager = decorationManager,
             sessionFactory = sessionFactory,
             mediaBinder = mediaBinder,
-            bookId = bookId
+            bookId = bookId,
         )
     }
 }

@@ -29,7 +29,7 @@ compose-material3 = "1.5.0-alpha13"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
-androidx-media3 = "1.9.1"
+androidx-media3 = "1.9.2"
 readium = "3.1.2"
 
 # -- DI (Hilt) --
@@ -45,7 +45,7 @@ junit = "4.13.2"
 ext-junit = "1.3.0"
 mockk = "1.14.9"
 robolectric = "4.16.1"
-kover = "0.9.5"
+kover = "0.9.6"
 
 [libraries]
 # --- Core & Architecture ---
