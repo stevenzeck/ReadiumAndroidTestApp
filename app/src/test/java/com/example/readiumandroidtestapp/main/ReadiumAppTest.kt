@@ -5,7 +5,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelStore
@@ -29,7 +29,6 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -47,7 +46,7 @@ class ReadiumAppTest {
     private val urlGateway: UrlGateway = mockk(relaxed = true)
 
     private lateinit var viewModel: MainViewModel
-    private val messagesFlow = MutableSharedFlow<Int>()
+    private val messagesFlow = MutableSharedFlow<Int>(extraBufferCapacity = 1)
     private val appThemeFlow = MutableStateFlow(AppTheme.SYSTEM)
 
     @Before
@@ -176,7 +175,7 @@ class ReadiumAppTest {
     }
 
     @Test
-    fun `user messages are displayed in snackbar`() = runTest {
+    fun `user messages are displayed in snackbar`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val messageResId = R.string.book_imported_successfully
         val expectedMessage = context.getString(messageResId)
@@ -191,7 +190,7 @@ class ReadiumAppTest {
         }
 
         // Emit a message
-        messagesFlow.emit(messageResId)
+        messagesFlow.tryEmit(messageResId)
 
         // Verify snackbar is displayed
         composeTestRule.onNodeWithText(text = expectedMessage).assertIsDisplayed()
