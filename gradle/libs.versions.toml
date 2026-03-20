@@ -4,32 +4,32 @@ agp = "9.1.0"
 desugar-jdk-libs = "2.1.5"
 
 # -- Kotlin --
-kotlin = "2.3.10"
+kotlin = "2.3.20"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
 
 # -- AndroidX Core --
-androidx-activity = "1.12.4"
+androidx-activity = "1.13.0"
 androidx-appcompat = "1.7.1"
 androidx-browser = "1.9.0"
-androidx-core = "1.17.0"
-androidx-datastore = "1.2.0"
+androidx-core = "1.18.0"
+androidx-datastore = "1.2.1"
 androidx-fragment = "1.8.9"
 androidx-lifecycle = "2.10.0"
 androidx-room = "2.8.4"
-androidx-paging = "3.4.1"
+androidx-paging = "3.4.2"
 
 # -- Navigation (v3) --
 androidx-navigation3 = "1.0.1"
 
 # -- Compose --
-compose-bom = "2026.02.01"
+compose-bom = "2026.03.00"
 compose-material3 = "1.5.0-alpha15"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
-androidx-media3 = "1.9.2"
+androidx-media3 = "1.9.3"
 readium = "3.1.2"
 
 # -- DI (Hilt) --
