@@ -130,6 +130,15 @@ fun ReadiumApp(
                             fadeIn() togetherWith fadeOut()
                         }
                     },
+                    popTransitionSpec = {
+                        val initialKey = initialState.key
+                        val targetKey = targetState.key
+                        if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
+                            EnterTransition.None togetherWith ExitTransition.None
+                        } else {
+                            fadeIn() togetherWith fadeOut()
+                        }
+                    },
                 )
                 // Global Snackbar (re-positioned for Reader mode if necessary, currently bottom aligned)
                 SnackbarHost(
@@ -186,6 +195,15 @@ fun ReadiumApp(
                             onBack = { if (!navigator.goBack()) activity?.finish() },
                             modifier = Modifier.fillMaxSize(),
                             transitionSpec = {
+                                val initialKey = initialState.key
+                                val targetKey = targetState.key
+                                if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
+                                    EnterTransition.None togetherWith ExitTransition.None
+                                } else {
+                                    fadeIn() togetherWith fadeOut()
+                                }
+                            },
+                            popTransitionSpec = {
                                 val initialKey = initialState.key
                                 val targetKey = targetState.key
                                 if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
