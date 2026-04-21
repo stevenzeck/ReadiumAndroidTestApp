@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.browser)
+    implementation(libs.bundles.readium.navigator2)
 
     // --- Async & Serialization ---
     implementation(libs.kotlinx.coroutines.android)

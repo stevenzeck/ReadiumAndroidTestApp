@@ -106,8 +106,6 @@ coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", versi
 readium-shared = { group = "org.readium.kotlin-toolkit", name = "readium-shared", version.ref = "readium" }
 readium-streamer = { group = "org.readium.kotlin-toolkit", name = "readium-streamer", version.ref = "readium" }
 readium-navigator = { group = "org.readium.kotlin-toolkit", name = "readium-navigator", version.ref = "readium" }
-readium-navigator-media-audio = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-media-audio", version.ref = "readium" }
-readium-navigator-media-tts = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-media-tts", version.ref = "readium" }
 readium-navigator-common = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-common", version.ref = "readium" }
 readium-navigator-media = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-media", version.ref = "readium" }
 readium-navigator-web-common = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-web-common", version.ref = "readium" }
@@ -163,8 +161,7 @@ readium = [
     "readium-shared",
     "readium-streamer",
     "readium-navigator",
-    "readium-navigator-media-audio",
-    "readium-navigator-media-tts",
+    "readium-navigator-media",
     "readium-adapter-exoplayer",
     "readium-adapter-pdfium",
     "readium-opds",
@@ -172,7 +169,6 @@ readium = [
 ]
 readium-navigator2 = [
     "readium-navigator-common",
-    "readium-navigator-media",
     "readium-navigator-web-common",
     "readium-navigator-web-fixed",
     "readium-navigator-web-reflowable"
