@@ -20,16 +20,22 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
 import com.example.readiumandroidtestapp.features.reader.ui.utils.HighlightActionModeCallback
 import kotlinx.coroutines.launch
+import org.readium.r2.navigator.NavigatorFragment
+import org.readium.r2.navigator.OverflowableNavigator
 import org.readium.r2.navigator.SelectableNavigator
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.epub.EpubNavigatorFactory
 import org.readium.r2.navigator.epub.EpubNavigatorFragment
 import org.readium.r2.navigator.epub.EpubPreferences
+import org.readium.r2.navigator.html.HtmlDecorationTemplates
 import org.readium.r2.navigator.input.InputListener
 import org.readium.r2.navigator.input.TapEvent
+import org.readium.r2.navigator.util.DirectionalNavigationAdapter
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 
+@OptIn(ExperimentalReadiumApi::class)
 @Composable
 fun EpubReader(
     publication: Publication,
@@ -63,6 +69,10 @@ fun EpubReader(
 
         val config = EpubNavigatorFragment.Configuration().apply {
             selectionActionModeCallback = actionModeCallback
+            decorationTemplates = HtmlDecorationTemplates.defaultTemplates(
+                alpha = 1.0,
+                experimentalPositioning = true,
+            )
         }
 
         val factory = (epubNavigatorFactory
@@ -82,8 +92,16 @@ fun EpubReader(
                 null,
             )
         }
-        val fragment = fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
+        val fragment =
+            fragmentManager.findFragmentById(containerId.intValue) as? NavigatorFragment
 
+        (fragment as? OverflowableNavigator)?.let { navigator ->
+            val navigationAdapter = DirectionalNavigationAdapter(
+                navigator = navigator,
+                animatedTransition = true,
+            )
+            navigator.addInputListener(navigationAdapter)
+        }
 
         val inputListener = object : InputListener {
             override fun onTap(event: TapEvent): Boolean {
@@ -91,13 +109,13 @@ fun EpubReader(
                 return true
             }
         }
-        fragment?.addInputListener(inputListener)
+        (fragment as? VisualNavigator)?.addInputListener(inputListener)
 
-        if (fragment != null) {
-            currentOnNavigatorReady(fragment)
+        (fragment as? VisualNavigator)?.let { navigator ->
+            currentOnNavigatorReady(navigator)
 
-            if (fragment is SelectableNavigator) {
-                actionModeCallback.navigator = fragment
+            if (navigator is SelectableNavigator) {
+                actionModeCallback.navigator = navigator
             }
         }
 
@@ -111,7 +129,7 @@ fun EpubReader(
         onDispose {
             job.cancel()
             actionModeCallback.navigator = null
-            fragment?.removeInputListener(inputListener)
+            (fragment as? VisualNavigator)?.removeInputListener(inputListener)
             if (!fragmentManager.isStateSaved) {
                 fragmentManager.commitNow(allowStateLoss = true) {
                     val currentFrag = fragmentManager.findFragmentById(containerId.intValue)

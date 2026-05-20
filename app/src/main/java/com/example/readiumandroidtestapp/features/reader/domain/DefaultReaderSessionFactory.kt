@@ -6,10 +6,9 @@ import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabili
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import org.json.JSONObject
 import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
+import org.readium.r2.shared.publication.Layout
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.epub.EpubLayout
-import org.readium.r2.shared.publication.presentation.presentation
 import org.readium.r2.shared.publication.services.search.isSearchable
 import org.readium.r2.shared.util.Try
 import javax.inject.Inject
@@ -26,7 +25,7 @@ class DefaultReaderSessionFactory @Inject constructor(
     ): ReaderUiState.Visual {
         val initialLocator = book.progression?.let { Locator.fromJSON(json = JSONObject(it)) }
 
-        val isFixedLayout = publication.metadata.presentation.layout == EpubLayout.FIXED
+        val isFixedLayout = publication.metadata.layout == Layout.FIXED
 
         val initialPreferences = preferencesManager.loadPreferences(
             bookId = book.id,

@@ -26,7 +26,7 @@ class FakeStorageGateway(
     var urlToReturn: AbsoluteUrl? = null
 
     override fun toUrl(file: File): AbsoluteUrl {
-        return urlToReturn ?: file.toUrl()
+        return urlToReturn ?: file.toUrl(isDirectory = false)
     }
 
     override fun deleteFile(path: String): Boolean {

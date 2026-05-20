@@ -12,13 +12,13 @@ plugins {
 android {
     namespace = "com.example.readiumandroidtestapp"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.example.readiumandroidtestapp"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -85,7 +85,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.browser)
-    implementation(libs.bundles.readium.navigator2)
 
     // --- Async & Serialization ---
     implementation(libs.kotlinx.coroutines.android)
@@ -102,6 +101,7 @@ dependencies {
 
     // --- Feature Bundles ---
     implementation(libs.bundles.readium)
+//    implementation(libs.bundles.readium.navigator2)
     implementation(libs.bundles.paging)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)

@@ -77,7 +77,7 @@ class AndroidStorageGatewayTest {
     @Test
     fun `toUrl converts file to AbsoluteUrl`() {
         val file = File("/path/to/file.epub")
-        val expectedUrl = file.toUrl()
+        val expectedUrl = file.toUrl(isDirectory = false)
         assertEquals(expectedUrl, storageGateway.toUrl(file = file))
     }
 

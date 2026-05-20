@@ -21,14 +21,19 @@ import kotlinx.coroutines.launch
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
 import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
 import org.readium.adapter.pdfium.navigator.PdfiumSettings
+import org.readium.r2.navigator.NavigatorFragment
+import org.readium.r2.navigator.OverflowableNavigator
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.input.InputListener
 import org.readium.r2.navigator.input.TapEvent
 import org.readium.r2.navigator.pdf.PdfNavigatorFactory
 import org.readium.r2.navigator.pdf.PdfNavigatorFragment
+import org.readium.r2.navigator.util.DirectionalNavigationAdapter
+import org.readium.r2.shared.ExperimentalReadiumApi
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 
+@OptIn(ExperimentalReadiumApi::class)
 @Composable
 fun PdfReader(
     publication: Publication,
@@ -58,7 +63,8 @@ fun PdfReader(
         )
         fragmentManager.fragmentFactory = factory
 
-        var fragment = fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
+        var fragment =
+            fragmentManager.findFragmentById(containerId.intValue) as? NavigatorFragment
 
         if (fragment == null) {
             fragmentManager.commitNow(allowStateLoss = true) {
@@ -69,7 +75,15 @@ fun PdfReader(
                     null,
                 )
             }
-            fragment = fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
+            fragment =
+                fragmentManager.findFragmentById(containerId.intValue) as? NavigatorFragment
+        }
+
+        (fragment as? OverflowableNavigator)?.let { navigator ->
+            val navigationAdapter = DirectionalNavigationAdapter(
+                navigator = navigator,
+            )
+            navigator.addInputListener(navigationAdapter)
         }
 
         val inputListener = object : InputListener {
@@ -78,10 +92,10 @@ fun PdfReader(
                 return true
             }
         }
-        fragment?.addInputListener(inputListener)
+        (fragment as? VisualNavigator)?.addInputListener(inputListener)
 
-        if (fragment != null) {
-            currentOnNavigatorReady(fragment)
+        (fragment as? VisualNavigator)?.let { navigator ->
+            currentOnNavigatorReady(navigator)
         }
 
         val scope = kotlinx.coroutines.CoroutineScope(context = kotlinx.coroutines.Dispatchers.Main)
@@ -93,7 +107,7 @@ fun PdfReader(
 
         onDispose {
             job.cancel()
-            fragment?.removeInputListener(inputListener)
+            (fragment as? VisualNavigator)?.removeInputListener(inputListener)
             if (!fragmentManager.isStateSaved) {
                 fragmentManager.commitNow(allowStateLoss = true) {
                     val currentFrag = fragmentManager.findFragmentById(containerId.intValue)
