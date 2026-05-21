@@ -110,7 +110,7 @@ readium-navigator-common = { group = "org.readium.kotlin-toolkit", name = "readi
 readium-navigator-media = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-media", version.ref = "readium" }
 readium-navigator-web-common = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-web-common", version.ref = "readium" }
 readium-navigator-web-reflowable = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-web-reflowable", version.ref = "readium" }
-readium-navigator-web-fixed = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-web-fixed", version.ref = "readium" }
+readium-navigator-web-fixedlayout = { group = "org.readium.kotlin-toolkit", name = "readium-navigator-web-fixedlayout", version.ref = "readium" }
 readium-adapter-exoplayer = { group = "org.readium.kotlin-toolkit", name = "readium-adapter-exoplayer", version.ref = "readium" }
 readium-adapter-pdfium = { group = "org.readium.kotlin-toolkit", name = "readium-adapter-pdfium", version.ref = "readium" }
 readium-opds = { group = "org.readium.kotlin-toolkit", name = "readium-opds", version.ref = "readium" }
@@ -170,7 +170,7 @@ readium = [
 readium-navigator2 = [
     "readium-navigator-common",
     "readium-navigator-web-common",
-    "readium-navigator-web-fixed",
+    "readium-navigator-web-fixedlayout",
     "readium-navigator-web-reflowable"
 ]
 paging = [
