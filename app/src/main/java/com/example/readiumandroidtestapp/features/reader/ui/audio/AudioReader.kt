@@ -28,13 +28,13 @@ import com.example.readiumandroidtestapp.features.reader.ui.audio.components.Aud
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioPlayerControls
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioProgressBar
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.SettingsBottomSheet
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferences
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import kotlinx.coroutines.launch
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
-import org.readium.r2.navigator.preferences.Configurable
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -42,10 +42,10 @@ import kotlin.time.Duration.Companion.seconds
 fun AudioReader(
     book: Book,
     navigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>,
-    settingsSheetState: ReaderSettingsSheet?,
+    settingsSheetState: ReaderSettings?,
     onNavigateBack: () -> Unit,
     onSettingsClick: () -> Unit,
-    onSettingsChange: (Configurable.Preferences<*>) -> Unit,
+    onSettingsChange: (ReaderPreferences) -> Unit,
     onSettingsDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -159,11 +159,10 @@ fun AudioReader(
             Spacer(modifier = Modifier.height(height = 48.dp))
         }
 
-        if (settingsSheetState is ReaderSettingsSheet.Configurable) {
+        if (settingsSheetState != null) {
             SettingsBottomSheet(
-                settings = settingsSheetState.editor,
-                isFixedLayout = false,
-                onCommit = { preferences -> onSettingsChange(preferences) },
+                settings = settingsSheetState,
+                onCommit = { wrapped -> onSettingsChange(wrapped) },
                 onDismissRequest = onSettingsDismiss,
             )
         }

@@ -9,47 +9,51 @@ import com.example.readiumandroidtestapp.features.reader.ui.preferences.EnumPref
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.StepperPreference
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatFit
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatScrollAxis
+import org.readium.adapter.pdfium.navigator.PdfiumPreferences
 import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
 import org.readium.r2.navigator.preferences.Configurable
+import org.readium.r2.navigator.preferences.PreferencesEditor
 
 @Composable
 fun PdfSettingsSheet(
-    editor: PdfiumPreferencesEditor,
+    editor: PreferencesEditor<PdfiumPreferences>,
     onCommit: (Configurable.Preferences<*>) -> Unit,
 ) {
     val resources = LocalResources.current
     val commit = { onCommit(editor.preferences) }
 
+    val pdfEditor = editor as? PdfiumPreferencesEditor ?: return
+
     Column {
-        if (editor.fit.isEffective) {
+        if (pdfEditor.fit.isEffective) {
             EnumPreference(
                 title = stringResource(id = R.string.fit),
-                preference = editor.fit,
+                preference = pdfEditor.fit,
                 onValueChange = { newVal ->
-                    editor.fit.set(newVal)
+                    pdfEditor.fit.set(newVal)
                     commit()
                 },
                 formatValue = { formatFit(fit = it, resources = resources) },
             )
         }
 
-        if (editor.scrollAxis.isEffective) {
+        if (pdfEditor.scrollAxis.isEffective) {
             EnumPreference(
                 title = stringResource(id = R.string.scroll_axis),
-                preference = editor.scrollAxis,
+                preference = pdfEditor.scrollAxis,
                 onValueChange = { newVal ->
-                    editor.scrollAxis.set(newVal)
+                    pdfEditor.scrollAxis.set(newVal)
                     commit()
                 },
                 formatValue = { formatScrollAxis(axis = it, resources = resources) },
             )
         }
 
-        if (editor.pageSpacing.isEffective) {
+        if (pdfEditor.pageSpacing.isEffective) {
             StepperPreference(
                 title = stringResource(id = R.string.page_spacing),
-                preference = editor.pageSpacing,
-                onCommit = commit,
+                preference = pdfEditor.pageSpacing,
+                onCommit = { commit() },
             )
         }
     }

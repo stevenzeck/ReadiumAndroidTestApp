@@ -4,12 +4,20 @@ import com.example.readiumandroidtestapp.core.domain.model.Book
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
+import org.readium.adapter.pdfium.navigator.PdfiumPreferences
+import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
+import org.readium.navigator.common.NavigationController
+import org.readium.navigator.common.RenditionState
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.tts.android.AndroidTtsEngine
+import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.navigator.media.tts.android.AndroidTtsPreferencesEditor
-import org.readium.r2.navigator.preferences.Configurable
+import org.readium.navigator.web.fixedlayout.preferences.FixedWebPreferences
+import org.readium.navigator.web.fixedlayout.preferences.FixedWebPreferencesEditor
+import org.readium.navigator.web.reflowable.preferences.ReflowableWebPreferences
+import org.readium.navigator.web.reflowable.preferences.ReflowableWebPreferencesEditor
+import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.preferences.Preference
-import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Language
@@ -22,6 +30,27 @@ sealed class ReaderError {
     data class AssetRetrievalFailed(val cause: Throwable) : ReaderError()
     data class PublicationOpenFailed(val cause: Throwable) : ReaderError()
     data class NavigatorCreationFailed(val cause: Throwable) : ReaderError()
+}
+
+sealed interface ReaderNavigator {
+    data class Legacy(val navigator: VisualNavigator) : ReaderNavigator
+    data class New(val controller: NavigationController<*, *>) : ReaderNavigator
+}
+
+sealed interface ReaderPreferences {
+    data class ReflowableWeb(val value: ReflowableWebPreferences) : ReaderPreferences
+    data class FixedWeb(val value: FixedWebPreferences) : ReaderPreferences
+    data class Pdf(val value: PdfiumPreferences) : ReaderPreferences
+    data class Audio(val value: ExoPlayerPreferences) : ReaderPreferences
+    data class Tts(val value: AndroidTtsPreferences) : ReaderPreferences
+}
+
+sealed interface ReaderPreferencesEditor {
+    data class ReflowableWeb(val editor: ReflowableWebPreferencesEditor) : ReaderPreferencesEditor
+    data class FixedWeb(val editor: FixedWebPreferencesEditor) : ReaderPreferencesEditor
+    data class Pdf(val editor: PdfiumPreferencesEditor) : ReaderPreferencesEditor
+    data class Audio(val editor: org.readium.r2.navigator.preferences.PreferencesEditor<ExoPlayerPreferences>) :
+        ReaderPreferencesEditor
 }
 
 data class ReaderCapabilities(
@@ -40,16 +69,17 @@ sealed interface ReaderUiState {
         val initialLocator: Locator?,
         val pdfiumDocumentFactory: PdfiumDocumentFactory,
         val capabilities: ReaderCapabilities,
-        val preferencesEditor: PreferencesEditor<*>? = null,
-        val initialPreferences: Configurable.Preferences<*>,
+        val preferencesEditor: ReaderPreferencesEditor? = null,
+        val initialPreferences: ReaderPreferences,
         val isFixedLayout: Boolean = false,
+        val renditionState: RenditionState<*>? = null,
     ) : ReaderUiState
 
     data class Audio(
         val publication: Publication,
         val book: Book,
         val navigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>,
-        val preferencesEditor: PreferencesEditor<ExoPlayerPreferences>? = null,
+        val preferencesEditor: ReaderPreferencesEditor? = null,
     ) : ReaderUiState
 }
 
@@ -65,7 +95,7 @@ data class TtsSettingsSession(
     val availableVoices: List<AndroidTtsEngine.Voice>,
 )
 
-sealed interface ReaderSettingsSheet {
-    data class Tts(val session: TtsSettingsSession) : ReaderSettingsSheet
-    data class Configurable(val editor: PreferencesEditor<*>) : ReaderSettingsSheet
+sealed interface ReaderSettings {
+    data class Tts(val session: TtsSettingsSession) : ReaderSettings
+    data class Configurable(val editor: ReaderPreferencesEditor) : ReaderSettings
 }

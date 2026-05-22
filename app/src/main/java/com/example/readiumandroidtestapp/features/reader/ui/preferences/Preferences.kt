@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
 import org.readium.r2.navigator.preferences.EnumPreference
+import org.readium.r2.navigator.preferences.OptionalRangePreference
 import org.readium.r2.navigator.preferences.Preference
 import org.readium.r2.navigator.preferences.RangePreference
 
@@ -159,6 +160,73 @@ fun <T> EnumPreference(
                         },
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun <T : Comparable<T>> OptionalStepperPreference(
+    modifier: Modifier = Modifier,
+    title: String,
+    preference: OptionalRangePreference<T>,
+    onCommit: () -> Unit,
+    formatValue: (T) -> String = { it.toString() },
+) {
+    if (!preference.isEffective) return
+
+    val value = preference.value ?: preference.effectiveValue
+    val range = preference.supportedRange
+
+    val canDecrement = value != null && value > range.start
+    val canIncrement = value != null && value < range.endInclusive
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(all = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+        ) {
+            IconButton(
+                onClick = {
+                    preference.decrement()
+                    onCommit()
+                },
+                enabled = canDecrement,
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.skip_previous),
+                    contentDescription = stringResource(id = R.string.decrease),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Text(
+                text = value?.let { formatValue(it) }
+                    ?: stringResource(id = R.string.system_default),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+
+            IconButton(
+                onClick = {
+                    preference.increment()
+                    onCommit()
+                },
+                enabled = canIncrement,
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.skip_next),
+                    contentDescription = stringResource(id = R.string.increase),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
     }

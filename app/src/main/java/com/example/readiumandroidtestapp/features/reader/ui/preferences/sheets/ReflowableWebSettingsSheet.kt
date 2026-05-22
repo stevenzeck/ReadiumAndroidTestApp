@@ -7,35 +7,17 @@ import androidx.compose.ui.res.stringResource
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.ChoicePreference
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.EnumPreference
+import com.example.readiumandroidtestapp.features.reader.ui.preferences.OptionalStepperPreference
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.StepperPreference
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.SwitchPreference
-import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatColumnCount
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatFontFamily
-import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatSpread
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatTextAlign
-import com.example.readiumandroidtestapp.features.reader.ui.preferences.formatTheme
-import org.readium.r2.navigator.epub.EpubPreferencesEditor
-import org.readium.r2.navigator.preferences.Configurable
+import org.readium.navigator.web.reflowable.preferences.ReflowableWebPreferencesEditor
 import org.readium.r2.navigator.preferences.FontFamily
 
 @Composable
-fun EpubSettingsSheet(
-    editor: EpubPreferencesEditor,
-    isFixedLayout: Boolean,
-    onCommit: (Configurable.Preferences<*>) -> Unit,
-) {
-    val commit = { onCommit(editor.preferences) }
-
-    if (isFixedLayout) {
-        FixedLayoutSettings(editor = editor, onCommit = commit)
-    } else {
-        ReflowableSettings(editor = editor, onCommit = commit)
-    }
-}
-
-@Composable
-private fun ReflowableSettings(
-    editor: EpubPreferencesEditor,
+fun ReflowableWebSettingsSheet(
+    editor: ReflowableWebPreferencesEditor,
     onCommit: () -> Unit,
 ) {
     val resources = LocalResources.current
@@ -58,30 +40,6 @@ private fun ReflowableSettings(
                     editor.scroll.set(newVal)
                     onCommit()
                 },
-            )
-        }
-
-        if (editor.spread.isEffective) {
-            EnumPreference(
-                title = stringResource(id = R.string.spread),
-                preference = editor.spread,
-                onValueChange = { newVal ->
-                    editor.spread.set(newVal)
-                    onCommit()
-                },
-                formatValue = { formatSpread(spread = it, resources = resources) },
-            )
-        }
-
-        if (editor.theme.isEffective) {
-            EnumPreference(
-                title = stringResource(id = R.string.theme),
-                preference = editor.theme,
-                onValueChange = { newVal ->
-                    editor.theme.set(newVal)
-                    onCommit()
-                },
-                formatValue = { formatTheme(theme = it, resources = resources) },
             )
         }
 
@@ -159,21 +117,17 @@ private fun ReflowableSettings(
         }
 
         if (editor.columnCount.isEffective) {
-            EnumPreference(
+            OptionalStepperPreference(
                 title = stringResource(id = R.string.column_count),
                 preference = editor.columnCount,
-                onValueChange = { newVal ->
-                    editor.columnCount.set(newVal)
-                    onCommit()
-                },
-                formatValue = { formatColumnCount(count = it, resources = resources) },
+                onCommit = onCommit,
             )
         }
 
-        if (editor.pageMargins.isEffective) {
+        if (editor.minMargins.isEffective) {
             StepperPreference(
                 title = stringResource(id = R.string.page_margins),
-                preference = editor.pageMargins,
+                preference = editor.minMargins,
                 onCommit = onCommit,
                 formatValue = { it.toString() },
             )
@@ -211,48 +165,14 @@ private fun ReflowableSettings(
             )
         }
 
-        if (editor.publisherStyles.isEffective) {
+        if (editor.overridePublisherColors.isEffective) {
             SwitchPreference(
                 title = stringResource(id = R.string.publisher_styles),
-                preference = editor.publisherStyles,
+                preference = editor.overridePublisherColors,
                 onCheckedChange = { newVal ->
-                    editor.publisherStyles.set(newVal)
+                    editor.overridePublisherColors.set(newVal)
                     onCommit()
                 },
-            )
-        }
-    }
-}
-
-@Composable
-private fun FixedLayoutSettings(
-    editor: EpubPreferencesEditor,
-    onCommit: () -> Unit,
-) {
-    val resources = LocalResources.current
-
-    Column {
-        if (editor.spread.isEffective) {
-            EnumPreference(
-                title = stringResource(id = R.string.spread),
-                preference = editor.spread,
-                onValueChange = { newVal ->
-                    editor.spread.set(newVal)
-                    onCommit()
-                },
-                formatValue = { formatSpread(spread = it, resources = resources) },
-            )
-        }
-
-        if (editor.theme.isEffective) {
-            EnumPreference(
-                title = stringResource(id = R.string.theme),
-                preference = editor.theme,
-                onValueChange = { newVal ->
-                    editor.theme.set(newVal)
-                    onCommit()
-                },
-                formatValue = { formatTheme(theme = it, resources = resources) },
             )
         }
     }

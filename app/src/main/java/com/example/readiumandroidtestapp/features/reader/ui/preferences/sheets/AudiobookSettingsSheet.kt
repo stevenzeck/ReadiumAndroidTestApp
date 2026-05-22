@@ -20,7 +20,7 @@ fun AudiobookSettingsSheet(
             StepperPreference(
                 title = stringResource(id = R.string.speed),
                 preference = editor.speed,
-                onCommit = commit,
+                onCommit = { commit() },
                 formatValue = { "%.1fx".format(it) },
             )
         }
@@ -29,7 +29,7 @@ fun AudiobookSettingsSheet(
             StepperPreference(
                 title = stringResource(id = R.string.pitch),
                 preference = editor.pitch,
-                onCommit = commit,
+                onCommit = { commit() },
                 formatValue = { "%.1fx".format(it) },
             )
         }

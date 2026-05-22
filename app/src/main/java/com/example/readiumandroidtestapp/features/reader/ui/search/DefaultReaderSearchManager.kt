@@ -24,10 +24,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import org.readium.r2.navigator.Decoration
+import org.readium.navigator.common.Decoration
+import org.readium.navigator.web.fixedlayout.FixedWebDecorationLocation
+import org.readium.navigator.web.reflowable.ReflowableWebDecorationLocation
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import javax.inject.Inject
+import org.readium.r2.navigator.Decoration as LegacyDecoration
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class DefaultReaderSearchManager @Inject constructor(
@@ -39,15 +42,33 @@ class DefaultReaderSearchManager @Inject constructor(
 
     private val _searchLocators = MutableStateFlow<List<Locator>>(value = emptyList())
 
-    override val searchDecorations: Flow<List<Decoration>> = _searchLocators.map { locators ->
-        locators.mapIndexed { index, locator ->
-            Decoration(
-                id = "search-$index",
-                locator = locator,
-                style = Decoration.Style.Underline(tint = Color.Red.toArgb()),
-            )
+    override val pdfSearchDecorations: Flow<List<LegacyDecoration>> =
+        _searchLocators.map { locators ->
+            locators.map { locator ->
+                LegacyDecoration(
+                    id = "search-${locators.indexOf(locator)}",
+                    locator = locator,
+                    style = LegacyDecoration.Style.Underline(tint = Color.Red.toArgb()),
+                )
+            }
         }
-    }
+
+    override fun epubSearchDecorations(isFixedLayout: Boolean): Flow<List<Decoration<*>>> =
+        _searchLocators.map { locators ->
+            locators.mapIndexedNotNull { index, locator ->
+                val location = if (isFixedLayout) {
+                    FixedWebDecorationLocation(locator = locator)
+                } else {
+                    ReflowableWebDecorationLocation(locator = locator)
+                } ?: return@mapIndexedNotNull null
+
+                Decoration(
+                    id = Decoration.Id(value = "search-$index"),
+                    location = location,
+                    style = Decoration.Style.Underline(tint = Color.Red.toArgb()),
+                )
+            }
+        }
 
     override fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
@@ -73,18 +94,21 @@ class DefaultReaderSearchManager @Inject constructor(
                 if (iterator == null) {
                     flowOf(value = PagingData.empty())
                 } else {
-                    Pager(config = PagingConfig(pageSize = 20)) {
-                        SearchPagingSource(iterator = iterator) { locators ->
-                            _searchLocators.update { it + locators }
-                        }
-                    }.flow.map { pagingData ->
+                    Pager(
+                        config = PagingConfig(pageSize = 20),
+                        pagingSourceFactory = {
+                            SearchPagingSource(iterator = iterator) { locators ->
+                                _searchLocators.update { it + locators }
+                            }
+                        },
+                    ).flow.map { pagingData ->
                         pagingData
                             .map { SearchItem.Result(locator = it) }
                             .insertSeparators { before: SearchItem.Result?, after: SearchItem.Result? ->
                                 val beforeTitle = before?.locator?.title
                                 val afterTitle = after?.locator?.title
                                 if (afterTitle != null && beforeTitle != afterTitle) {
-                                    SearchItem.Header(afterTitle)
+                                    SearchItem.Header(title = afterTitle)
                                 } else {
                                     null
                                 }
@@ -92,6 +116,6 @@ class DefaultReaderSearchManager @Inject constructor(
                     }
                 }
             }
-        }.cachedIn(scope)
+        }.cachedIn(scope = scope)
     }
 }

@@ -14,20 +14,20 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.Highlight
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AudioReader
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderNavigator
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferences
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import com.example.readiumandroidtestapp.features.reader.ui.visual.VisualReaderContent
-import org.readium.r2.navigator.VisualNavigator
-import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.shared.publication.Locator
 
 data class VisualReaderActions(
     val onSettingsClick: () -> Unit,
-    val onSettingsChange: (Configurable.Preferences<*>) -> Unit,
+    val onSettingsChange: (ReaderPreferences) -> Unit,
     val onSettingsDismiss: () -> Unit,
     val onVisualLocatorChanged: (Locator) -> Unit,
-    val onNavigatorReady: (VisualNavigator) -> Unit,
+    val onNavigatorReady: (ReaderNavigator) -> Unit,
     val onHighlightAction: (Locator) -> Unit,
     val startTts: () -> Unit,
     val stopTts: () -> Unit,
@@ -43,7 +43,7 @@ data class VisualReaderActions(
 
 data class VisualReaderState(
     val uiState: ReaderUiState.Visual,
-    val settingsSheetState: ReaderSettingsSheet?,
+    val settingsSheetState: ReaderSettings?,
     val bookmarks: List<Bookmark>,
     val highlights: List<Highlight>,
     val searchResults: LazyPagingItems<SearchItem>,
@@ -55,14 +55,14 @@ data class VisualReaderState(
 
 data class AudioReaderActions(
     val onSettingsClick: () -> Unit,
-    val onSettingsChange: (Configurable.Preferences<*>) -> Unit,
+    val onSettingsChange: (ReaderPreferences) -> Unit,
     val onSettingsDismiss: () -> Unit,
     val onNavigateBack: () -> Unit,
 )
 
 data class AudioReaderState(
     val uiState: ReaderUiState.Audio,
-    val settingsSheetState: ReaderSettingsSheet?,
+    val settingsSheetState: ReaderSettings?,
 )
 
 /**
@@ -82,7 +82,7 @@ fun ReaderScreen(
     bookId: Long,
     viewModel: ReaderViewModel = hiltViewModel(
         creationCallback = { factory: ReaderViewModel.Factory ->
-            factory.create(bookId)
+            factory.create(bookId = bookId)
         },
     ),
     onNavigateBack: () -> Unit,
@@ -93,7 +93,7 @@ fun ReaderScreen(
         DefaultVisualReaderContent(state = state, actions = actions)
     },
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val settingsSheetState by viewModel.settingsSheetState.collectAsState()
 
     val bookmarks by viewModel.bookmarks.collectAsState(initial = emptyList())
@@ -105,14 +105,14 @@ fun ReaderScreen(
     val showHighlightDialog by viewModel.showHighlightDialog.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val uiState = state) {
+        when (val state = uiState) {
             is ReaderUiState.Loading -> {
                 LoadingIndicator(modifier = Modifier.align(alignment = Alignment.Center))
             }
 
             is ReaderUiState.Error -> {
                 ReaderErrorScreen(
-                    error = uiState.error,
+                    error = state.error,
                     onRetry = { viewModel.retryLoad() },
                 )
             }
@@ -120,7 +120,7 @@ fun ReaderScreen(
             is ReaderUiState.Audio -> {
                 audioReaderContent(
                     AudioReaderState(
-                        uiState = uiState,
+                        uiState = state,
                         settingsSheetState = settingsSheetState,
                     ),
                     AudioReaderActions(
@@ -135,7 +135,7 @@ fun ReaderScreen(
             is ReaderUiState.Visual -> {
                 visualReaderContent(
                     VisualReaderState(
-                        uiState = uiState,
+                        uiState = state,
                         settingsSheetState = settingsSheetState,
                         bookmarks = bookmarks,
                         highlights = highlights,
@@ -150,7 +150,7 @@ fun ReaderScreen(
                         onSettingsChange = viewModel::onSettingsChanged,
                         onSettingsDismiss = viewModel::closeSettings,
                         onVisualLocatorChanged = viewModel::onVisualLocatorChanged,
-                        onNavigatorReady = { viewModel.onNavigatorReady(visualNavigator = it) },
+                        onNavigatorReady = { viewModel.onNavigatorReady(navigator = it) },
                         onHighlightAction = viewModel::onHighlightAction,
                         startTts = viewModel::startTts,
                         stopTts = viewModel::stopTts,

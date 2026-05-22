@@ -15,7 +15,9 @@ import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFac
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderError
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderNavigator
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferences
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
@@ -23,6 +25,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -37,10 +40,11 @@ import kotlinx.coroutines.launch
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
+import org.readium.navigator.common.DecorationController
+import org.readium.navigator.common.NavigationController
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.VisualNavigator
-import org.readium.r2.navigator.epub.EpubPreferences
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
@@ -74,8 +78,8 @@ class ReaderViewModel @AssistedInject constructor(
     private val _uiState = MutableStateFlow<ReaderUiState>(value = ReaderUiState.Loading)
     val uiState: StateFlow<ReaderUiState> = _uiState.asStateFlow()
 
-    private val _settingsSheetState = MutableStateFlow<ReaderSettingsSheet?>(value = null)
-    val settingsSheetState: StateFlow<ReaderSettingsSheet?> = _settingsSheetState.asStateFlow()
+    private val _settingsSheetState = MutableStateFlow<ReaderSettings?>(value = null)
+    val settingsSheetState: StateFlow<ReaderSettings?> = _settingsSheetState.asStateFlow()
 
     // Reactive streams for book data, switched dynamically based on the current bookId.
     val bookmarks: Flow<List<Bookmark>> = bookRepository.bookmarksForBook(bookId = bookId)
@@ -100,8 +104,9 @@ class ReaderViewModel @AssistedInject constructor(
     private var audioNavigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>? = null
 
     // We hold a weak reference (not technically WeakReference, but nullable and transient)
-    // to the VisualNavigator to control it from the ViewModel (e.g., for TTS page turning).
+    // to the VisualNavigator or NavigationController to control it from the ViewModel.
     private var currentVisualNavigator: VisualNavigator? = null
+    private var currentNavigationController: NavigationController<*, *>? = null
     private val visualLocatorFlow = MutableStateFlow<Locator?>(value = null)
 
     init {
@@ -115,10 +120,10 @@ class ReaderViewModel @AssistedInject constructor(
             }
         }.launchIn(scope = viewModelScope)
 
-        // Apply Search Decorations to the navigator whenever they change
-        searchManager.searchDecorations.onEach { decorations ->
+        // Apply Search Decorations to the legacy navigator (for PDFs)
+        searchManager.pdfSearchDecorations.onEach { decorations ->
             (currentVisualNavigator as? DecorableNavigator)?.applyDecorations(
-                decorations,
+                decorations = decorations,
                 group = "search",
             )
         }.launchIn(viewModelScope)
@@ -162,18 +167,20 @@ class ReaderViewModel @AssistedInject constructor(
 
     private suspend fun setupSession(book: Book, publication: Publication) {
         if (publication.conformsTo(profile = Publication.Profile.AUDIOBOOK)) {
-            sessionFactory.createAudioSession(book, publication).onSuccess { audioState ->
-                audioNavigator = audioState.navigator
-                mediaBinder.bind(navigator = audioState.navigator)
-                startObservingAudioLocator(locatorFlow = audioState.navigator.currentLocator)
-                _uiState.value = audioState
-            }.onFailure { error ->
-                _uiState.value = ReaderUiState.Error(
-                    error = ReaderError.NavigatorCreationFailed(cause = error),
-                )
-            }
+            sessionFactory.createAudioSession(book = book, publication = publication)
+                .onSuccess { audioState ->
+                    audioNavigator = audioState.navigator
+                    mediaBinder.bind(navigator = audioState.navigator)
+                    startObservingAudioLocator(locatorFlow = audioState.navigator.currentLocator)
+                    _uiState.value = audioState
+                }.onFailure { error ->
+                    _uiState.value = ReaderUiState.Error(
+                        error = ReaderError.NavigatorCreationFailed(cause = error),
+                    )
+                }
         } else {
-            val visualState = sessionFactory.createVisualSession(book, publication)
+            val visualState =
+                sessionFactory.createVisualSession(book = book, publication = publication)
             _uiState.value = visualState
         }
     }
@@ -188,49 +195,85 @@ class ReaderViewModel @AssistedInject constructor(
         asset?.close()
     }
 
-    //region Visual Navigator Interaction
+    //region Navigator Interaction
 
     /**
-     * Called when the VisualNavigator is ready (attached to the UI).
-     *
-     * This is critical for:
-     * 1. Submitting initial preferences.
-     * 2. Re-applying decorations (Highlights, Search).
-     * 3. Initializing TTS with the publication.
+     * Called when the Navigator is ready (attached to the UI).
      */
-    fun onNavigatorReady(visualNavigator: VisualNavigator) {
-        currentVisualNavigator = visualNavigator
+    fun onNavigatorReady(navigator: ReaderNavigator) {
+        when (navigator) {
+            is ReaderNavigator.Legacy -> {
+                val visualNavigator = navigator.navigator
+                currentVisualNavigator = visualNavigator
+                currentNavigationController = null
 
-        // Submit initial preferences to the navigator
-        val state = _uiState.value as? ReaderUiState.Visual
-        val preferences = state?.initialPreferences
-        if (preferences != null) {
-            if (preferences is EpubPreferences) {
-                @Suppress("UNCHECKED_CAST") (visualNavigator as? Configurable<*, EpubPreferences>)?.submitPreferences(
-                    preferences,
-                )
-            } else if (preferences is PdfiumPreferences) {
-                @Suppress("UNCHECKED_CAST") (visualNavigator as? Configurable<*, PdfiumPreferences>)?.submitPreferences(
-                    preferences,
-                )
+                // Submit initial preferences to the navigator
+                val state = _uiState.value as? ReaderUiState.Visual
+                val preferences = state?.initialPreferences
+                if (preferences != null) {
+                    if (preferences is ReaderPreferences.Pdf) {
+                        @Suppress("UNCHECKED_CAST") (visualNavigator as? Configurable<*, PdfiumPreferences>)?.submitPreferences(
+                            preferences = preferences.value,
+                        )
+                    }
+                }
+
+                // Restore Decorations (Highlights, Search) for PDF
+                viewModelScope.launch {
+                    decorationManager.pdfDecorationFlow(bookId = bookId).onEach { decorations ->
+                        (visualNavigator as? DecorableNavigator)?.applyDecorations(
+                            decorations = decorations,
+                            group = "highlights",
+                        )
+                    }.launchIn(scope = this)
+
+                    searchManager.pdfSearchDecorations.onEach { decorations ->
+                        (visualNavigator as? DecorableNavigator)?.applyDecorations(
+                            decorations = decorations,
+                            group = "search",
+                        )
+                    }.launchIn(scope = this)
+                }
             }
-        }
 
-        // Restore Decorations (Highlights, Search)
-        viewModelScope.launch {
-            decorationManager.decorationFlow(bookId = bookId).onEach { decorations ->
-                (visualNavigator as? DecorableNavigator)?.applyDecorations(
-                    decorations,
-                    group = "highlights",
-                )
-            }.launchIn(scope = this)
+            is ReaderNavigator.New -> {
+                val controller = navigator.controller
+                currentNavigationController = controller
+                currentVisualNavigator = null
 
-            searchManager.searchDecorations.onEach { decorations ->
-                (visualNavigator as? DecorableNavigator)?.applyDecorations(
-                    decorations,
-                    group = "search",
-                )
-            }.launchIn(scope = this)
+                // Restore Decorations (Highlights, Search) for EPUB
+                viewModelScope.launch {
+                    val isFixedLayout =
+                        (uiState.value as? ReaderUiState.Visual)?.isFixedLayout ?: false
+
+                    decorationManager.epubDecorationFlow(
+                        bookId = bookId,
+                        isFixedLayout = isFixedLayout,
+                    )
+                        .onEach { decorations ->
+                            @Suppress("UNCHECKED_CAST")
+                            (controller as? DecorationController<org.readium.navigator.common.DecorationLocation>)?.let { decController ->
+                                decController.decorations =
+                                    decController.decorations.put(
+                                        "highlights",
+                                        decorations.toPersistentList(),
+                                    )
+                            }
+                        }.launchIn(scope = this)
+
+                    searchManager.epubSearchDecorations(isFixedLayout = isFixedLayout)
+                        .onEach { decorations ->
+                            @Suppress("UNCHECKED_CAST")
+                            (controller as? DecorationController<org.readium.navigator.common.DecorationLocation>)?.let { decController ->
+                                decController.decorations =
+                                    decController.decorations.put(
+                                        "search",
+                                        decorations.toPersistentList(),
+                                    )
+                            }
+                        }.launchIn(scope = this)
+                }
+            }
         }
 
         // Initialize TTS factory
@@ -243,10 +286,6 @@ class ReaderViewModel @AssistedInject constructor(
         if (currentState is ReaderUiState.Visual) {
             _uiState.value = currentState.copy(initialLocator = locator)
         }
-        // If audiobooks change and we need to update state here
-//        else if (currentState is ReaderUiState.Audio) {
-//
-//        }
     }
     //endregion
 
@@ -262,7 +301,7 @@ class ReaderViewModel @AssistedInject constructor(
     private fun openVisualSettings() {
         val state = _uiState.value as? ReaderUiState.Visual ?: return
         val editor = state.preferencesEditor ?: return
-        _settingsSheetState.value = ReaderSettingsSheet.Configurable(editor = editor)
+        _settingsSheetState.value = ReaderSettings.Configurable(editor = editor)
     }
 
     private fun openTtsSettings() {
@@ -276,7 +315,7 @@ class ReaderViewModel @AssistedInject constructor(
                 application = application,
             )
             if (session != null) {
-                _settingsSheetState.value = ReaderSettingsSheet.Tts(session = session)
+                _settingsSheetState.value = ReaderSettings.Tts(session = session)
             }
         }
     }
@@ -284,38 +323,44 @@ class ReaderViewModel @AssistedInject constructor(
     fun openAudiobookSettings() {
         val state = _uiState.value as? ReaderUiState.Audio ?: return
         val editor = state.preferencesEditor ?: return
-        _settingsSheetState.value = ReaderSettingsSheet.Configurable(editor = editor)
+
+        _settingsSheetState.value = ReaderSettings.Configurable(editor = editor)
     }
 
     fun closeSettings() {
         _settingsSheetState.value = null
     }
 
-    fun onSettingsChanged(preferences: Configurable.Preferences<*>) {
+    fun onSettingsChanged(preferences: ReaderPreferences) {
         commitPreferences(preferences = preferences)
     }
 
-    private fun commitPreferences(preferences: Configurable.Preferences<*>) {
+    private fun commitPreferences(preferences: ReaderPreferences) {
+        val pub = publication ?: return
         viewModelScope.launch {
+            val navigator = currentVisualNavigator?.let { ReaderNavigator.Legacy(navigator = it) }
+                ?: currentNavigationController?.let { ReaderNavigator.New(controller = it) }
+
             preferencesManager.commitPreferences(
                 bookId = bookId,
                 preferences = preferences,
-                currentVisualNavigator = currentVisualNavigator,
+                publication = pub,
+                navigator = navigator,
                 audioNavigator = audioNavigator,
                 ttsManager = ttsManager,
             )
-            refreshSettings(preferences)
+            refreshSettings(preferences = preferences)
         }
     }
 
-    private suspend fun refreshSettings(preferences: Configurable.Preferences<*>) {
+    private suspend fun refreshSettings(preferences: ReaderPreferences) {
         val sheetState = _settingsSheetState.value ?: return
         val currentState = _uiState.value
 
         when (sheetState) {
-            is ReaderSettingsSheet.Configurable -> {
+            is ReaderSettings.Configurable -> {
                 val newState = preferencesManager.refreshSessionState(
-                    currentState,
+                    currentState = currentState,
                     newPreferences = preferences,
                 )
 
@@ -326,12 +371,12 @@ class ReaderViewModel @AssistedInject constructor(
                         ?: (newState as? ReaderUiState.Audio)?.preferencesEditor
 
                     if (newEditor != null) {
-                        _settingsSheetState.value = ReaderSettingsSheet.Configurable(newEditor)
+                        _settingsSheetState.value = ReaderSettings.Configurable(editor = newEditor)
                     }
                 }
             }
 
-            is ReaderSettingsSheet.Tts -> {
+            is ReaderSettings.Tts -> {
                 val visualState = currentState as? ReaderUiState.Visual ?: return
 
                 val newSession = preferencesManager.createTtsSettingsSession(
@@ -342,7 +387,7 @@ class ReaderViewModel @AssistedInject constructor(
                 )
 
                 if (newSession != null) {
-                    _settingsSheetState.value = ReaderSettingsSheet.Tts(newSession)
+                    _settingsSheetState.value = ReaderSettings.Tts(session = newSession)
                 }
             }
         }
@@ -375,7 +420,8 @@ class ReaderViewModel @AssistedInject constructor(
 
     //region Search & Highlights
     fun onSearchQueryChanged(query: String) = searchManager.onSearchQueryChanged(query = query)
-    fun onHighlightAction(selection: Locator) = decorationManager.onHighlightAction(selection)
+    fun onHighlightAction(selection: Locator) =
+        decorationManager.onHighlightAction(selection = selection)
     fun dismissHighlightDialog() = decorationManager.dismissHighlightDialog()
     fun saveHighlight(note: String, color: Int) {
         viewModelScope.launch {
