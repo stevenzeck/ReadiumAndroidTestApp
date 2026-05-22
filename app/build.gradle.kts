@@ -101,7 +101,7 @@ dependencies {
 
     // --- Feature Bundles ---
     implementation(libs.bundles.readium)
-//    implementation(libs.bundles.readium.navigator2)
+    implementation(libs.bundles.readium.navigator2)
     implementation(libs.bundles.paging)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
