@@ -1,7 +1,10 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
+import android.app.Application
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferences
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -9,22 +12,28 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
 import org.readium.navigator.media.audio.AudioNavigator
-import org.readium.r2.navigator.preferences.Configurable
+import org.readium.navigator.web.reflowable.preferences.ReflowableWebPreferences
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.mediatype.MediaType
+import org.robolectric.annotation.Config
 
+@RunWith(AndroidJUnit4::class)
+@Config(manifest = Config.NONE)
 class ReaderSessionFactoryTest {
 
+    private val application: Application = mockk()
     private val preferencesManager: ReaderPreferencesManager = mockk(relaxed = true)
     private val audioNavigatorFactory: AppAudioNavigatorFactory = mockk()
     private val pdfiumDocumentFactory: PdfiumDocumentFactory = mockk(relaxed = true)
 
     private val factory = DefaultReaderSessionFactory(
+        application = application,
         preferencesManager = preferencesManager,
         audioNavigatorFactory = audioNavigatorFactory,
         pdfiumDocumentFactory = pdfiumDocumentFactory,
@@ -45,7 +54,7 @@ class ReaderSessionFactoryTest {
             every { conformsTo(profile = any()) } returns true
         }
 
-        val preferences = mockk<Configurable.Preferences<*>>()
+        val preferences = ReaderPreferences.ReflowableWeb(ReflowableWebPreferences())
         coEvery {
             preferencesManager.loadPreferences(
                 bookId = any(),

@@ -11,7 +11,7 @@ import com.example.readiumandroidtestapp.features.reader.domain.ReaderPreference
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFactory
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.TtsSettingsSession
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
@@ -188,7 +188,7 @@ class ReaderViewModelTest {
             // Assert
             assertTrue(
                 "Sheet should be Configurable",
-                viewModel.settingsSheetState.value is ReaderSettingsSheet.Configurable,
+                viewModel.settingsSheetState.value is ReaderSettings.Configurable,
             )
         }
 
@@ -227,7 +227,7 @@ class ReaderViewModelTest {
         // Assert
         assertTrue(
             "Sheet should be Tts",
-            viewModel.settingsSheetState.value is ReaderSettingsSheet.Tts,
+            viewModel.settingsSheetState.value is ReaderSettings.Tts,
         )
     }
 

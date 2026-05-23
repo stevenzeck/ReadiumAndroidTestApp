@@ -2,8 +2,8 @@ package com.example.readiumandroidtestapp.features.reader.ui.search
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -65,10 +65,9 @@ class ReaderSearchTest {
             )
         }
 
-        composeTestRule.waitUntilAtLeastOneExists(
-            matcher = hasText("Chapter 1"),
-            timeoutMillis = 5000L,
-        )
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            composeTestRule.onAllNodesWithText("Chapter 1").fetchSemanticsNodes().isNotEmpty()
+        }
 
         composeTestRule.onNodeWithText(text = "Chapter 1").assertIsDisplayed()
         composeTestRule.onNodeWithText(text = "Found text").assertIsDisplayed()

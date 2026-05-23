@@ -19,6 +19,7 @@ import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabilities
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderError
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferences
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import io.mockk.every
 import io.mockk.mockk
@@ -31,7 +32,7 @@ import org.junit.runner.RunWith
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
-import org.readium.r2.navigator.preferences.Configurable
+import org.readium.navigator.web.reflowable.preferences.ReflowableWebPreferences
 import org.readium.r2.shared.publication.Publication
 
 @RunWith(AndroidJUnit4::class)
@@ -102,7 +103,7 @@ class ReaderScreenTest {
                 canSpeak = false,
                 hasPreferences = false,
             ),
-            initialPreferences = mockk<Configurable.Preferences<*>>(relaxed = true),
+            initialPreferences = ReaderPreferences.ReflowableWeb(ReflowableWebPreferences()),
         )
 
         setupViewModel(uiState)
@@ -165,7 +166,7 @@ class ReaderScreenTest {
                 canSpeak = false,
                 hasPreferences = false,
             ),
-            initialPreferences = mockk<Configurable.Preferences<*>>(relaxed = true),
+            initialPreferences = ReaderPreferences.ReflowableWeb(ReflowableWebPreferences()),
         )
 
         setupViewModel(uiState)

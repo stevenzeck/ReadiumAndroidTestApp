@@ -144,15 +144,19 @@ fun VisualReaderContent(
             checkNotNull(uiState.renditionState) { "EPUB rendition state is missing" }
 
             if (uiState.isFixedLayout) {
-                FixedWebRendition(
-                    state = uiState.renditionState as FixedWebRenditionState,
-                    inputListener = inputListener,
-                )
+                (uiState.renditionState as? FixedWebRenditionState)?.let {
+                    FixedWebRendition(
+                        state = it,
+                        inputListener = inputListener,
+                    )
+                }
             } else {
-                ReflowableWebRendition(
-                    state = uiState.renditionState as ReflowableWebRenditionState,
-                    inputListener = inputListener,
-                )
+                (uiState.renditionState as? ReflowableWebRenditionState)?.let {
+                    ReflowableWebRendition(
+                        state = it,
+                        inputListener = inputListener,
+                    )
+                }
             }
 
             // Handle locator changes and readiness

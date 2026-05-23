@@ -11,7 +11,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferencesEditor
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -289,7 +290,7 @@ class AudioReaderTest {
         val navigator = createMockNavigator()
 
         val mockEditor = mockk<PreferencesEditor<ExoPlayerPreferences>>(relaxed = true)
-        val settingsState = ReaderSettingsSheet.Configurable(mockEditor)
+        val settingsState = ReaderSettings.Configurable(ReaderPreferencesEditor.Audio(mockEditor))
 
         composeTestRule.setContent {
             AudioReader(

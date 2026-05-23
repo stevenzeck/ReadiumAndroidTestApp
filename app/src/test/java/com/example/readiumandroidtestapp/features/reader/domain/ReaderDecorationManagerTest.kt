@@ -26,13 +26,13 @@ class ReaderDecorationManagerTest {
     private val manager = DefaultReaderDecorationManager(bookRepository = bookRepository)
 
     @Test
-    fun `decorationFlow returns empty list when bookId is null`() = runTest {
-        val result = manager.decorationFlow(bookId = null).first()
+    fun `pdfDecorationFlow returns empty list when bookId is null`() = runTest {
+        val result = manager.pdfDecorationFlow(bookId = null).first()
         assertTrue(result.isEmpty())
     }
 
     @Test
-    fun `decorationFlow returns mapped decorations from repository`() = runTest {
+    fun `pdfDecorationFlow returns mapped decorations from repository`() = runTest {
         val bookId = 1L
         // Using primary constructor to avoid Locator complexity in test setup
         // and ensure id is set.
@@ -52,7 +52,7 @@ class ReaderDecorationManagerTest {
             ),
         )
 
-        val result = manager.decorationFlow(bookId = bookId).first()
+        val result = manager.pdfDecorationFlow(bookId = bookId).first()
 
         assertEquals(1, result.size)
         val decoration = result.first()
