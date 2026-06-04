@@ -55,9 +55,8 @@ android {
 
 kotlin {
     compilerOptions {
-        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
+        languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_4
         allWarningsAsErrors = true
-        freeCompilerArgs.add("-Xannotation-default-target=param-property")
 
         freeCompilerArgs.addAll(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
@@ -65,6 +64,8 @@ kotlin {
             "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
             "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
             "-opt-in=org.readium.r2.shared.ExperimentalReadiumApi",
+            "-XXLanguage:+ContextParameters",
+            "-XXLanguage:+ExplicitBackingFields",
         )
     }
 }
@@ -85,6 +86,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.browser)
+    annotationProcessor(libs.kotlin.metadata.jvm)
 
     // --- Async & Serialization ---
     implementation(libs.kotlinx.coroutines.android)

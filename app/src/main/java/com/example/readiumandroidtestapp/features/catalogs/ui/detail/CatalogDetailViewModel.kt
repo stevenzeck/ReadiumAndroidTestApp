@@ -10,7 +10,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.readium.r2.shared.opds.Feed
 
@@ -19,8 +18,7 @@ class CatalogDetailViewModel @AssistedInject constructor(
     @Assisted private val catalog: Catalog,
     private val opdsParser: OpdsParser,
 ) : ViewModel() {
-    private val _feedState = MutableStateFlow<FeedState>(value = FeedState.Loading)
-    val feedState: StateFlow<FeedState> = _feedState.asStateFlow()
+    val feedState: StateFlow<FeedState> field = MutableStateFlow<FeedState>(value = FeedState.Loading)
 
     init {
         fetchFeed()
@@ -32,13 +30,13 @@ class CatalogDetailViewModel @AssistedInject constructor(
      */
     fun fetchFeed() {
         viewModelScope.launch {
-            _feedState.value = FeedState.Loading
+            feedState.value = FeedState.Loading
 
             opdsParser.parseUrlString(url = catalog.href, type = catalog.type)
                 .onSuccess { parseData ->
-                    _feedState.value = FeedState.Success(feed = parseData.feed)
+                    feedState.value = FeedState.Success(feed = parseData.feed)
                 }.onFailure { error ->
-                    _feedState.value = FeedState.Error(message = error.localizedMessage)
+                    feedState.value = FeedState.Error(message = error.localizedMessage)
                 }
         }
     }

@@ -7,8 +7,8 @@ import org.readium.r2.shared.publication.services.cover
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
-import java.util.UUID
 import javax.inject.Inject
+import kotlin.uuid.Uuid
 
 class DefaultCoverImageSaver @Inject constructor(
     private val storageGateway: StorageGateway,
@@ -17,7 +17,7 @@ class DefaultCoverImageSaver @Inject constructor(
     override suspend fun saveCover(publication: Publication): String? {
         return try {
             val coverBitmap = publication.cover() ?: return null
-            val coverFile = File(storageGateway.filesDir, "covers/${UUID.randomUUID()}.jpg")
+            val coverFile = File(storageGateway.filesDir, "covers/${Uuid.random()}.jpg")
             coverFile.parentFile?.mkdirs()
 
             FileOutputStream(coverFile).use { out ->

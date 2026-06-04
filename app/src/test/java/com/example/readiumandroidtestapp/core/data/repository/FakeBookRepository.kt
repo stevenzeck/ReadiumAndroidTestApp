@@ -15,19 +15,18 @@ import org.readium.r2.shared.util.Try
 
 class FakeBookRepository : BookRepository {
 
-    private val _books = MutableStateFlow<List<Book>>(emptyList())
-    override val books: Flow<List<Book>> = _books
+    override val books: Flow<List<Book>> field = MutableStateFlow<List<Book>>(emptyList())
 
     fun addBooks(vararg newBooks: Book) {
-        _books.value += newBooks
+        books.value += newBooks
     }
 
     override suspend fun deleteBook(bookId: Long): Try<Unit, Exception> {
-        val current = _books.value
+        val current = books.value
         val new = current.filter { it.id != bookId }
 
         return if (current.size != new.size) {
-            _books.value = new
+            books.value = new
             Try.success(success = Unit)
         } else {
             Try.failure(failure = Exception("Not found"))
@@ -37,7 +36,7 @@ class FakeBookRepository : BookRepository {
     override suspend fun addBook(url: AbsoluteUrl) = TODO()
     override suspend fun addBook(uri: Uri) = TODO()
     override suspend fun saveProgression(bookId: Long, locator: String) = TODO()
-    override suspend fun get(bookId: Long) = _books.value.find { it.id == bookId }
+    override suspend fun get(bookId: Long) = books.value.find { it.id == bookId }
     override fun bookmarksForBook(bookId: Long) = flowOf(emptyList<Bookmark>())
     override suspend fun insertBookmark(bookId: Long, publication: Publication, locator: Locator) =
         0L

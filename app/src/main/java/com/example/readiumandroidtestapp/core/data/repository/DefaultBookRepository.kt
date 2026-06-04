@@ -45,7 +45,7 @@ class DefaultBookRepository @Inject constructor(
     private val booksDao: BooksDao,
     private val bookImporter: BookImporter,
     private val storageGateway: StorageGateway,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : BookRepository {
 
     override val books: Flow<List<Book>> = booksDao.getAllBooks()

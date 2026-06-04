@@ -10,7 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
@@ -33,10 +33,9 @@ class DefaultReaderTtsManager @Inject constructor(
     private var ttsJob: Job? = null
     private var publication: Publication? = null
 
-    private val _isTtsActive = MutableStateFlow(value = false)
-    override val isTtsActive = _isTtsActive.asStateFlow()
+    override val isTtsActive: StateFlow<Boolean> field = MutableStateFlow(value = false)
 
-    override val ttsPlayback: Flow<Boolean> = _isTtsActive.flatMapLatest { active ->
+    override val ttsPlayback: Flow<Boolean> = isTtsActive.flatMapLatest { active ->
         if (active) ttsNavigator?.playback ?: emptyFlow()
         else emptyFlow()
     }
@@ -71,7 +70,7 @@ class DefaultReaderTtsManager @Inject constructor(
                 },
             ).onSuccess { navigator ->
                 ttsNavigator = navigator
-                _isTtsActive.value = true
+                isTtsActive.value = true
                 navigator.play()
 
                 ttsJob?.cancel()
@@ -124,7 +123,7 @@ class DefaultReaderTtsManager @Inject constructor(
 
             ttsNavigator?.close()
             ttsNavigator = null
-            _isTtsActive.value = false
+            isTtsActive.value = false
             ttsJob?.cancel()
             ttsJob = null
         }
@@ -152,7 +151,7 @@ class DefaultReaderTtsManager @Inject constructor(
 
         ttsNavigator?.close()
         ttsNavigator = null
-        _isTtsActive.value = false
+        isTtsActive.value = false
     }
 
     override fun submitPreferences(preferences: AndroidTtsPreferences) {

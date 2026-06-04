@@ -17,7 +17,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
@@ -34,8 +33,7 @@ class DefaultReaderSearchManager @Inject constructor(
     private val searchGateway: SearchGateway,
 ) : ReaderSearchManager {
 
-    private val _searchQuery = MutableStateFlow<String?>(value = null)
-    override val searchQuery: StateFlow<String?> = _searchQuery.asStateFlow()
+    override val searchQuery: StateFlow<String?> field = MutableStateFlow<String?>(value = null)
 
     private val _searchLocators = MutableStateFlow<List<Locator>>(value = emptyList())
 
@@ -50,7 +48,7 @@ class DefaultReaderSearchManager @Inject constructor(
     }
 
     override fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
+        searchQuery.value = query
     }
 
     override fun getSearchResults(
@@ -58,7 +56,7 @@ class DefaultReaderSearchManager @Inject constructor(
         scope: CoroutineScope,
     ): Flow<PagingData<SearchItem>> {
         return combine(
-            _searchQuery.debounce(timeoutMillis = 300),
+            searchQuery.debounce(timeoutMillis = 300),
             publicationFlow,
         ) { query, pub ->
             Pair(query, pub)

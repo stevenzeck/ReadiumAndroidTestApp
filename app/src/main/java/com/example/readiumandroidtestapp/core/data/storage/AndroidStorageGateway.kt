@@ -12,8 +12,8 @@ import org.readium.r2.shared.util.toUrl
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.util.UUID
 import javax.inject.Inject
+import kotlin.uuid.Uuid
 
 /**
  * Implementation of [StorageGateway] that bridges the Android-specific context
@@ -64,7 +64,7 @@ class AndroidStorageGateway @Inject constructor(
                 extension.startsWith(prefix = ".") -> extension
                 else -> ".$extension"
             }
-            val filename = "${UUID.randomUUID()}$safeExtension"
+            val filename = "${Uuid.random()}$safeExtension"
             val file = File(filesDir, filename)
 
             FileOutputStream(file).use { output ->

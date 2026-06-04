@@ -71,11 +71,9 @@ class ReaderViewModel @AssistedInject constructor(
     @Assisted val bookId: Long,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ReaderUiState>(value = ReaderUiState.Loading)
-    val uiState: StateFlow<ReaderUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<ReaderUiState> field = MutableStateFlow<ReaderUiState>(value = ReaderUiState.Loading)
 
-    private val _settingsSheetState = MutableStateFlow<ReaderSettingsSheet?>(value = null)
-    val settingsSheetState: StateFlow<ReaderSettingsSheet?> = _settingsSheetState.asStateFlow()
+    val settingsSheetState: StateFlow<ReaderSettingsSheet?> field = MutableStateFlow<ReaderSettingsSheet?>(value = null)
 
     // Reactive streams for book data, switched dynamically based on the current bookId.
     val bookmarks: Flow<List<Bookmark>> = bookRepository.bookmarksForBook(bookId = bookId)
@@ -90,7 +88,7 @@ class ReaderViewModel @AssistedInject constructor(
     val ttsPlayback: Flow<Boolean> = ttsManager.ttsPlayback
 
     val searchResults: Flow<PagingData<SearchItem>> = searchManager.getSearchResults(
-        publicationFlow = _uiState.map { (it as? ReaderUiState.Visual)?.publication },
+        publicationFlow = uiState.map { (it as? ReaderUiState.Visual)?.publication },
         scope = viewModelScope,
     )
 
@@ -129,12 +127,12 @@ class ReaderViewModel @AssistedInject constructor(
      */
     private fun loadBookData() {
         viewModelScope.launch {
-            _uiState.value = ReaderUiState.Loading
+            uiState.value = ReaderUiState.Loading
             val book = bookRepository.get(bookId = bookId)
             val url = book?.url
 
             if (url == null) {
-                _uiState.value = ReaderUiState.Error(error = ReaderError.InvalidBookLocation)
+                uiState.value = ReaderUiState.Error(error = ReaderError.InvalidBookLocation)
                 return@launch
             }
 
@@ -143,7 +141,7 @@ class ReaderViewModel @AssistedInject constructor(
                 publication = openedBook.publication
                 setupSession(book = book, publication = openedBook.publication)
             }.onFailure { error ->
-                _uiState.value = ReaderUiState.Error(
+                uiState.value = ReaderUiState.Error(
                     error = ReaderError.PublicationOpenFailed(
                         cause = error as? Exception ?: Exception(error),
                     ),
@@ -156,7 +154,7 @@ class ReaderViewModel @AssistedInject constructor(
      * Retries loading the book if an error occurred.
      */
     fun retryLoad() {
-        if (_uiState.value !is ReaderUiState.Error) return
+        if (uiState.value !is ReaderUiState.Error) return
         loadBookData()
     }
 
@@ -166,15 +164,15 @@ class ReaderViewModel @AssistedInject constructor(
                 audioNavigator = audioState.navigator
                 mediaBinder.bind(navigator = audioState.navigator)
                 startObservingAudioLocator(locatorFlow = audioState.navigator.currentLocator)
-                _uiState.value = audioState
+                uiState.value = audioState
             }.onFailure { error ->
-                _uiState.value = ReaderUiState.Error(
+                uiState.value = ReaderUiState.Error(
                     error = ReaderError.NavigatorCreationFailed(cause = error),
                 )
             }
         } else {
             val visualState = sessionFactory.createVisualSession(book, publication)
-            _uiState.value = visualState
+            uiState.value = visualState
         }
     }
 
@@ -202,7 +200,7 @@ class ReaderViewModel @AssistedInject constructor(
         currentVisualNavigator = visualNavigator
 
         // Submit initial preferences to the navigator
-        val state = _uiState.value as? ReaderUiState.Visual
+        val state = uiState.value as? ReaderUiState.Visual
         val preferences = state?.initialPreferences
         if (preferences != null) {
             if (preferences is EpubPreferences) {
@@ -239,9 +237,9 @@ class ReaderViewModel @AssistedInject constructor(
 
     fun onVisualLocatorChanged(locator: Locator) {
         visualLocatorFlow.value = locator
-        val currentState = _uiState.value
+        val currentState = uiState.value
         if (currentState is ReaderUiState.Visual) {
-            _uiState.value = currentState.copy(initialLocator = locator)
+            uiState.value = currentState.copy(initialLocator = locator)
         }
         // If audiobooks change and we need to update state here
 //        else if (currentState is ReaderUiState.Audio) {
@@ -260,9 +258,9 @@ class ReaderViewModel @AssistedInject constructor(
     }
 
     private fun openVisualSettings() {
-        val state = _uiState.value as? ReaderUiState.Visual ?: return
+        val state = uiState.value as? ReaderUiState.Visual ?: return
         val editor = state.preferencesEditor ?: return
-        _settingsSheetState.value = ReaderSettingsSheet.Configurable(editor = editor)
+        settingsSheetState.value = ReaderSettingsSheet.Configurable(editor = editor)
     }
 
     private fun openTtsSettings() {
@@ -276,19 +274,19 @@ class ReaderViewModel @AssistedInject constructor(
                 application = application,
             )
             if (session != null) {
-                _settingsSheetState.value = ReaderSettingsSheet.Tts(session = session)
+                settingsSheetState.value = ReaderSettingsSheet.Tts(session = session)
             }
         }
     }
 
     fun openAudiobookSettings() {
-        val state = _uiState.value as? ReaderUiState.Audio ?: return
+        val state = uiState.value as? ReaderUiState.Audio ?: return
         val editor = state.preferencesEditor ?: return
-        _settingsSheetState.value = ReaderSettingsSheet.Configurable(editor = editor)
+        settingsSheetState.value = ReaderSettingsSheet.Configurable(editor = editor)
     }
 
     fun closeSettings() {
-        _settingsSheetState.value = null
+        settingsSheetState.value = null
     }
 
     fun onSettingsChanged(preferences: Configurable.Preferences<*>) {
@@ -309,8 +307,8 @@ class ReaderViewModel @AssistedInject constructor(
     }
 
     private suspend fun refreshSettings(preferences: Configurable.Preferences<*>) {
-        val sheetState = _settingsSheetState.value ?: return
-        val currentState = _uiState.value
+        val sheetState = settingsSheetState.value ?: return
+        val currentState = uiState.value
 
         when (sheetState) {
             is ReaderSettingsSheet.Configurable -> {
@@ -320,13 +318,13 @@ class ReaderViewModel @AssistedInject constructor(
                 )
 
                 if (newState != null) {
-                    _uiState.value = newState
+                    uiState.value = newState
 
                     val newEditor = (newState as? ReaderUiState.Visual)?.preferencesEditor
                         ?: (newState as? ReaderUiState.Audio)?.preferencesEditor
 
                     if (newEditor != null) {
-                        _settingsSheetState.value = ReaderSettingsSheet.Configurable(newEditor)
+                        settingsSheetState.value = ReaderSettingsSheet.Configurable(newEditor)
                     }
                 }
             }
@@ -342,7 +340,7 @@ class ReaderViewModel @AssistedInject constructor(
                 )
 
                 if (newSession != null) {
-                    _settingsSheetState.value = ReaderSettingsSheet.Tts(newSession)
+                    settingsSheetState.value = ReaderSettingsSheet.Tts(newSession)
                 }
             }
         }

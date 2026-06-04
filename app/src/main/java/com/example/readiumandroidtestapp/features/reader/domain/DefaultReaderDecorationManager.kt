@@ -5,7 +5,6 @@ import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.readium.r2.navigator.Decoration
@@ -16,8 +15,7 @@ class DefaultReaderDecorationManager @Inject constructor(
     private val bookRepository: BookRepository,
 ) : ReaderDecorationManager {
     // UI State for the Highlight Dialog
-    private val _showHighlightDialog = MutableStateFlow(value = false)
-    override val showHighlightDialog: StateFlow<Boolean> = _showHighlightDialog.asStateFlow()
+    override val showHighlightDialog: StateFlow<Boolean> field = MutableStateFlow(value = false)
 
     private var activeSelection: Locator? = null
 
@@ -48,11 +46,11 @@ class DefaultReaderDecorationManager @Inject constructor(
      */
     override fun onHighlightAction(selection: Locator) {
         activeSelection = selection
-        _showHighlightDialog.value = true
+        showHighlightDialog.value = true
     }
 
     override fun dismissHighlightDialog() {
-        _showHighlightDialog.value = false
+        showHighlightDialog.value = false
         activeSelection = null
     }
 
