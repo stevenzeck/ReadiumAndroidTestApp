@@ -64,8 +64,6 @@ kotlin {
             "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
             "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
             "-opt-in=org.readium.r2.shared.ExperimentalReadiumApi",
-            "-XXLanguage:+ContextParameters",
-            "-XXLanguage:+ExplicitBackingFields",
         )
     }
 }
