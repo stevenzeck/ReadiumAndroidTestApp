@@ -23,6 +23,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.navigator.common.SelectionController
+import org.readium.navigator.common.SelectionLocation
 import org.readium.r2.navigator.SelectableNavigator
 import org.readium.r2.navigator.Selection
 import org.readium.r2.shared.publication.Locator
@@ -147,6 +149,56 @@ class HighlightActionModeCallbackTest {
         verify { onHighlight(locator) }
         verify { actionMode.finish() }
     }
+
+    @Test
+    fun `onActionItemClicked with selectionController but no selection does not call onHighlight or finish`() =
+        runTest {
+            every { menuItem.itemId } returns 100
+            val selectionController =
+                mockk<SelectionController<SelectionLocation>>(relaxed = true)
+            callback.selectionController = selectionController
+            callback.coroutineScope = this
+
+            coEvery { selectionController.currentSelection() } returns null
+
+            val result = callback.onActionItemClicked(actionMode, menuItem)
+            advanceUntilIdle()
+
+            assertTrue(result)
+            verify { onHighlight wasNot Called }
+            verify(exactly = 0) { actionMode.finish() }
+        }
+
+    @Test
+    fun `onActionItemClicked with selectionController and selection calls onHighlight and finishes`() =
+        runTest {
+            every { menuItem.itemId } returns 100
+            val selectionController =
+                mockk<SelectionController<SelectionLocation>>(relaxed = true)
+            val selection =
+                mockk<org.readium.navigator.common.Selection<SelectionLocation>>(
+                    relaxed = true,
+                )
+            val location = mockk<SelectionLocation>(relaxed = true)
+            val locator = Locator(
+                href = Url(url = "test.html")!!,
+                mediaType = MediaType(string = "text/html")!!,
+            )
+
+            every { location.toLocator() } returns locator
+            every { selection.location } returns location
+            coEvery { selectionController.currentSelection() } returns selection
+
+            callback.selectionController = selectionController
+            callback.coroutineScope = this
+
+            val result = callback.onActionItemClicked(mode = actionMode, item = menuItem)
+            advanceUntilIdle()
+
+            assertTrue(result)
+            verify { onHighlight(locator) }
+            verify { actionMode.finish() }
+        }
 
     @Test
     fun `onDestroyActionMode is callable`() {

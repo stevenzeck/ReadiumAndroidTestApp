@@ -4,7 +4,9 @@ import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.readium.navigator.common.SelectionController
 import org.readium.r2.navigator.SelectableNavigator
 import org.readium.r2.shared.publication.Locator
 
@@ -17,6 +19,9 @@ class HighlightActionModeCallback(
 
     var navigator: SelectableNavigator? = null
 
+    var selectionController: SelectionController<*>? = null
+    var coroutineScope: CoroutineScope? = null
+
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
         menu.add(Menu.NONE, 100, Menu.NONE, "Highlight")
         return true
@@ -26,11 +31,25 @@ class HighlightActionModeCallback(
 
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
         if (item.itemId == 100) {
+            val controller = selectionController
+            val scope = coroutineScope
+            if (controller != null && scope != null) {
+                scope.launch {
+                    val selection = controller.currentSelection()
+                    if (selection != null) {
+                        onHighlight(selection.location.toLocator())
+                        mode.finish()
+                    }
+                }
+                return true
+            }
+
             val nav = navigator ?: return false
 
-            val scope = (nav as? androidx.fragment.app.Fragment)?.viewLifecycleOwner?.lifecycleScope
+            val fragmentScope =
+                (nav as? androidx.fragment.app.Fragment)?.viewLifecycleOwner?.lifecycleScope
 
-            scope?.launch {
+            fragmentScope?.launch {
                 val selection = nav.currentSelection()
                 if (selection != null) {
                     onHighlight(selection.locator)

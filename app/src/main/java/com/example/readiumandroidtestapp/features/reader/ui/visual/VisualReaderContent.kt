@@ -36,6 +36,7 @@ import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderPreferen
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettings
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
+import com.example.readiumandroidtestapp.features.reader.ui.utils.HighlightActionModeCallback
 import kotlinx.coroutines.launch
 import org.readium.adapter.pdfium.navigator.PdfiumDefaults
 import org.readium.adapter.pdfium.navigator.PdfiumEngineProvider
@@ -44,6 +45,7 @@ import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
 import org.readium.adapter.pdfium.navigator.PdfiumSettings
 import org.readium.navigator.common.InputListener
 import org.readium.navigator.common.NavigationController
+import org.readium.navigator.common.SelectionController
 import org.readium.navigator.common.TapContext
 import org.readium.navigator.common.TapEvent
 import org.readium.navigator.web.fixedlayout.FixedWebGoLocation
@@ -139,6 +141,16 @@ fun VisualReaderContent(
         }
     }
 
+    val textSelectionActionModeCallback =
+        remember(uiState.renditionState?.controller, coroutineScope) {
+            (uiState.renditionState?.controller as? SelectionController<*>)?.let { controller ->
+                HighlightActionModeCallback(onHighlightAction).apply {
+                    this.selectionController = controller
+                    this.coroutineScope = coroutineScope
+                }
+            }
+        }
+
     Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.publication.conformsTo(profile = Publication.Profile.EPUB)) {
             checkNotNull(uiState.renditionState) { "EPUB rendition state is missing" }
@@ -148,6 +160,7 @@ fun VisualReaderContent(
                     FixedWebRendition(
                         state = it,
                         inputListener = inputListener,
+                        textSelectionActionModeCallback = textSelectionActionModeCallback,
                     )
                 }
             } else {
@@ -155,6 +168,7 @@ fun VisualReaderContent(
                     ReflowableWebRendition(
                         state = it,
                         inputListener = inputListener,
+                        textSelectionActionModeCallback = textSelectionActionModeCallback,
                     )
                 }
             }
