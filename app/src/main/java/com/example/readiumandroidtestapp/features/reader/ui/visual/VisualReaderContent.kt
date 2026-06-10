@@ -59,6 +59,7 @@ fun VisualReaderContent(
     isTtsActive: Boolean,
     isPlaying: Boolean,
     showAnnotationDialog: Boolean,
+    editingAnnotation: ReaderAnnotation?,
     onNavigateBack: () -> Unit,
     onVisualLocatorChanged: (Locator) -> Unit,
     onNavigatorReady: (VisualNavigator) -> Unit,
@@ -72,6 +73,8 @@ fun VisualReaderContent(
     onSearchQueryChanged: (String) -> Unit,
     saveAnnotation: (String, Int, ReaderAnnotation.Style) -> Unit,
     dismissAnnotationDialog: () -> Unit,
+    onDeleteAnnotation: (ReaderAnnotation) -> Unit,
+    onEditAnnotation: (ReaderAnnotation) -> Unit,
     epubNavigatorFactory: EpubNavigatorFactory? = null,
     pdfNavigatorFactory: PdfNavigatorFactory<PdfiumSettings, PdfiumPreferences, PdfiumPreferencesEditor>? = null,
 ) {
@@ -186,6 +189,11 @@ fun VisualReaderContent(
                     navigator?.go(locator, animated = true)
                     showTocBottomSheet = false
                 },
+                onDeleteAnnotation = onDeleteAnnotation,
+                onEditAnnotation = { annotation ->
+                    onEditAnnotation(annotation)
+                    showTocBottomSheet = false
+                },
             )
         }
 
@@ -218,6 +226,7 @@ fun VisualReaderContent(
 
         if (showAnnotationDialog) {
             AnnotationDialog(
+                annotation = editingAnnotation,
                 onDismiss = dismissAnnotationDialog,
                 onSave = saveAnnotation,
             )

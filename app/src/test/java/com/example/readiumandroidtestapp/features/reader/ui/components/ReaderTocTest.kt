@@ -3,6 +3,7 @@ package com.example.readiumandroidtestapp.features.reader.ui.components
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -49,6 +50,8 @@ class ReaderTocTest {
                 onDismissRequest = {},
                 onLinkSelected = onLinkSelected,
                 onLocatorSelected = {},
+                onDeleteAnnotation = {},
+                onEditAnnotation = {},
             )
         }
 
@@ -93,6 +96,8 @@ class ReaderTocTest {
                 onDismissRequest = {},
                 onLinkSelected = {},
                 onLocatorSelected = onLocatorSelected,
+                onDeleteAnnotation = {},
+                onEditAnnotation = {},
             )
         }
 
@@ -137,6 +142,8 @@ class ReaderTocTest {
                 onDismissRequest = {},
                 onLinkSelected = {},
                 onLocatorSelected = onLocatorSelected,
+                onDeleteAnnotation = {},
+                onEditAnnotation = {},
             )
         }
 
@@ -147,5 +154,105 @@ class ReaderTocTest {
         composeTestRule.onNodeWithText(text = "Highlighted text").performClick()
 
         verify { onLocatorSelected(any()) }
+    }
+
+    @Test
+    fun `displays annotations and handles delete click`() {
+        val locator = Locator(
+            href = Url(url = "href")!!,
+            mediaType = MediaType(string = "text/html")!!,
+            text = Locator.Text(highlight = "Highlighted text"),
+        )
+        val annotation = ReaderAnnotation(
+            bookId = 1,
+            style = ReaderAnnotation.Style.HIGHLIGHT,
+            tint = 0,
+            locator = locator,
+            annotation = "",
+        )
+        val onDeleteAnnotation = mockk<(ReaderAnnotation) -> Unit>(relaxed = true)
+
+        composeTestRule.setContent {
+            TocBottomSheet(
+                publication = Publication(
+                    manifest = Manifest(
+                        metadata = Metadata(
+                            localizedTitle = LocalizedString(
+                                value = "Title",
+                            ),
+                        ),
+                    ),
+                ),
+                bookmarks = emptyList(),
+                annotations = listOf(annotation),
+                onDismissRequest = {},
+                onLinkSelected = {},
+                onLocatorSelected = {},
+                onDeleteAnnotation = onDeleteAnnotation,
+                onEditAnnotation = {},
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val annotationsTab = context.getString(R.string.annotations)
+
+        composeTestRule.onNodeWithText(text = annotationsTab).performClick()
+
+        // Click delete icon
+        val deleteContentDescription = context.getString(R.string.delete)
+        composeTestRule.onNodeWithContentDescription(label = deleteContentDescription)
+            .performClick()
+
+        verify { onDeleteAnnotation(annotation) }
+    }
+
+    @Test
+    fun `displays annotations and handles edit click`() {
+        val locator = Locator(
+            href = Url(url = "href")!!,
+            mediaType = MediaType(string = "text/html")!!,
+            text = Locator.Text(highlight = "Highlighted text"),
+        )
+        val annotation = ReaderAnnotation(
+            bookId = 1,
+            style = ReaderAnnotation.Style.HIGHLIGHT,
+            tint = 0,
+            locator = locator,
+            annotation = "",
+        )
+        val onEditAnnotation = mockk<(ReaderAnnotation) -> Unit>(relaxed = true)
+
+        composeTestRule.setContent {
+            TocBottomSheet(
+                publication = Publication(
+                    manifest = Manifest(
+                        metadata = Metadata(
+                            localizedTitle = LocalizedString(
+                                value = "Title",
+                            ),
+                        ),
+                    ),
+                ),
+                bookmarks = emptyList(),
+                annotations = listOf(annotation),
+                onDismissRequest = {},
+                onLinkSelected = {},
+                onLocatorSelected = {},
+                onDeleteAnnotation = {},
+                onEditAnnotation = onEditAnnotation,
+            )
+        }
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val annotationsTab = context.getString(R.string.annotations)
+
+        composeTestRule.onNodeWithText(text = annotationsTab).performClick()
+
+        // Click edit icon
+        val editContentDescription = context.getString(R.string.edit)
+        composeTestRule.onNodeWithContentDescription(label = editContentDescription)
+            .performClick()
+
+        verify { onEditAnnotation(annotation) }
     }
 }

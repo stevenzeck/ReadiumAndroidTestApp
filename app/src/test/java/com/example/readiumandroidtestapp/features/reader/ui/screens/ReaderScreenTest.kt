@@ -52,6 +52,7 @@ class ReaderScreenTest {
         every { viewModel.isTtsActive } returns MutableStateFlow(value = false)
         every { viewModel.ttsPlayback } returns flowOf(value = false)
         every { viewModel.showAnnotationDialog } returns MutableStateFlow(value = false)
+        every { viewModel.editingAnnotation } returns MutableStateFlow(value = null)
     }
 
     @Test

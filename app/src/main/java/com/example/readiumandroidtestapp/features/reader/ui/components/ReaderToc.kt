@@ -5,11 +5,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SecondaryScrollableTabRow
@@ -23,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
@@ -40,6 +44,8 @@ fun TocBottomSheet(
     onDismissRequest: () -> Unit,
     onLinkSelected: (Link) -> Unit,
     onLocatorSelected: (Locator) -> Unit,
+    onDeleteAnnotation: (ReaderAnnotation) -> Unit,
+    onEditAnnotation: (ReaderAnnotation) -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
         var selectedTabIndex by remember { mutableIntStateOf(value = 0) }
@@ -70,6 +76,8 @@ fun TocBottomSheet(
                 2 -> TocAnnotationList(
                     annotations = annotations,
                     onLocatorSelected = onLocatorSelected,
+                    onDeleteAnnotation = onDeleteAnnotation,
+                    onEditAnnotation = onEditAnnotation,
                 )
             }
         }
@@ -113,6 +121,8 @@ private fun TocBookmarkList(bookmarks: List<Bookmark>, onLocatorSelected: (Locat
 private fun TocAnnotationList(
     annotations: List<ReaderAnnotation>,
     onLocatorSelected: (Locator) -> Unit,
+    onDeleteAnnotation: (ReaderAnnotation) -> Unit,
+    onEditAnnotation: (ReaderAnnotation) -> Unit,
 ) {
     LazyColumn {
         items(items = annotations) { annotation ->
@@ -130,6 +140,22 @@ private fun TocAnnotationList(
                 supportingContent = {
                     if (annotation.annotation.isNotEmpty()) {
                         Text(text = annotation.annotation)
+                    }
+                },
+                trailingContent = {
+                    Row {
+                        IconButton(onClick = { onEditAnnotation(annotation) }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.edit),
+                                contentDescription = stringResource(id = R.string.edit),
+                            )
+                        }
+                        IconButton(onClick = { onDeleteAnnotation(annotation) }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.delete),
+                                contentDescription = stringResource(id = R.string.delete),
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.clickable { onLocatorSelected(annotation.locator) },

@@ -84,6 +84,8 @@
     <string name="reading_preferences">Reading Preferences</string>
     <string name="table_of_contents">Table of Contents</string>
     <string name="add_annotation">Add Annotation</string>
+    <string name="edit_annotation">Edit Annotation</string>
+    <string name="edit">Edit</string>
     <string name="annotation_style">Style</string>
     <string name="add_note">Add Note</string>
     <string name="contents">Contents</string>

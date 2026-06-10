@@ -37,6 +37,7 @@ import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 
 @Composable
 fun AnnotationDialog(
+    annotation: ReaderAnnotation? = null,
     onDismiss: () -> Unit,
     onSave: (String, Int, ReaderAnnotation.Style) -> Unit, // Note, Color, Style
 ) {
@@ -44,9 +45,16 @@ fun AnnotationDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
         dismissButton = {},
-        title = { Text(text = stringResource(id = R.string.add_annotation)) },
+        title = {
+            Text(
+                text = stringResource(
+                    id = if (annotation != null) R.string.edit_annotation else R.string.add_annotation,
+                ),
+            )
+        },
         text = {
             AnnotationDialogContent(
+                annotation = annotation,
                 onDismiss = onDismiss,
                 onSave = onSave,
             )
@@ -56,10 +64,11 @@ fun AnnotationDialog(
 
 @Composable
 fun AnnotationDialogContent(
+    annotation: ReaderAnnotation? = null,
     onDismiss: () -> Unit,
     onSave: (String, Int, ReaderAnnotation.Style) -> Unit,
 ) {
-    var note by remember { mutableStateOf(value = "") }
+    var note by remember(annotation) { mutableStateOf(value = annotation?.annotation ?: "") }
     val colors = listOf(
         Color(color = 0xFFFFFF00), // Yellow
         Color(color = 0xFF00FF00), // Green
@@ -67,8 +76,18 @@ fun AnnotationDialogContent(
         Color(color = 0xFFFF0000), // Red
         Color(color = 0xFF800080), // Purple
     )
-    var selectedColor by remember { mutableStateOf(value = colors[0]) }
-    var selectedStyle by remember { mutableStateOf(value = ReaderAnnotation.Style.HIGHLIGHT) }
+    val initialColor = remember(annotation) {
+        val argb = annotation?.tint
+        if (argb != null) {
+            colors.find { it.toArgb() == argb } ?: colors[0]
+        } else {
+            colors[0]
+        }
+    }
+    var selectedColor by remember(initialColor) { mutableStateOf(value = initialColor) }
+    var selectedStyle by remember(annotation) {
+        mutableStateOf(value = annotation?.style ?: ReaderAnnotation.Style.HIGHLIGHT)
+    }
 
     Column {
         // Color Circles

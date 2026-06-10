@@ -38,6 +38,8 @@ data class VisualReaderActions(
     val onSearchQueryChanged: (String) -> Unit,
     val saveAnnotation: (String, Int, ReaderAnnotation.Style) -> Unit,
     val dismissAnnotationDialog: () -> Unit,
+    val onDeleteAnnotation: (ReaderAnnotation) -> Unit,
+    val onEditAnnotationAction: (ReaderAnnotation) -> Unit,
     val onNavigateBack: () -> Unit,
 )
 
@@ -51,6 +53,7 @@ data class VisualReaderState(
     val isTtsActive: Boolean,
     val isPlaying: Boolean,
     val showAnnotationDialog: Boolean,
+    val editingAnnotation: ReaderAnnotation?,
 )
 
 data class AudioReaderActions(
@@ -103,6 +106,7 @@ fun ReaderScreen(
     val isTtsActive by viewModel.isTtsActive.collectAsState()
     val isPlaying by viewModel.ttsPlayback.collectAsState(initial = false)
     val showAnnotationDialog by viewModel.showAnnotationDialog.collectAsState()
+    val editingAnnotation by viewModel.editingAnnotation.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val uiState = state) {
@@ -144,6 +148,7 @@ fun ReaderScreen(
                         isTtsActive = isTtsActive,
                         isPlaying = isPlaying,
                         showAnnotationDialog = showAnnotationDialog,
+                        editingAnnotation = editingAnnotation,
                     ),
                     VisualReaderActions(
                         onSettingsClick = viewModel::openSettings,
@@ -167,6 +172,8 @@ fun ReaderScreen(
                             )
                         },
                         dismissAnnotationDialog = viewModel::dismissAnnotationDialog,
+                        onDeleteAnnotation = { viewModel.deleteAnnotation(id = it.id) },
+                        onEditAnnotationAction = viewModel::onEditAnnotationAction,
                         onNavigateBack = onNavigateBack,
                     ),
                 )
@@ -209,6 +216,7 @@ private fun DefaultVisualReaderContent(
         isTtsActive = state.isTtsActive,
         isPlaying = state.isPlaying,
         showAnnotationDialog = state.showAnnotationDialog,
+        editingAnnotation = state.editingAnnotation,
         onNavigateBack = actions.onNavigateBack,
         onVisualLocatorChanged = actions.onVisualLocatorChanged,
         onNavigatorReady = actions.onNavigatorReady,
@@ -222,5 +230,7 @@ private fun DefaultVisualReaderContent(
         onSearchQueryChanged = actions.onSearchQueryChanged,
         saveAnnotation = actions.saveAnnotation,
         dismissAnnotationDialog = actions.dismissAnnotationDialog,
+        onDeleteAnnotation = actions.onDeleteAnnotation,
+        onEditAnnotation = actions.onEditAnnotationAction,
     )
 }

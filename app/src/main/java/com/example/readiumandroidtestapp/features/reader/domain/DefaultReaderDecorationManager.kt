@@ -16,6 +16,9 @@ class DefaultReaderDecorationManager @Inject constructor(
 ) : ReaderDecorationManager {
     // UI State for the Annotation Dialog
     override val showAnnotationDialog: StateFlow<Boolean> field = MutableStateFlow(value = false)
+    override val editingAnnotation: StateFlow<ReaderAnnotation?> field = MutableStateFlow<ReaderAnnotation?>(
+        value = null,
+    )
 
     private var activeSelection: Locator? = null
 
@@ -49,9 +52,18 @@ class DefaultReaderDecorationManager @Inject constructor(
         showAnnotationDialog.value = true
     }
 
+    /**
+     * Called when the user wants to edit an existing annotation from the TOC list.
+     */
+    override fun onEditAnnotationAction(annotation: ReaderAnnotation) {
+        editingAnnotation.value = annotation
+        showAnnotationDialog.value = true
+    }
+
     override fun dismissAnnotationDialog() {
         showAnnotationDialog.value = false
         activeSelection = null
+        editingAnnotation.value = null
     }
 
     /**
@@ -63,14 +75,20 @@ class DefaultReaderDecorationManager @Inject constructor(
         color: Int,
         style: ReaderAnnotation.Style,
     ) {
-        val locator = activeSelection ?: return
-        bookRepository.addAnnotation(
-            bookId = bookId,
-            style = style,
-            tint = color,
-            locator = locator,
-            annotation = note,
-        )
+        val editing = editingAnnotation.value
+        if (editing != null) {
+            bookRepository.updateAnnotationNote(id = editing.id, note = note)
+            bookRepository.updateAnnotationStyle(id = editing.id, style = style, tint = color)
+        } else {
+            val locator = activeSelection ?: return
+            bookRepository.addAnnotation(
+                bookId = bookId,
+                style = style,
+                tint = color,
+                locator = locator,
+                annotation = note,
+            )
+        }
         dismissAnnotationDialog()
     }
 }

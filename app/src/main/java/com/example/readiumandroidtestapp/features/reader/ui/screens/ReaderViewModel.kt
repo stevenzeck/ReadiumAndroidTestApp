@@ -82,6 +82,8 @@ class ReaderViewModel @AssistedInject constructor(
 
     val showAnnotationDialog: StateFlow<Boolean> = decorationManager.showAnnotationDialog
 
+    val editingAnnotation: StateFlow<ReaderAnnotation?> = decorationManager.editingAnnotation
+
     // Search and TTS state delegated to their respective managers.
     val searchQuery: StateFlow<String?> = searchManager.searchQuery
     val isTtsActive: StateFlow<Boolean> = ttsManager.isTtsActive
@@ -374,6 +376,8 @@ class ReaderViewModel @AssistedInject constructor(
     //region Search & Highlights
     fun onSearchQueryChanged(query: String) = searchManager.onSearchQueryChanged(query = query)
     fun onAnnotateAction(selection: Locator) = decorationManager.onAnnotateAction(selection)
+    fun onEditAnnotationAction(annotation: ReaderAnnotation) =
+        decorationManager.onEditAnnotationAction(annotation)
     fun dismissAnnotationDialog() = decorationManager.dismissAnnotationDialog()
     fun saveAnnotation(note: String, color: Int, style: ReaderAnnotation.Style) {
         viewModelScope.launch {
@@ -383,6 +387,11 @@ class ReaderViewModel @AssistedInject constructor(
                 color = color,
                 style = style,
             )
+        }
+    }
+    fun deleteAnnotation(id: Long) {
+        viewModelScope.launch {
+            bookRepository.deleteAnnotation(id = id)
         }
     }
     //endregion

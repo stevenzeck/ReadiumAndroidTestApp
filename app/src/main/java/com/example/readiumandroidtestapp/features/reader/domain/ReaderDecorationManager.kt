@@ -8,9 +8,11 @@ import org.readium.r2.shared.publication.Locator
 
 interface ReaderDecorationManager {
     val showAnnotationDialog: StateFlow<Boolean>
+    val editingAnnotation: StateFlow<ReaderAnnotation?>
 
     fun decorationFlow(bookId: Long?): Flow<List<Decoration>>
     fun onAnnotateAction(selection: Locator)
+    fun onEditAnnotationAction(annotation: ReaderAnnotation)
     fun dismissAnnotationDialog()
     suspend fun saveAnnotation(
         bookId: Long,

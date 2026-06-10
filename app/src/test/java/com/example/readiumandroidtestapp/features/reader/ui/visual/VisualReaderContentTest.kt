@@ -14,6 +14,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabilities
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
@@ -473,6 +474,7 @@ class VisualReaderContentTest {
         bookmarks: List<Bookmark> = emptyList(),
         settingsSheetState: ReaderSettingsSheet? = null,
         showAnnotationDialog: Boolean = false,
+        editingAnnotation: ReaderAnnotation? = null,
     ) {
         composeTestRule.setContent {
             val searchResults =
@@ -491,6 +493,7 @@ class VisualReaderContentTest {
                 isTtsActive = false,
                 isPlaying = false,
                 showAnnotationDialog = showAnnotationDialog,
+                editingAnnotation = editingAnnotation,
                 onNavigateBack = onNavigateBack,
                 onVisualLocatorChanged = {},
                 onNavigatorReady = {},
@@ -504,6 +507,8 @@ class VisualReaderContentTest {
                 onSearchQueryChanged = {},
                 saveAnnotation = { _, _, _ -> },
                 dismissAnnotationDialog = {},
+                onDeleteAnnotation = {},
+                onEditAnnotation = {},
                 epubNavigatorFactory = epubNavigatorFactory,
                 pdfNavigatorFactory = pdfNavigatorFactory,
             )

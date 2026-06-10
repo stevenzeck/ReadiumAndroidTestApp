@@ -31,8 +31,30 @@ class AnnotationDialogTest {
         }
 
         composeTestRule.onNodeWithText(text = "Add Note").assertIsDisplayed()
-        composeTestRule.onNodeWithText(text = "Markup Type").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Style").assertIsDisplayed()
         composeTestRule.onNodeWithText(text = "Highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithText(text = "Underline").assertIsDisplayed()
+    }
+
+    @Test
+    fun annotationDialog_prepopulatesFields_whenEditing() {
+        val annotation = ReaderAnnotation(
+            bookId = 1,
+            style = ReaderAnnotation.Style.UNDERLINE,
+            tint = Color.Red.toArgb(),
+            locator = mockk(relaxed = true),
+            annotation = "Existing note",
+        )
+
+        composeTestRule.setContent {
+            AnnotationDialogContent(
+                annotation = annotation,
+                onDismiss = {},
+                onSave = { _, _, _ -> },
+            )
+        }
+
+        composeTestRule.onNodeWithText(text = "Existing note").assertIsDisplayed()
         composeTestRule.onNodeWithText(text = "Underline").assertIsDisplayed()
     }
 
