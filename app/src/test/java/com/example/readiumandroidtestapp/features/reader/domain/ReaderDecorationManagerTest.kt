@@ -1,7 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -36,9 +36,9 @@ class ReaderDecorationManagerTest {
         val bookId = 1L
         // Using primary constructor to avoid Locator complexity in test setup
         // and ensure id is set.
-        val highlight = Highlight(
+        val annotation = ReaderAnnotation(
             bookId = bookId,
-            style = Highlight.Style.HIGHLIGHT,
+            style = ReaderAnnotation.Style.HIGHLIGHT,
             tint = 123456,
             href = "http://example.com/chapter1",
             type = "text/html",
@@ -46,9 +46,9 @@ class ReaderDecorationManagerTest {
             annotation = "Test annotation",
         ).apply { id = 100L }
 
-        coEvery { bookRepository.highlightsForBook(bookId = bookId) } returns flowOf(
+        coEvery { bookRepository.annotationsForBook(bookId = bookId) } returns flowOf(
             value = listOf(
-                highlight,
+                annotation,
             ),
         )
 
@@ -57,65 +57,70 @@ class ReaderDecorationManagerTest {
         assertEquals(1, result.size)
         val decoration = result.first()
         assertEquals("100", decoration.id)
-        // Check that the decoration locator matches the highlight's locator
-        // Compare the objects produced by Highlight.locator
-        assertEquals(highlight.locator, decoration.locator)
+        // Check that the decoration locator matches the annotation's locator
+        // Compare the objects produced by ReaderAnnotation.locator
+        assertEquals(annotation.locator, decoration.locator)
         assertTrue(decoration.style is Decoration.Style.Highlight)
         assertEquals(123456, (decoration.style as Decoration.Style.Highlight).tint)
     }
 
     @Test
-    fun `onHighlightAction shows dialog`() = runTest {
+    fun `onAnnotateAction shows dialog`() = runTest {
         val locator = mockk<Locator>(relaxed = true)
 
-        manager.onHighlightAction(selection = locator)
+        manager.onAnnotateAction(selection = locator)
 
-        assertTrue(manager.showHighlightDialog.value)
+        assertTrue(manager.showAnnotationDialog.value)
     }
 
     @Test
-    fun `dismissHighlightDialog hides dialog`() = runTest {
+    fun `dismissAnnotationDialog hides dialog`() = runTest {
         val locator = mockk<Locator>(relaxed = true)
-        manager.onHighlightAction(selection = locator)
-        assertTrue(manager.showHighlightDialog.value)
+        manager.onAnnotateAction(selection = locator)
+        assertTrue(manager.showAnnotationDialog.value)
 
-        manager.dismissHighlightDialog()
+        manager.dismissAnnotationDialog()
 
-        assertFalse(manager.showHighlightDialog.value)
+        assertFalse(manager.showAnnotationDialog.value)
     }
 
     @Test
-    fun `saveHighlight saves to repository and dismisses dialog`() = runTest {
+    fun `saveAnnotation saves to repository and dismisses dialog`() = runTest {
         val bookId = 1L
         val note = "My Note"
         val color = 123456
         val locator = mockk<Locator>(relaxed = true)
 
         // Setup state
-        manager.onHighlightAction(selection = locator)
+        manager.onAnnotateAction(selection = locator)
 
         coEvery {
-            bookRepository.addHighlight(
+            bookRepository.addAnnotation(
                 bookId = bookId,
-                style = Highlight.Style.HIGHLIGHT,
+                style = ReaderAnnotation.Style.HIGHLIGHT,
                 tint = color,
                 locator = locator,
                 annotation = note,
             )
         } returns 101L
 
-        manager.saveHighlight(bookId = bookId, note = note, color = color)
+        manager.saveAnnotation(
+            bookId = bookId,
+            note = note,
+            color = color,
+            style = ReaderAnnotation.Style.HIGHLIGHT,
+        )
 
         coVerify {
-            bookRepository.addHighlight(
+            bookRepository.addAnnotation(
                 bookId = bookId,
-                style = Highlight.Style.HIGHLIGHT,
+                style = ReaderAnnotation.Style.HIGHLIGHT,
                 tint = color,
                 locator = locator,
                 annotation = note,
             )
         }
 
-        assertFalse(manager.showHighlightDialog.value)
+        assertFalse(manager.showAnnotationDialog.value)
     }
 }

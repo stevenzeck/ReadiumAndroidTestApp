@@ -85,6 +85,8 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.browser)
     annotationProcessor(libs.kotlin.metadata.jvm)
+    testAnnotationProcessor(libs.kotlin.metadata.jvm)
+    androidTestAnnotationProcessor(libs.kotlin.metadata.jvm)
 
     // --- Async & Serialization ---
     implementation(libs.kotlinx.coroutines.android)

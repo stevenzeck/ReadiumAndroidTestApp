@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
@@ -28,7 +28,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -78,9 +77,10 @@ class ReaderViewModel @AssistedInject constructor(
     // Reactive streams for book data, switched dynamically based on the current bookId.
     val bookmarks: Flow<List<Bookmark>> = bookRepository.bookmarksForBook(bookId = bookId)
 
-    val highlights: Flow<List<Highlight>> = bookRepository.highlightsForBook(bookId = bookId)
+    val annotations: Flow<List<ReaderAnnotation>> =
+        bookRepository.annotationsForBook(bookId = bookId)
 
-    val showHighlightDialog: StateFlow<Boolean> = decorationManager.showHighlightDialog
+    val showAnnotationDialog: StateFlow<Boolean> = decorationManager.showAnnotationDialog
 
     // Search and TTS state delegated to their respective managers.
     val searchQuery: StateFlow<String?> = searchManager.searchQuery
@@ -373,11 +373,16 @@ class ReaderViewModel @AssistedInject constructor(
 
     //region Search & Highlights
     fun onSearchQueryChanged(query: String) = searchManager.onSearchQueryChanged(query = query)
-    fun onHighlightAction(selection: Locator) = decorationManager.onHighlightAction(selection)
-    fun dismissHighlightDialog() = decorationManager.dismissHighlightDialog()
-    fun saveHighlight(note: String, color: Int) {
+    fun onAnnotateAction(selection: Locator) = decorationManager.onAnnotateAction(selection)
+    fun dismissAnnotationDialog() = decorationManager.dismissAnnotationDialog()
+    fun saveAnnotation(note: String, color: Int, style: ReaderAnnotation.Style) {
         viewModelScope.launch {
-            decorationManager.saveHighlight(bookId = bookId, note = note, color = color)
+            decorationManager.saveAnnotation(
+                bookId = bookId,
+                note = note,
+                color = color,
+                style = style,
+            )
         }
     }
     //endregion

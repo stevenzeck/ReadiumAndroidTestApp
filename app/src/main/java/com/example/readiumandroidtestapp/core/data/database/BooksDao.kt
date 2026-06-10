@@ -7,16 +7,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Data Access Object for books and their associated user data (bookmarks, highlights).
+ * Data Access Object for books and their associated user data (bookmarks, annotations).
  *
  * This DAO handles:
  * - The storage of [Book] entities.
  * - The One-to-Many relationship between [Book] and [Bookmark].
- * - The One-to-Many relationship between [Book] and [Highlight].
+ * - The One-to-Many relationship between [Book] and [ReaderAnnotation].
  */
 @Dao
 interface BooksDao {
@@ -58,18 +58,18 @@ interface BooksDao {
     fun getBookmarksForBook(bookId: Long): Flow<List<Bookmark>>
 
     /**
-     * Retrieve all highlights for a specific book
+     * Retrieve all annotations for a specific book
      */
     @Query(
-        "SELECT * FROM ${Highlight.TABLE_NAME} WHERE ${Highlight.BOOK_ID} = :bookId ORDER BY ${Highlight.TOTAL_PROGRESSION} ASC"
+        "SELECT * FROM ${ReaderAnnotation.TABLE_NAME} WHERE ${ReaderAnnotation.BOOK_ID} = :bookId ORDER BY ${ReaderAnnotation.TOTAL_PROGRESSION} ASC"
     )
-    fun getHighlightsForBook(bookId: Long): Flow<List<Highlight>>
+    fun getAnnotationsForBook(bookId: Long): Flow<List<ReaderAnnotation>>
 
     /**
-     * Retrieves the highlight with the given ID.
+     * Retrieves the annotation with the given ID.
      */
-    @Query("SELECT * FROM ${Highlight.TABLE_NAME} WHERE ${Highlight.ID} = :highlightId")
-    suspend fun getHighlightById(highlightId: Long): Highlight?
+    @Query("SELECT * FROM ${ReaderAnnotation.TABLE_NAME} WHERE ${ReaderAnnotation.ID} = :annotationId")
+    suspend fun getAnnotationById(annotationId: Long): ReaderAnnotation?
 
     /**
      * Inserts a bookmark
@@ -80,28 +80,28 @@ interface BooksDao {
     suspend fun insertBookmark(bookmark: Bookmark): Long
 
     /**
-     * Inserts a highlight
-     * @param highlight The highlight to insert
-     * @return The ID of the highlight that was added (primary key)
+     * Inserts an annotation
+     * @param annotation The annotation to insert
+     * @return The ID of the annotation that was added (primary key)
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertHighlight(highlight: Highlight): Long
+    suspend fun insertAnnotation(annotation: ReaderAnnotation): Long
 
     /**
-     * Updates a highlight's annotation.
+     * Updates an annotation's note text.
      */
     @Query(
-        "UPDATE ${Highlight.TABLE_NAME} SET ${Highlight.ANNOTATION} = :annotation WHERE ${Highlight.ID} = :id"
+        "UPDATE ${ReaderAnnotation.TABLE_NAME} SET ${ReaderAnnotation.ANNOTATION} = :note WHERE ${ReaderAnnotation.ID} = :id"
     )
-    suspend fun updateHighlightAnnotation(id: Long, annotation: String)
+    suspend fun updateAnnotationNote(id: Long, note: String)
 
     /**
-     * Updates a highlight's tint and style.
+     * Updates an annotation's tint and style.
      */
     @Query(
-        "UPDATE ${Highlight.TABLE_NAME} SET ${Highlight.TINT} = :tint, ${Highlight.STYLE} = :style WHERE ${Highlight.ID} = :id"
+        "UPDATE ${ReaderAnnotation.TABLE_NAME} SET ${ReaderAnnotation.TINT} = :tint, ${ReaderAnnotation.STYLE} = :style WHERE ${ReaderAnnotation.ID} = :id"
     )
-    suspend fun updateHighlightStyle(id: Long, style: Highlight.Style, @ColorInt tint: Int)
+    suspend fun updateAnnotationStyle(id: Long, style: ReaderAnnotation.Style, @ColorInt tint: Int)
 
     /**
      * Deletes a bookmark
@@ -110,10 +110,10 @@ interface BooksDao {
     suspend fun deleteBookmark(id: Long)
 
     /**
-     * Deletes the highlight with given id.
+     * Deletes the annotation with given id.
      */
-    @Query("DELETE FROM ${Highlight.TABLE_NAME} WHERE ${Highlight.ID} = :id")
-    suspend fun deleteHighlight(id: Long)
+    @Query("DELETE FROM ${ReaderAnnotation.TABLE_NAME} WHERE ${ReaderAnnotation.ID} = :id")
+    suspend fun deleteAnnotation(id: Long)
 
     /**
      * Saves book progression

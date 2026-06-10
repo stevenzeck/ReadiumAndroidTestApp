@@ -31,10 +31,10 @@ import org.readium.r2.shared.util.mediatype.MediaType
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class HighlightActionModeCallbackTest {
+class AnnotationActionModeCallbackTest {
 
-    private lateinit var onHighlight: (Locator) -> Unit
-    private lateinit var callback: HighlightActionModeCallback
+    private lateinit var onAnnotate: (Locator) -> Unit
+    private lateinit var callback: AnnotationActionModeCallback
 
     private val actionMode: ActionMode = mockk(relaxed = true)
     private val menu: Menu = mockk(relaxed = true)
@@ -42,15 +42,15 @@ class HighlightActionModeCallbackTest {
 
     @Before
     fun setUp() {
-        onHighlight = spyk()
-        callback = HighlightActionModeCallback(onHighlight)
+        onAnnotate = spyk()
+        callback = AnnotationActionModeCallback(onAnnotate)
     }
 
     @Test
-    fun `onCreateActionMode adds highlight menu item and returns true`() {
+    fun `onCreateActionMode adds annotate menu item and returns true`() {
         val result = callback.onCreateActionMode(actionMode, menu)
 
-        verify { menu.add(Menu.NONE, 100, Menu.NONE, "Highlight") }
+        verify { menu.add(Menu.NONE, 100, Menu.NONE, "Annotate") }
         assertTrue(result)
     }
 
@@ -67,7 +67,7 @@ class HighlightActionModeCallbackTest {
         val result = callback.onActionItemClicked(actionMode, menuItem)
 
         assertFalse(result)
-        verify { onHighlight wasNot Called }
+        verify { onAnnotate wasNot Called }
         verify(exactly = 0) { actionMode.finish() }
     }
 
@@ -79,7 +79,7 @@ class HighlightActionModeCallbackTest {
         val result = callback.onActionItemClicked(actionMode, menuItem)
 
         assertFalse(result)
-        verify { onHighlight wasNot Called }
+        verify { onAnnotate wasNot Called }
     }
 
     @Test
@@ -92,12 +92,12 @@ class HighlightActionModeCallbackTest {
 
         assertTrue(result)
         coVerify(exactly = 0) { navigator.currentSelection() }
-        verify { onHighlight wasNot Called }
+        verify { onAnnotate wasNot Called }
         verify(exactly = 0) { actionMode.finish() }
     }
 
     @Test
-    fun `onActionItemClicked with navigator but no selection does not call onHighlight or finish`() =
+    fun `onActionItemClicked with navigator but no selection does not call onAnnotate or finish`() =
         runTest {
             every { menuItem.itemId } returns 100
             val fragmentNavigator = mockk<FragmentNavigator>(relaxed = true)
@@ -116,12 +116,12 @@ class HighlightActionModeCallbackTest {
             advanceUntilIdle()
 
             assertTrue(result)
-            verify { onHighlight wasNot Called }
+            verify { onAnnotate wasNot Called }
             verify(exactly = 0) { actionMode.finish() }
         }
 
     @Test
-    fun `onActionItemClicked with selection calls onHighlight and finishes`() = runTest {
+    fun `onActionItemClicked with selection calls onAnnotate and finishes`() = runTest {
         every { menuItem.itemId } returns 100
         val fragmentNavigator = mockk<FragmentNavigator>(relaxed = true)
         val lifecycleOwner = mockk<LifecycleOwner>()
@@ -144,7 +144,7 @@ class HighlightActionModeCallbackTest {
         advanceUntilIdle()
 
         assertTrue(result)
-        verify { onHighlight(locator) }
+        verify { onAnnotate(locator) }
         verify { actionMode.finish() }
     }
 

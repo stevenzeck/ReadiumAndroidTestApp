@@ -22,8 +22,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.paging.compose.LazyPagingItems
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
-import com.example.readiumandroidtestapp.features.reader.ui.components.HighlightDialog
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
+import com.example.readiumandroidtestapp.features.reader.ui.components.AnnotationDialog
 import com.example.readiumandroidtestapp.features.reader.ui.components.ReaderOverlay
 import com.example.readiumandroidtestapp.features.reader.ui.components.TocBottomSheet
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.SettingsBottomSheet
@@ -53,16 +53,16 @@ fun VisualReaderContent(
     onSettingsChange: (Configurable.Preferences<*>) -> Unit,
     onSettingsDismiss: () -> Unit,
     bookmarks: List<Bookmark>,
-    highlights: List<Highlight>,
+    annotations: List<ReaderAnnotation>,
     searchResults: LazyPagingItems<SearchItem>,
     searchQuery: String?,
     isTtsActive: Boolean,
     isPlaying: Boolean,
-    showHighlightDialog: Boolean,
+    showAnnotationDialog: Boolean,
     onNavigateBack: () -> Unit,
     onVisualLocatorChanged: (Locator) -> Unit,
     onNavigatorReady: (VisualNavigator) -> Unit,
-    onHighlightAction: (Locator) -> Unit,
+    onAnnotateAction: (Locator) -> Unit,
     startTts: () -> Unit,
     stopTts: () -> Unit,
     play: () -> Unit,
@@ -70,8 +70,8 @@ fun VisualReaderContent(
     previous: () -> Unit,
     next: () -> Unit,
     onSearchQueryChanged: (String) -> Unit,
-    saveHighlight: (String, Int) -> Unit,
-    dismissHighlightDialog: () -> Unit,
+    saveAnnotation: (String, Int, ReaderAnnotation.Style) -> Unit,
+    dismissAnnotationDialog: () -> Unit,
     epubNavigatorFactory: EpubNavigatorFactory? = null,
     pdfNavigatorFactory: PdfNavigatorFactory<PdfiumSettings, PdfiumPreferences, PdfiumPreferencesEditor>? = null,
 ) {
@@ -131,7 +131,7 @@ fun VisualReaderContent(
                     navigator = it
                     onNavigatorReady(it)
                 },
-                onHighlight = onHighlightAction,
+                onAnnotate = onAnnotateAction,
                 epubNavigatorFactory = epubNavigatorFactory,
             )
         } else if (uiState.publication.conformsTo(profile = Publication.Profile.PDF)) {
@@ -176,7 +176,7 @@ fun VisualReaderContent(
             TocBottomSheet(
                 publication = uiState.publication,
                 bookmarks = bookmarks,
-                highlights = highlights,
+                annotations = annotations,
                 onDismissRequest = { showTocBottomSheet = false },
                 onLinkSelected = { link ->
                     navigator?.go(link, animated = true)
@@ -216,10 +216,10 @@ fun VisualReaderContent(
             )
         }
 
-        if (showHighlightDialog) {
-            HighlightDialog(
-                onDismiss = dismissHighlightDialog,
-                onSave = saveHighlight,
+        if (showAnnotationDialog) {
+            AnnotationDialog(
+                onDismiss = dismissAnnotationDialog,
+                onSave = saveAnnotation,
             )
         }
     }

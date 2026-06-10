@@ -11,14 +11,14 @@ import org.readium.r2.shared.publication.Locator
 /**
  * Custom ActionMode Callback that allows us to inject the navigator instance later.
  */
-class HighlightActionModeCallback(
-    private val onHighlight: (Locator) -> Unit,
+class AnnotationActionModeCallback(
+    private val onAnnotate: (Locator) -> Unit,
 ) : ActionMode.Callback {
 
     var navigator: SelectableNavigator? = null
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-        menu.add(Menu.NONE, 100, Menu.NONE, "Highlight")
+        menu.add(Menu.NONE, 100, Menu.NONE, "Annotate")
         return true
     }
 
@@ -33,7 +33,7 @@ class HighlightActionModeCallback(
             scope?.launch {
                 val selection = nav.currentSelection()
                 if (selection != null) {
-                    onHighlight(selection.locator)
+                    onAnnotate(selection.locator)
                     mode.finish()
                 }
             }

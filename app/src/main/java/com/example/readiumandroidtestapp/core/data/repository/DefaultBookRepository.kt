@@ -8,7 +8,7 @@ import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import kotlinx.coroutines.CoroutineDispatcher
@@ -132,7 +132,7 @@ class DefaultBookRepository @Inject constructor(
      */
     override suspend fun get(bookId: Long): Book? =
         withContext(context = ioDispatcher) {
-            booksDao.get(bookId)
+            booksDao.get(bookId = bookId)
         }
 
     /**
@@ -143,7 +143,7 @@ class DefaultBookRepository @Inject constructor(
      * @return A flow emitting a list of [Bookmark]s for the given book.
      */
     override fun bookmarksForBook(bookId: Long): Flow<List<Bookmark>> =
-        booksDao.getBookmarksForBook(bookId)
+        booksDao.getBookmarksForBook(bookId = bookId)
 
     /**
      * Inserts a bookmark for a book.
@@ -182,62 +182,70 @@ class DefaultBookRepository @Inject constructor(
     override suspend fun deleteBookmark(bookmarkId: Long) = booksDao.deleteBookmark(bookmarkId)
 
     /**
-     * Gets all highlights for a book by its ID.
+     * Gets all annotations for a book by its ID.
      *
      * @param bookId The ID of the book.
      *
-     * @return A flow emitting a list of [Highlight]s for the given book.
+     * @return A flow emitting a list of [ReaderAnnotation]s for the given book.
      */
-    override fun highlightsForBook(bookId: Long): Flow<List<Highlight>> =
-        booksDao.getHighlightsForBook(bookId)
+    override fun annotationsForBook(bookId: Long): Flow<List<ReaderAnnotation>> =
+        booksDao.getAnnotationsForBook(bookId = bookId)
 
     /**
-     * Adds a highlight for a book.
+     * Adds an annotation for a book.
      *
      * @param bookId The ID of the book.
-     * @param style The style of the highlight.
-     * @param tint The color of the highlight.
-     * @param locator The [Locator] of the highlighted area.
-     * @param annotation The annotation or note associated with the highlight.
+     * @param style The style of the annotation.
+     * @param tint The color of the annotation.
+     * @param locator The [Locator] of the annotated area.
+     * @param annotation The annotation or note associated with the annotation.
      *
-     * @return The ID of the inserted highlight.
+     * @return The ID of the inserted annotation.
      */
-    override suspend fun addHighlight(
+    override suspend fun addAnnotation(
         bookId: Long,
-        style: Highlight.Style,
+        style: ReaderAnnotation.Style,
         @ColorInt tint: Int,
         locator: Locator,
         annotation: String,
-    ): Long = booksDao.insertHighlight(Highlight(bookId, style, tint, locator, annotation))
+    ): Long = booksDao.insertAnnotation(
+        annotation = ReaderAnnotation(
+            bookId = bookId,
+            style = style,
+            tint = tint,
+            locator = locator,
+            annotation = annotation,
+        ),
+    )
 
     /**
-     * Updates the annotation of a highlight.
+     * Updates the annotation note.
      *
-     * @param id The ID of the highlight.
-     * @param annotation The new annotation or note.
+     * @param id The ID of the annotation.
+     * @param note The new annotation note.
      */
-    override suspend fun updateHighlightAnnotation(id: Long, annotation: String) {
-        booksDao.updateHighlightAnnotation(id, annotation)
+    override suspend fun updateAnnotationNote(id: Long, note: String) {
+        booksDao.updateAnnotationNote(id = id, note = note)
     }
 
     /**
-     * Updates the style of a highlight.
+     * Updates the style of an annotation.
      *
-     * @param id The ID of the highlight.
-     * @param style The new style of the highlight.
+     * @param id The ID of the annotation.
+     * @param style The new style of the annotation.
      */
-    override suspend fun updateHighlightStyle(
+    override suspend fun updateAnnotationStyle(
         id: Long,
-        style: Highlight.Style,
+        style: ReaderAnnotation.Style,
         @ColorInt tint: Int,
     ) {
-        booksDao.updateHighlightStyle(id, style, tint)
+        booksDao.updateAnnotationStyle(id = id, style = style, tint = tint)
     }
 
     /**
-     * Deletes a highlight by its ID.
+     * Deletes an annotation by its ID.
      *
-     * @param id The ID of the highlight to delete.
+     * @param id The ID of the annotation to delete.
      */
-    override suspend fun deleteHighlight(id: Long) = booksDao.deleteHighlight(id)
+    override suspend fun deleteAnnotation(id: Long) = booksDao.deleteAnnotation(id = id)
 }

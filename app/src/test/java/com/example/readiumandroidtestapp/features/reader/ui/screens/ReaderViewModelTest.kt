@@ -66,7 +66,7 @@ class ReaderViewModelTest {
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         every { ttsManager.isTtsActive } returns MutableStateFlow(value = false)
-        every { decorationManager.showHighlightDialog } returns MutableStateFlow(value = false)
+        every { decorationManager.showAnnotationDialog } returns MutableStateFlow(value = false)
 
         runTest(context = testDispatcher) {
             bookRepository.addBooks(testBook)

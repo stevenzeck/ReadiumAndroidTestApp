@@ -83,11 +83,12 @@
     <string name="tts">Text-to-speech (TTS)</string>
     <string name="reading_preferences">Reading Preferences</string>
     <string name="table_of_contents">Table of Contents</string>
-    <string name="add_highlight">Add Highlight</string>
+    <string name="add_annotation">Add Annotation</string>
+    <string name="annotation_style">Style</string>
     <string name="add_note">Add Note</string>
     <string name="contents">Contents</string>
     <string name="bookmarks">Bookmarks</string>
-    <string name="highlights">Highlights</string>
+    <string name="annotations">Annotations</string>
 
     <!-- TTS and Audiobooks-->
     <string name="audio_settings">Audio Settings</string>

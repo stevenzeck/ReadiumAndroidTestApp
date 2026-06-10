@@ -6,16 +6,16 @@ import androidx.room.TypeConverters
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
-import com.example.readiumandroidtestapp.core.domain.model.HighlightConverters
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotationConverters
 
 @Database(
-    entities = [Book::class, Bookmark::class, Highlight::class, Catalog::class],
+    entities = [Book::class, Bookmark::class, ReaderAnnotation::class, Catalog::class],
     version = 1,
     exportSchema = false,
 )
 @TypeConverters(
-    HighlightConverters::class,
+    ReaderAnnotationConverters::class,
 )
 /**
  * The main Room database for the application.
@@ -23,7 +23,7 @@ import com.example.readiumandroidtestapp.core.domain.model.HighlightConverters
  * It manages the persistence of:
  * - [Book]: The metadata of imported publications.
  * - [Bookmark]: User bookmarks associated with a book.
- * - [Highlight]: User highlights associated with a book.
+ * - [ReaderAnnotation]: User annotations associated with a book.
  * - [Catalog]: External OPDS catalog feeds.
  */
 abstract class AppDatabase : RoomDatabase() {

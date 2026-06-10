@@ -5,7 +5,7 @@ import androidx.annotation.ColorInt
 import com.example.readiumandroidtestapp.core.data.book.ImportError
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import kotlinx.coroutines.flow.Flow
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
@@ -22,16 +22,16 @@ interface BookRepository {
     fun bookmarksForBook(bookId: Long): Flow<List<Bookmark>>
     suspend fun insertBookmark(bookId: Long, publication: Publication, locator: Locator): Long
     suspend fun deleteBookmark(bookmarkId: Long)
-    fun highlightsForBook(bookId: Long): Flow<List<Highlight>>
-    suspend fun addHighlight(
+    fun annotationsForBook(bookId: Long): Flow<List<ReaderAnnotation>>
+    suspend fun addAnnotation(
         bookId: Long,
-        style: Highlight.Style,
+        style: ReaderAnnotation.Style,
         @ColorInt tint: Int,
         locator: Locator,
         annotation: String,
     ): Long
 
-    suspend fun updateHighlightAnnotation(id: Long, annotation: String)
-    suspend fun updateHighlightStyle(id: Long, style: Highlight.Style, @ColorInt tint: Int)
-    suspend fun deleteHighlight(id: Long)
+    suspend fun updateAnnotationNote(id: Long, note: String)
+    suspend fun updateAnnotationStyle(id: Long, style: ReaderAnnotation.Style, @ColorInt tint: Int)
+    suspend fun deleteAnnotation(id: Long)
 }

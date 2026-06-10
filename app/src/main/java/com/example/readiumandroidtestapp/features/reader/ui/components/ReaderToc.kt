@@ -27,7 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
@@ -36,7 +36,7 @@ import org.readium.r2.shared.publication.Publication
 fun TocBottomSheet(
     publication: Publication,
     bookmarks: List<Bookmark>,
-    highlights: List<Highlight>,
+    annotations: List<ReaderAnnotation>,
     onDismissRequest: () -> Unit,
     onLinkSelected: (Link) -> Unit,
     onLocatorSelected: (Locator) -> Unit,
@@ -46,7 +46,7 @@ fun TocBottomSheet(
         val tabs = listOf(
             stringResource(id = R.string.contents),
             stringResource(id = R.string.bookmarks),
-            stringResource(id = R.string.highlights),
+            stringResource(id = R.string.annotations),
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
@@ -67,8 +67,8 @@ fun TocBottomSheet(
                 )
 
                 1 -> TocBookmarkList(bookmarks = bookmarks, onLocatorSelected = onLocatorSelected)
-                2 -> TocHighlightList(
-                    highlights = highlights,
+                2 -> TocAnnotationList(
+                    annotations = annotations,
                     onLocatorSelected = onLocatorSelected,
                 )
             }
@@ -110,26 +110,29 @@ private fun TocBookmarkList(bookmarks: List<Bookmark>, onLocatorSelected: (Locat
 }
 
 @Composable
-private fun TocHighlightList(highlights: List<Highlight>, onLocatorSelected: (Locator) -> Unit) {
+private fun TocAnnotationList(
+    annotations: List<ReaderAnnotation>,
+    onLocatorSelected: (Locator) -> Unit,
+) {
     LazyColumn {
-        items(items = highlights) { highlight ->
+        items(items = annotations) { annotation ->
             ListItem(
                 leadingContent = {
                     Box(
                         modifier = Modifier
                             .size(size = 24.dp)
                             .clip(shape = CircleShape)
-                            .background(Color(color = highlight.tint))
+                            .background(Color(color = annotation.tint))
                             .border(width = 1.dp, color = Color.Gray, shape = CircleShape),
                     )
                 },
-                headlineContent = { Text(text = highlight.locator.text.highlight ?: "") },
+                headlineContent = { Text(text = annotation.locator.text.highlight ?: "") },
                 supportingContent = {
-                    if (highlight.annotation.isNotEmpty()) {
-                        Text(text = highlight.annotation)
+                    if (annotation.annotation.isNotEmpty()) {
+                        Text(text = annotation.annotation)
                     }
                 },
-                modifier = Modifier.clickable { onLocatorSelected(highlight.locator) },
+                modifier = Modifier.clickable { onLocatorSelected(annotation.locator) },
             )
         }
     }

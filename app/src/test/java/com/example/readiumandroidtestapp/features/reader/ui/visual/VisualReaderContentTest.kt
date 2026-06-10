@@ -411,7 +411,7 @@ class VisualReaderContentTest {
     }
 
     @Test
-    fun visualReaderContent_showsHighlightDialog_whenStateIsTrue() {
+    fun visualReaderContent_showsAnnotationDialog_whenStateIsTrue() {
         val publication = mockk<Publication>(relaxed = true)
         every { publication.conformsTo(profile = Publication.Profile.EPUB) } returns true
         every { publication.conformsTo(profile = Publication.Profile.PDF) } returns false
@@ -438,11 +438,11 @@ class VisualReaderContentTest {
         setContent(
             uiState = uiState,
             epubNavigatorFactory = navigatorFactory,
-            showHighlightDialog = true,
+            showAnnotationDialog = true,
         )
 
-        // Highlight dialog should be displayed.
-        composeTestRule.onNodeWithText(text = "Add Highlight").assertIsDisplayed()
+        // Annotation dialog should be displayed.
+        composeTestRule.onNodeWithText(text = "Add Annotation").assertIsDisplayed()
     }
 
     private fun createUiState(
@@ -472,7 +472,7 @@ class VisualReaderContentTest {
         pdfNavigatorFactory: PdfNavigatorFactory<PdfiumSettings, PdfiumPreferences, PdfiumPreferencesEditor>? = null,
         bookmarks: List<Bookmark> = emptyList(),
         settingsSheetState: ReaderSettingsSheet? = null,
-        showHighlightDialog: Boolean = false,
+        showAnnotationDialog: Boolean = false,
     ) {
         composeTestRule.setContent {
             val searchResults =
@@ -485,16 +485,16 @@ class VisualReaderContentTest {
                 onSettingsChange = {},
                 onSettingsDismiss = {},
                 bookmarks = bookmarks,
-                highlights = emptyList(),
+                annotations = emptyList(),
                 searchResults = searchResults,
                 searchQuery = "",
                 isTtsActive = false,
                 isPlaying = false,
-                showHighlightDialog = showHighlightDialog,
+                showAnnotationDialog = showAnnotationDialog,
                 onNavigateBack = onNavigateBack,
                 onVisualLocatorChanged = {},
                 onNavigatorReady = {},
-                onHighlightAction = {},
+                onAnnotateAction = {},
                 startTts = {},
                 stopTts = {},
                 play = {},
@@ -502,8 +502,8 @@ class VisualReaderContentTest {
                 previous = {},
                 next = {},
                 onSearchQueryChanged = {},
-                saveHighlight = { _, _ -> },
-                dismissHighlightDialog = {},
+                saveAnnotation = { _, _, _ -> },
+                dismissAnnotationDialog = {},
                 epubNavigatorFactory = epubNavigatorFactory,
                 pdfNavigatorFactory = pdfNavigatorFactory,
             )

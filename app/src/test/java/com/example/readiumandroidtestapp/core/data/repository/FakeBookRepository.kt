@@ -3,7 +3,7 @@ package com.example.readiumandroidtestapp.core.data.repository
 import android.net.Uri
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,16 +42,22 @@ class FakeBookRepository : BookRepository {
         0L
 
     override suspend fun deleteBookmark(bookmarkId: Long) {}
-    override fun highlightsForBook(bookId: Long) = flowOf(emptyList<Highlight>())
-    override suspend fun addHighlight(
+    override fun annotationsForBook(bookId: Long) = flowOf(emptyList<ReaderAnnotation>())
+    override suspend fun addAnnotation(
         bookId: Long,
-        style: Highlight.Style,
+        style: ReaderAnnotation.Style,
         tint: Int,
         locator: Locator,
         annotation: String,
     ) = 0L
 
-    override suspend fun updateHighlightAnnotation(id: Long, annotation: String) {}
-    override suspend fun updateHighlightStyle(id: Long, style: Highlight.Style, tint: Int) {}
-    override suspend fun deleteHighlight(id: Long) {}
+    override suspend fun updateAnnotationNote(id: Long, note: String) {}
+    override suspend fun updateAnnotationStyle(
+        id: Long,
+        style: ReaderAnnotation.Style,
+        tint: Int,
+    ) {
+    }
+
+    override suspend fun deleteAnnotation(id: Long) {}
 }

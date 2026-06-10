@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
-import com.example.readiumandroidtestapp.features.reader.ui.utils.HighlightActionModeCallback
+import com.example.readiumandroidtestapp.features.reader.ui.utils.AnnotationActionModeCallback
 import kotlinx.coroutines.launch
 import org.readium.r2.navigator.NavigatorFragment
 import org.readium.r2.navigator.OverflowableNavigator
@@ -44,7 +44,7 @@ fun EpubReader(
     onLocatorChanged: (Locator) -> Unit,
     onTap: () -> Unit,
     onNavigatorReady: (VisualNavigator) -> Unit,
-    onHighlight: (Locator) -> Unit,
+    onAnnotate: (Locator) -> Unit,
     epubNavigatorFactory: EpubNavigatorFactory? = null,
 ) {
     val context = LocalContext.current
@@ -56,10 +56,10 @@ fun EpubReader(
     val currentOnLocatorChanged by rememberUpdatedState(newValue = onLocatorChanged)
     val currentOnTap by rememberUpdatedState(newValue = onTap)
     val currentOnNavigatorReady by rememberUpdatedState(newValue = onNavigatorReady)
-    val currentOnHighlight by rememberUpdatedState(newValue = onHighlight)
+    val currentOnAnnotate by rememberUpdatedState(newValue = onAnnotate)
 
     val actionModeCallback = remember {
-        HighlightActionModeCallback(onHighlight = { loc -> currentOnHighlight(loc) })
+        AnnotationActionModeCallback(onAnnotate = { loc -> currentOnAnnotate(loc) })
     }
 
     DisposableEffect(key1 = publication, key2 = configuration) {

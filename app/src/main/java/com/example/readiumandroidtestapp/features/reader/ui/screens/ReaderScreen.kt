@@ -12,7 +12,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.features.reader.ui.audio.AudioReader
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
@@ -28,7 +28,7 @@ data class VisualReaderActions(
     val onSettingsDismiss: () -> Unit,
     val onVisualLocatorChanged: (Locator) -> Unit,
     val onNavigatorReady: (VisualNavigator) -> Unit,
-    val onHighlightAction: (Locator) -> Unit,
+    val onAnnotateAction: (Locator) -> Unit,
     val startTts: () -> Unit,
     val stopTts: () -> Unit,
     val play: () -> Unit,
@@ -36,8 +36,8 @@ data class VisualReaderActions(
     val previous: () -> Unit,
     val next: () -> Unit,
     val onSearchQueryChanged: (String) -> Unit,
-    val saveHighlight: (String, Int) -> Unit,
-    val dismissHighlightDialog: () -> Unit,
+    val saveAnnotation: (String, Int, ReaderAnnotation.Style) -> Unit,
+    val dismissAnnotationDialog: () -> Unit,
     val onNavigateBack: () -> Unit,
 )
 
@@ -45,12 +45,12 @@ data class VisualReaderState(
     val uiState: ReaderUiState.Visual,
     val settingsSheetState: ReaderSettingsSheet?,
     val bookmarks: List<Bookmark>,
-    val highlights: List<Highlight>,
+    val annotations: List<ReaderAnnotation>,
     val searchResults: LazyPagingItems<SearchItem>,
     val searchQuery: String?,
     val isTtsActive: Boolean,
     val isPlaying: Boolean,
-    val showHighlightDialog: Boolean,
+    val showAnnotationDialog: Boolean,
 )
 
 data class AudioReaderActions(
@@ -97,12 +97,12 @@ fun ReaderScreen(
     val settingsSheetState by viewModel.settingsSheetState.collectAsState()
 
     val bookmarks by viewModel.bookmarks.collectAsState(initial = emptyList())
-    val highlights by viewModel.highlights.collectAsState(initial = emptyList())
+    val annotations by viewModel.annotations.collectAsState(initial = emptyList())
     val searchResults = viewModel.searchResults.collectAsLazyPagingItems()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isTtsActive by viewModel.isTtsActive.collectAsState()
     val isPlaying by viewModel.ttsPlayback.collectAsState(initial = false)
-    val showHighlightDialog by viewModel.showHighlightDialog.collectAsState()
+    val showAnnotationDialog by viewModel.showAnnotationDialog.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val uiState = state) {
@@ -138,12 +138,12 @@ fun ReaderScreen(
                         uiState = uiState,
                         settingsSheetState = settingsSheetState,
                         bookmarks = bookmarks,
-                        highlights = highlights,
+                        annotations = annotations,
                         searchResults = searchResults,
                         searchQuery = searchQuery,
                         isTtsActive = isTtsActive,
                         isPlaying = isPlaying,
-                        showHighlightDialog = showHighlightDialog,
+                        showAnnotationDialog = showAnnotationDialog,
                     ),
                     VisualReaderActions(
                         onSettingsClick = viewModel::openSettings,
@@ -151,7 +151,7 @@ fun ReaderScreen(
                         onSettingsDismiss = viewModel::closeSettings,
                         onVisualLocatorChanged = viewModel::onVisualLocatorChanged,
                         onNavigatorReady = { viewModel.onNavigatorReady(visualNavigator = it) },
-                        onHighlightAction = viewModel::onHighlightAction,
+                        onAnnotateAction = viewModel::onAnnotateAction,
                         startTts = viewModel::startTts,
                         stopTts = viewModel::stopTts,
                         play = viewModel::play,
@@ -159,13 +159,14 @@ fun ReaderScreen(
                         previous = viewModel::previous,
                         next = viewModel::next,
                         onSearchQueryChanged = viewModel::onSearchQueryChanged,
-                        saveHighlight = { note, color ->
-                            viewModel.saveHighlight(
+                        saveAnnotation = { note, color, style ->
+                            viewModel.saveAnnotation(
                                 note = note,
                                 color = color,
+                                style = style,
                             )
                         },
-                        dismissHighlightDialog = viewModel::dismissHighlightDialog,
+                        dismissAnnotationDialog = viewModel::dismissAnnotationDialog,
                         onNavigateBack = onNavigateBack,
                     ),
                 )
@@ -202,16 +203,16 @@ private fun DefaultVisualReaderContent(
         onSettingsChange = actions.onSettingsChange,
         onSettingsDismiss = actions.onSettingsDismiss,
         bookmarks = state.bookmarks,
-        highlights = state.highlights,
+        annotations = state.annotations,
         searchResults = state.searchResults,
         searchQuery = state.searchQuery,
         isTtsActive = state.isTtsActive,
         isPlaying = state.isPlaying,
-        showHighlightDialog = state.showHighlightDialog,
+        showAnnotationDialog = state.showAnnotationDialog,
         onNavigateBack = actions.onNavigateBack,
         onVisualLocatorChanged = actions.onVisualLocatorChanged,
         onNavigatorReady = actions.onNavigatorReady,
-        onHighlightAction = actions.onHighlightAction,
+        onAnnotateAction = actions.onAnnotateAction,
         startTts = actions.startTts,
         stopTts = actions.stopTts,
         play = actions.play,
@@ -219,7 +220,7 @@ private fun DefaultVisualReaderContent(
         previous = actions.previous,
         next = actions.next,
         onSearchQueryChanged = actions.onSearchQueryChanged,
-        saveHighlight = actions.saveHighlight,
-        dismissHighlightDialog = actions.dismissHighlightDialog,
+        saveAnnotation = actions.saveAnnotation,
+        dismissAnnotationDialog = actions.dismissAnnotationDialog,
     )
 }

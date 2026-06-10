@@ -1,6 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,8 +14,8 @@ import javax.inject.Inject
 class DefaultReaderDecorationManager @Inject constructor(
     private val bookRepository: BookRepository,
 ) : ReaderDecorationManager {
-    // UI State for the Highlight Dialog
-    override val showHighlightDialog: StateFlow<Boolean> field = MutableStateFlow(value = false)
+    // UI State for the Annotation Dialog
+    override val showAnnotationDialog: StateFlow<Boolean> field = MutableStateFlow(value = false)
 
     private var activeSelection: Locator? = null
 
@@ -26,15 +26,15 @@ class DefaultReaderDecorationManager @Inject constructor(
     override fun decorationFlow(bookId: Long?): Flow<List<Decoration>> {
         if (bookId == null) return flowOf(value = emptyList())
 
-        return bookRepository.highlightsForBook(bookId).map { highlights ->
-            highlights.map { highlight ->
-                val style = when (highlight.style) {
-                    Highlight.Style.HIGHLIGHT -> Decoration.Style.Highlight(tint = highlight.tint)
-                    Highlight.Style.UNDERLINE -> Decoration.Style.Underline(tint = highlight.tint)
+        return bookRepository.annotationsForBook(bookId).map { annotations ->
+            annotations.map { annotation ->
+                val style = when (annotation.style) {
+                    ReaderAnnotation.Style.HIGHLIGHT -> Decoration.Style.Highlight(tint = annotation.tint)
+                    ReaderAnnotation.Style.UNDERLINE -> Decoration.Style.Underline(tint = annotation.tint)
                 }
                 Decoration(
-                    id = highlight.id.toString(),
-                    locator = highlight.locator,
+                    id = annotation.id.toString(),
+                    locator = annotation.locator,
                     style = style,
                 )
             }
@@ -42,30 +42,35 @@ class DefaultReaderDecorationManager @Inject constructor(
     }
 
     /**
-     * Called when the user selects text and taps "Highlight" in the context menu.
+     * Called when the user selects text and taps "Annotate" in the context menu.
      */
-    override fun onHighlightAction(selection: Locator) {
+    override fun onAnnotateAction(selection: Locator) {
         activeSelection = selection
-        showHighlightDialog.value = true
+        showAnnotationDialog.value = true
     }
 
-    override fun dismissHighlightDialog() {
-        showHighlightDialog.value = false
+    override fun dismissAnnotationDialog() {
+        showAnnotationDialog.value = false
         activeSelection = null
     }
 
     /**
-     * Persists the highlight to the database.
+     * Persists the annotation to the database.
      */
-    override suspend fun saveHighlight(bookId: Long, note: String, color: Int) {
+    override suspend fun saveAnnotation(
+        bookId: Long,
+        note: String,
+        color: Int,
+        style: ReaderAnnotation.Style,
+    ) {
         val locator = activeSelection ?: return
-        bookRepository.addHighlight(
+        bookRepository.addAnnotation(
             bookId = bookId,
-            style = Highlight.Style.HIGHLIGHT,
+            style = style,
             tint = color,
             locator = locator,
             annotation = note,
         )
-        dismissHighlightDialog()
+        dismissAnnotationDialog()
     }
 }

@@ -6,7 +6,7 @@ import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.data.repository.DefaultBookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -157,31 +157,31 @@ class BookRepositoryTest {
 
 
     @Test
-    fun `highlightsForBook returns flow from dao`() = runTest(testDispatcher) {
+    fun `annotationsForBook returns flow from dao`() = runTest(testDispatcher) {
         val bookId = 1L
-        val expectedHighlights = listOf(mockk<Highlight>())
-        every { booksDao.getHighlightsForBook(bookId = bookId) } returns flowOf(value = expectedHighlights)
+        val expectedAnnotations = listOf(mockk<ReaderAnnotation>())
+        every { booksDao.getAnnotationsForBook(bookId = bookId) } returns flowOf(value = expectedAnnotations)
 
-        val result = repository.highlightsForBook(bookId = bookId).first()
+        val result = repository.annotationsForBook(bookId = bookId).first()
 
-        Assert.assertEquals(expectedHighlights, result)
+        Assert.assertEquals(expectedAnnotations, result)
     }
 
     @Test
-    fun `addHighlight calls dao`() = runTest(testDispatcher) {
+    fun `addAnnotation calls dao`() = runTest(testDispatcher) {
         val bookId = 1L
         val locator = mockk<Locator>(relaxed = true)
-        coEvery { booksDao.insertHighlight(highlight = any()) } returns 20L
+        coEvery { booksDao.insertAnnotation(annotation = any()) } returns 20L
 
-        val id = repository.addHighlight(
+        val id = repository.addAnnotation(
             bookId = bookId,
-            style = Highlight.Style.HIGHLIGHT,
+            style = ReaderAnnotation.Style.HIGHLIGHT,
             tint = 123,
             locator = locator,
             annotation = "annotation",
         )
 
         Assert.assertEquals(20L, id)
-        coVerify { booksDao.insertHighlight(highlight = any()) }
+        coVerify { booksDao.insertAnnotation(annotation = any()) }
     }
 }

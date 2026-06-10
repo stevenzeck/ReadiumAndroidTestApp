@@ -2,7 +2,7 @@ package com.example.readiumandroidtestapp.core.data.database
 
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -12,7 +12,7 @@ class FakeBooksDao : BooksDao {
 
     private val books = MutableStateFlow<Map<Long, Book>>(emptyMap())
     private val bookmarks = MutableStateFlow<Map<Long, Bookmark>>(emptyMap())
-    private val highlights = MutableStateFlow<Map<Long, Highlight>>(emptyMap())
+    private val annotations = MutableStateFlow<Map<Long, ReaderAnnotation>>(emptyMap())
 
     // --- Books ---
 
@@ -63,40 +63,40 @@ class FakeBooksDao : BooksDao {
         bookmarks.update { it - id }
     }
 
-    // --- Highlights ---
+    // --- Annotations ---
 
-    override fun getHighlightsForBook(bookId: Long): Flow<List<Highlight>> {
-        return highlights.map { map ->
+    override fun getAnnotationsForBook(bookId: Long): Flow<List<ReaderAnnotation>> {
+        return annotations.map { map ->
             map.values.filter { it.bookId == bookId }.sortedBy { it.totalProgression }
         }
     }
 
-    override suspend fun getHighlightById(highlightId: Long): Highlight? {
-        return highlights.value[highlightId]
+    override suspend fun getAnnotationById(annotationId: Long): ReaderAnnotation? {
+        return annotations.value[annotationId]
     }
 
-    override suspend fun insertHighlight(highlight: Highlight): Long {
-        val id = (highlights.value.keys.maxOrNull() ?: 0L) + 1
-        val newHighlight = highlight.copy(id = id)
-        highlights.update { it + (id to newHighlight) }
+    override suspend fun insertAnnotation(annotation: ReaderAnnotation): Long {
+        val id = (annotations.value.keys.maxOrNull() ?: 0L) + 1
+        val newAnnotation = annotation.copy(id = id)
+        annotations.update { it + (id to newAnnotation) }
         return id
     }
 
-    override suspend fun updateHighlightAnnotation(id: Long, annotation: String) {
-        highlights.update { map ->
-            val highlight = map[id] ?: return@update map
-            map + (id to highlight.copy(annotation = annotation))
+    override suspend fun updateAnnotationNote(id: Long, note: String) {
+        annotations.update { map ->
+            val annotation = map[id] ?: return@update map
+            map + (id to annotation.copy(annotation = note))
         }
     }
 
-    override suspend fun updateHighlightStyle(id: Long, style: Highlight.Style, tint: Int) {
-        highlights.update { map ->
-            val highlight = map[id] ?: return@update map
-            map + (id to highlight.copy(style = style, tint = tint))
+    override suspend fun updateAnnotationStyle(id: Long, style: ReaderAnnotation.Style, tint: Int) {
+        annotations.update { map ->
+            val annotation = map[id] ?: return@update map
+            map + (id to annotation.copy(style = style, tint = tint))
         }
     }
 
-    override suspend fun deleteHighlight(id: Long) {
-        highlights.update { it - id }
+    override suspend fun deleteAnnotation(id: Long) {
+        annotations.update { it - id }
     }
 }

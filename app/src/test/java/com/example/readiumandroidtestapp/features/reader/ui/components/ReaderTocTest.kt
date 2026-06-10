@@ -9,7 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
-import com.example.readiumandroidtestapp.core.domain.model.Highlight
+import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Rule
@@ -45,7 +45,7 @@ class ReaderTocTest {
             TocBottomSheet(
                 publication = publication,
                 bookmarks = emptyList(),
-                highlights = emptyList(),
+                annotations = emptyList(),
                 onDismissRequest = {},
                 onLinkSelected = onLinkSelected,
                 onLocatorSelected = {},
@@ -89,7 +89,7 @@ class ReaderTocTest {
                     ),
                 ),
                 bookmarks = listOf(bookmark),
-                highlights = emptyList(),
+                annotations = emptyList(),
                 onDismissRequest = {},
                 onLinkSelected = {},
                 onLocatorSelected = onLocatorSelected,
@@ -106,15 +106,15 @@ class ReaderTocTest {
     }
 
     @Test
-    fun `displays highlights and handles click`() {
+    fun `displays annotations and handles click`() {
         val locator = Locator(
             href = Url(url = "href")!!,
             mediaType = MediaType(string = "text/html")!!,
             text = Locator.Text(highlight = "Highlighted text"),
         )
-        val highlight = Highlight(
+        val annotation = ReaderAnnotation(
             bookId = 1,
-            style = Highlight.Style.HIGHLIGHT,
+            style = ReaderAnnotation.Style.HIGHLIGHT,
             tint = 0,
             locator = locator,
             annotation = "",
@@ -133,7 +133,7 @@ class ReaderTocTest {
                     ),
                 ),
                 bookmarks = emptyList(),
-                highlights = listOf(highlight),
+                annotations = listOf(annotation),
                 onDismissRequest = {},
                 onLinkSelected = {},
                 onLocatorSelected = onLocatorSelected,
@@ -141,9 +141,9 @@ class ReaderTocTest {
         }
 
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val highlightsTab = context.getString(R.string.highlights)
+        val annotationsTab = context.getString(R.string.annotations)
 
-        composeTestRule.onNodeWithText(text = highlightsTab).performClick()
+        composeTestRule.onNodeWithText(text = annotationsTab).performClick()
         composeTestRule.onNodeWithText(text = "Highlighted text").performClick()
 
         verify { onLocatorSelected(any()) }

@@ -26,18 +26,18 @@ import org.readium.r2.shared.util.mediatype.MediaType
  * @param annotation User-provided note attached to the annotation
  */
 @Entity(
-    tableName = Highlight.TABLE_NAME,
+    tableName = ReaderAnnotation.TABLE_NAME,
     foreignKeys = [
         ForeignKey(
             entity = Book::class,
             parentColumns = [Book.ID],
-            childColumns = [Highlight.BOOK_ID],
+            childColumns = [ReaderAnnotation.BOOK_ID],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = [Highlight.BOOK_ID])],
+    indices = [Index(value = [ReaderAnnotation.BOOK_ID])],
 )
-data class Highlight(
+data class ReaderAnnotation(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = ID)
     var id: Long = 0,
@@ -48,7 +48,7 @@ data class Highlight(
     @ColumnInfo(name = STYLE)
     var style: Style,
     @ColumnInfo(name = TINT, defaultValue = "0")
-    @ColorInt
+    @param:ColorInt
     var tint: Int,
     @ColumnInfo(name = HREF)
     var href: String,
@@ -112,7 +112,7 @@ data class Highlight(
     }
 
     companion object {
-        const val TABLE_NAME = "HIGHLIGHTS"
+        const val TABLE_NAME = "READER_ANNOTATIONS"
         const val ID = "ID"
         const val CREATION_DATE = "CREATION_DATE"
         const val BOOK_ID = "BOOK_ID"
@@ -128,12 +128,12 @@ data class Highlight(
     }
 }
 
-class HighlightConverters {
+class ReaderAnnotationConverters {
     @TypeConverter
-    fun styleFromString(value: String?): Highlight.Style = Highlight.Style.getOrDefault(value)
+    fun styleFromString(value: String?): ReaderAnnotation.Style = ReaderAnnotation.Style.getOrDefault(value)
 
     @TypeConverter
-    fun styleToString(style: Highlight.Style): String = style.value
+    fun styleToString(style: ReaderAnnotation.Style): String = style.value
 
     @TypeConverter
     fun textFromString(value: String?): Locator.Text = Locator.Text.fromJSON(

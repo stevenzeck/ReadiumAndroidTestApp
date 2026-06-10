@@ -46,12 +46,12 @@ class ReaderScreenTest {
         every { viewModel.uiState } returns MutableStateFlow(value = uiState)
         every { viewModel.settingsSheetState } returns MutableStateFlow(value = null)
         every { viewModel.bookmarks } returns flowOf(value = emptyList())
-        every { viewModel.highlights } returns flowOf(value = emptyList())
+        every { viewModel.annotations } returns flowOf(value = emptyList())
         every { viewModel.searchResults } returns flowOf(value = PagingData.empty())
         every { viewModel.searchQuery } returns MutableStateFlow(value = null)
         every { viewModel.isTtsActive } returns MutableStateFlow(value = false)
         every { viewModel.ttsPlayback } returns flowOf(value = false)
-        every { viewModel.showHighlightDialog } returns MutableStateFlow(value = false)
+        every { viewModel.showAnnotationDialog } returns MutableStateFlow(value = false)
     }
 
     @Test
