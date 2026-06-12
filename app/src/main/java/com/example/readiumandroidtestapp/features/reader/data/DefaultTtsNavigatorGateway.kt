@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.readium.navigator.media.tts.AndroidTtsNavigator
+import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.navigator.media.tts.android.AndroidTtsEngine
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.r2.shared.publication.Locator
@@ -21,6 +22,10 @@ class DefaultTtsNavigatorGateway(
 
     override val currentLocator: StateFlow<Locator>
         get() = navigator.currentLocator
+
+    override val location: Flow<TtsNavigator.Location>
+        get() = navigator.location
+
 
     override fun play() {
         navigator.play()

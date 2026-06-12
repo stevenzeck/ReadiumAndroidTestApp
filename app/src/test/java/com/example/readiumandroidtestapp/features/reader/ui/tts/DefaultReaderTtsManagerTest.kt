@@ -3,6 +3,7 @@ package com.example.readiumandroidtestapp.features.reader.ui.tts
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.features.reader.domain.TtsNavigatorGateway
 import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
+import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderNavigator
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -62,7 +63,11 @@ class DefaultReaderTtsManagerTest {
         every { ttsNavigator.currentLocator } returns MutableStateFlow(value = locator)
         every { ttsNavigator.playback } returns flowOf(value = true)
 
-        manager.start(visualNavigator = visualNavigator, scope = backgroundScope, onStop = {})
+        manager.start(
+            navigator = ReaderNavigator.Legacy(visualNavigator),
+            scope = backgroundScope,
+            onStop = {},
+        )
 
         coVerify {
             ttsServiceGateway.createNavigator(
@@ -78,7 +83,11 @@ class DefaultReaderTtsManagerTest {
     @Test
     fun `start does nothing if publication is null`() = runTest(context = testDispatcher) {
         val emptyManager = DefaultReaderTtsManager(ttsServiceGateway = ttsServiceGateway)
-        emptyManager.start(visualNavigator = visualNavigator, scope = backgroundScope, onStop = {})
+        emptyManager.start(
+            navigator = ReaderNavigator.Legacy(visualNavigator),
+            scope = backgroundScope,
+            onStop = {},
+        )
 
         coVerify(exactly = 0) {
             ttsServiceGateway.createNavigator(
@@ -162,7 +171,7 @@ class DefaultReaderTtsManagerTest {
         every { ttsNavigator.playback } returns flowOf(value = true)
 
         manager.start(
-            visualNavigator = visualNavigator,
+            navigator = ReaderNavigator.Legacy(visualNavigator),
             scope = kotlinx.coroutines.CoroutineScope(context = testDispatcher),
             onStop = {},
         )

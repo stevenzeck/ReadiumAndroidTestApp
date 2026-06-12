@@ -107,6 +107,12 @@ class ReaderViewModel @AssistedInject constructor(
     // to the VisualNavigator or NavigationController to control it from the ViewModel.
     private var currentVisualNavigator: VisualNavigator? = null
     private var currentNavigationController: NavigationController<*, *>? = null
+    private val currentNavigator: ReaderNavigator?
+        get() {
+            currentVisualNavigator?.let { return ReaderNavigator.Legacy(it) }
+            currentNavigationController?.let { return ReaderNavigator.New(it) }
+            return null
+        }
     private val visualLocatorFlow = MutableStateFlow<Locator?>(value = null)
 
     init {
@@ -396,15 +402,15 @@ class ReaderViewModel @AssistedInject constructor(
 
     //region Playback (TTS & Audio)
     fun startTts() {
-        val navigator = currentVisualNavigator ?: return
+        val navigator = currentNavigator ?: return
         ttsManager.start(
-            visualNavigator = navigator,
+            navigator = navigator,
             scope = viewModelScope,
             onStop = ::stopTts,
         )
     }
 
-    fun stopTts() = ttsManager.stop(currentVisualNavigator, viewModelScope)
+    fun stopTts() = ttsManager.stop(currentNavigator, viewModelScope)
     fun play() = ttsManager.play()
     fun pause() = ttsManager.pause()
     fun previous() = ttsManager.previous()
