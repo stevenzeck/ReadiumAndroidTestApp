@@ -32,7 +32,7 @@ data object Catalogs : Route
  *
  * Note: These are implemented as a sealed class to group related screens,
  * but they do not strictly implement [Route] in this example unless they are also [NavKey]s.
- * (Assuming the app handles them as nested navigation or they should implement NavKey if used directly).
+ * (Assuming the app handles them as nested navigation, or they should implement NavKey if used directly).
  *
  * *Correction*: In Navigation 3, everything that is navigated to must be a [NavKey].
  * If these are used in `entry` calls, they act as keys.

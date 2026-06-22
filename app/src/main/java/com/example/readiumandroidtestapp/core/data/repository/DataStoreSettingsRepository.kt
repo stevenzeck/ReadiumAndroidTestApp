@@ -21,17 +21,17 @@ class DataStoreSettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : SettingsRepository {
 
-    private val THEME_KEY = intPreferencesKey(name = "app_theme")
+    private val themeKey = intPreferencesKey(name = "app_theme")
 
     override val appTheme: Flow<AppTheme> = context.dataStore.data
         .map { preferences ->
-            val themeOrdinal = preferences[THEME_KEY] ?: AppTheme.SYSTEM.ordinal
+            val themeOrdinal = preferences[themeKey] ?: AppTheme.SYSTEM.ordinal
             AppTheme.entries.toTypedArray().getOrElse(index = themeOrdinal) { AppTheme.SYSTEM }
         }
 
     override suspend fun setAppTheme(theme: AppTheme) {
         context.dataStore.edit { preferences ->
-            preferences[THEME_KEY] = theme.ordinal
+            preferences[themeKey] = theme.ordinal
         }
     }
 }

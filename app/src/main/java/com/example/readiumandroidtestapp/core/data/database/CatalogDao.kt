@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
 interface CatalogDao {
 
     /**
-     * Inserts an Catalog
+     * Inserts a Catalog
      * @param catalog The Catalog model to insert
      * @return ID of the Catalog model that was added (primary key)
      */
@@ -40,7 +40,7 @@ interface CatalogDao {
     fun getCatalogModels(): Flow<List<Catalog>>
 
     /**
-     * Deletes an Catalog model
+     * Deletes a Catalog model
      * @param id The id of the Catalog model to delete
      */
     @Query("DELETE FROM " + Catalog.TABLE_NAME + " WHERE " + Catalog.ID + " = :id")

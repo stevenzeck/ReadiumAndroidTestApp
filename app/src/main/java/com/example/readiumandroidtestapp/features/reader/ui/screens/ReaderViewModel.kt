@@ -179,7 +179,6 @@ class ReaderViewModel @AssistedInject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         // Cleanup all resources
         mediaBinder.unbind()
         audioNavigator?.close()
