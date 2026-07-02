@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.androidx.room)
+    alias(libs.plugins.androidx.room3)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.dagger.hilt.android)
     alias(libs.plugins.kotlin.parcelize)
@@ -68,7 +68,7 @@ kotlin {
     }
 }
 
-room {
+room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
@@ -114,8 +114,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // --- Database (Room) ---
-    implementation(libs.bundles.room)
-    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room3)
+    ksp(libs.androidx.room3.compiler)
 
     // --- Utilities ---
     implementation(libs.timber)

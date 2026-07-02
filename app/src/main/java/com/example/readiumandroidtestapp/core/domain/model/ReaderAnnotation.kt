@@ -1,12 +1,12 @@
 package com.example.readiumandroidtestapp.core.domain.model
 
 import androidx.annotation.ColorInt
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
+import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverter
+import androidx.room3.Entity
+import androidx.room3.ForeignKey
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 import org.json.JSONObject
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.util.Url
@@ -129,25 +129,25 @@ data class ReaderAnnotation(
 }
 
 class ReaderAnnotationConverters {
-    @TypeConverter
+    @ColumnTypeConverter
     fun styleFromString(value: String?): ReaderAnnotation.Style = ReaderAnnotation.Style.getOrDefault(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun styleToString(style: ReaderAnnotation.Style): String = style.value
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun textFromString(value: String?): Locator.Text = Locator.Text.fromJSON(
         value?.let { JSONObject(it) },
     )
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun textToString(text: Locator.Text): String = text.toJSON().toString()
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun locationsFromString(value: String?): Locator.Locations = Locator.Locations.fromJSON(
         value?.let { JSONObject(it) },
     )
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun locationsToString(text: Locator.Locations): String = text.toJSON().toString()
 }

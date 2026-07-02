@@ -78,13 +78,13 @@ fun AccountListPane(onItemClick: (AccountScreens) -> Unit) {
                 .fillMaxSize(),
         ) {
             ListItem(
-                headlineContent = { Text(text = stringResource(id = R.string.settings)) },
                 modifier = Modifier.clickable { onItemClick(AccountScreens.Settings) },
+                content = { Text(text = stringResource(id = R.string.settings)) },
             )
             HorizontalDivider()
             ListItem(
-                headlineContent = { Text(text = stringResource(id = R.string.about)) },
                 modifier = Modifier.clickable { onItemClick(AccountScreens.About) },
+                content = { Text(text = stringResource(id = R.string.about)) },
             )
         }
     }

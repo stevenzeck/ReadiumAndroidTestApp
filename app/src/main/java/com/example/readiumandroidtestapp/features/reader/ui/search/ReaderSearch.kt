@@ -85,12 +85,12 @@ private fun ReaderSearchResults(
 
                 is SearchItem.Result -> {
                     ListItem(
-                        headlineContent = {
+                        modifier = Modifier.clickable { onLocatorSelected(item.locator) },
+                        content = {
                             Text(
                                 text = item.locator.text.toAnnotatedString(),
                             )
                         },
-                        modifier = Modifier.clickable { onLocatorSelected(item.locator) },
                     )
                 }
 

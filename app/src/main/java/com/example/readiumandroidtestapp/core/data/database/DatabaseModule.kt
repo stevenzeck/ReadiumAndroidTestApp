@@ -1,7 +1,7 @@
 package com.example.readiumandroidtestapp.core.data.database
 
 import android.content.Context
-import androidx.room.Room
+import androidx.room3.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,9 +16,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
+        return Room.databaseBuilder<AppDatabase>(
             context,
-            AppDatabase::class.java,
             "database",
         )
             .fallbackToDestructiveMigration(dropAllTables = false)

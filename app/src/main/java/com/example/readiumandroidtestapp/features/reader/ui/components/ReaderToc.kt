@@ -89,8 +89,8 @@ private fun TocChapterList(toc: List<Link>, onLinkSelected: (Link) -> Unit) {
     LazyColumn {
         items(items = toc) { link ->
             ListItem(
-                headlineContent = { Text(text = link.title ?: link.href.toString()) },
                 modifier = Modifier.clickable { onLinkSelected(link) },
+                content = { Text(text = link.title ?: link.href.toString()) },
             )
         }
     }
@@ -101,7 +101,7 @@ private fun TocBookmarkList(bookmarks: List<Bookmark>, onLocatorSelected: (Locat
     LazyColumn {
         items(items = bookmarks) { bookmark ->
             ListItem(
-                headlineContent = { Text(text = bookmark.resourceTitle) },
+                modifier = Modifier.clickable { onLocatorSelected(bookmark.locator) },
                 supportingContent = {
                     val progression = bookmark.locator.locations.progression
                     val percentage = if (progression != null) {
@@ -111,7 +111,7 @@ private fun TocBookmarkList(bookmarks: List<Bookmark>, onLocatorSelected: (Locat
                     }
                     Text(text = percentage)
                 },
-                modifier = Modifier.clickable { onLocatorSelected(bookmark.locator) },
+                content = { Text(text = bookmark.resourceTitle) },
             )
         }
     }
@@ -127,6 +127,7 @@ private fun TocAnnotationList(
     LazyColumn {
         items(items = annotations) { annotation ->
             ListItem(
+                modifier = Modifier.clickable { onLocatorSelected(annotation.locator) },
                 leadingContent = {
                     Box(
                         modifier = Modifier
@@ -136,7 +137,6 @@ private fun TocAnnotationList(
                             .border(width = 1.dp, color = Color.Gray, shape = CircleShape),
                     )
                 },
-                headlineContent = { Text(text = annotation.locator.text.highlight ?: "") },
                 supportingContent = {
                     if (annotation.annotation.isNotEmpty()) {
                         Text(text = annotation.annotation)
@@ -158,7 +158,7 @@ private fun TocAnnotationList(
                         }
                     }
                 },
-                modifier = Modifier.clickable { onLocatorSelected(annotation.locator) },
+                content = { Text(text = annotation.locator.text.highlight ?: "") },
             )
         }
     }

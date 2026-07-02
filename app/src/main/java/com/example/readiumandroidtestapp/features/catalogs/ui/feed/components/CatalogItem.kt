@@ -32,13 +32,9 @@ fun CatalogItem(
     modifier: Modifier = Modifier,
 ) {
     ListItem(
-        headlineContent = {
-            Text(
-                text = catalog.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-        },
+        modifier = modifier
+            .clip(shape = MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
         supportingContent = {
             Text(
                 text = catalog.href,
@@ -50,9 +46,6 @@ fun CatalogItem(
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
-        modifier = modifier
-            .clip(shape = MaterialTheme.shapes.medium)
-            .clickable(onClick = onClick),
         trailingContent = {
             Row(horizontalArrangement = Arrangement.spacedBy(space = 8.dp)) {
                 FilledTonalIconButton(
@@ -80,6 +73,13 @@ fun CatalogItem(
                     )
                 }
             }
+        },
+        content = {
+            Text(
+                text = catalog.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
         },
     )
 }

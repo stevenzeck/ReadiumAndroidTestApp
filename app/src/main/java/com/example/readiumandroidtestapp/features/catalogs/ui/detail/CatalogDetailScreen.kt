@@ -241,8 +241,13 @@ private fun LazyGridScope.renderNavigationLinks(
     ) { link ->
         val defaultSubFeedTitle = stringResource(id = R.string.sub_feed)
         ListItem(
-            headlineContent = {
-                Text(text = link.title ?: link.href.toString())
+            modifier = Modifier.clickable {
+                val subCatalog = Catalog(
+                    title = link.title ?: defaultSubFeedTitle,
+                    href = link.href.toString(),
+                    type = parentCatalog.type,
+                )
+                onSubFeedClick(subCatalog)
             },
             leadingContent = {
                 Icon(
@@ -251,13 +256,8 @@ private fun LazyGridScope.renderNavigationLinks(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
-            modifier = Modifier.clickable {
-                val subCatalog = Catalog(
-                    title = link.title ?: defaultSubFeedTitle,
-                    href = link.href.toString(),
-                    type = parentCatalog.type,
-                )
-                onSubFeedClick(subCatalog)
+            content = {
+                Text(text = link.title ?: link.href.toString())
             },
         )
     }

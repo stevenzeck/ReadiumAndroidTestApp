@@ -1,8 +1,8 @@
 package com.example.readiumandroidtestapp.core.data.database
 
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Database
+import androidx.room3.RoomDatabase
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
@@ -14,7 +14,7 @@ import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotationConve
     version = 1,
     exportSchema = false,
 )
-@TypeConverters(
+@ColumnTypeConverters(
     ReaderAnnotationConverters::class,
 )
 /**
