@@ -192,10 +192,13 @@ class VisualReaderContentTest {
 
         // Simulate tap
         val tapEvent = mockk<TapEvent>(relaxed = true)
+
+        // Wait for the fragment lifecycle to attach and register the listener
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            testFragment.listeners.isNotEmpty()
+        }
+
         composeTestRule.runOnIdle {
-            if (testFragment.listeners.isEmpty()) {
-                throw AssertionError("No listeners registered")
-            }
             testFragment.listeners.forEach { it.onTap(tapEvent) }
         }
 
@@ -249,6 +252,9 @@ class VisualReaderContentTest {
 
         // Show overlay
         val tapEvent = mockk<TapEvent>(relaxed = true)
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            testFragment.listeners.isNotEmpty()
+        }
         composeTestRule.runOnIdle {
             testFragment.listeners.forEach { it.onTap(tapEvent) }
         }
@@ -307,6 +313,9 @@ class VisualReaderContentTest {
 
         // Show overlay
         val tapEvent = mockk<TapEvent>(relaxed = true)
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            testFragment.listeners.isNotEmpty()
+        }
         composeTestRule.runOnIdle {
             testFragment.listeners.forEach { it.onTap(tapEvent) }
         }
@@ -360,6 +369,9 @@ class VisualReaderContentTest {
 
         // Show overlay
         val tapEvent = mockk<TapEvent>(relaxed = true)
+        composeTestRule.waitUntil(timeoutMillis = 5000L) {
+            testFragment.listeners.isNotEmpty()
+        }
         composeTestRule.runOnIdle {
             testFragment.listeners.forEach { it.onTap(tapEvent) }
         }
