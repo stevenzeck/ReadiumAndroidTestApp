@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -44,7 +45,8 @@ class BookshelfViewModel @Inject constructor(
                 BookshelfUiState.Success(books = books)
             }
         }
-        .catch {
+        .catch { e ->
+            Timber.e(e)
             emit(value = BookshelfUiState.Error)
         }
         .stateIn(
