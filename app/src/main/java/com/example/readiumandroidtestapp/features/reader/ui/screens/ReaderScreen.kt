@@ -57,10 +57,11 @@ data class VisualReaderState(
 )
 
 data class AudioReaderActions(
+    val onNavigateBack: () -> Unit,
     val onSettingsClick: () -> Unit,
     val onSettingsChange: (Configurable.Preferences<*>) -> Unit,
     val onSettingsDismiss: () -> Unit,
-    val onNavigateBack: () -> Unit,
+    val onOpenPlayer: () -> Unit,
 )
 
 data class AudioReaderState(
@@ -128,10 +129,14 @@ fun ReaderScreen(
                         settingsSheetState = settingsSheetState,
                     ),
                     AudioReaderActions(
-                        onSettingsClick = viewModel::openAudiobookSettings,
+                        onNavigateBack = onNavigateBack,
+                        onSettingsClick = viewModel::openSettings,
                         onSettingsChange = viewModel::onSettingsChanged,
                         onSettingsDismiss = viewModel::closeSettings,
-                        onNavigateBack = onNavigateBack,
+                        onOpenPlayer = {
+                            viewModel.expandPlayer()
+                            onNavigateBack()
+                        },
                     ),
                 )
             }
@@ -189,12 +194,12 @@ private fun DefaultAudioReaderContent(
 ) {
     AudioReader(
         book = state.uiState.book,
-        navigator = state.uiState.navigator,
         settingsSheetState = state.settingsSheetState,
         onNavigateBack = actions.onNavigateBack,
         onSettingsClick = actions.onSettingsClick,
         onSettingsChange = actions.onSettingsChange,
         onSettingsDismiss = actions.onSettingsDismiss,
+        onOpenPlayer = actions.onOpenPlayer,
     )
 }
 

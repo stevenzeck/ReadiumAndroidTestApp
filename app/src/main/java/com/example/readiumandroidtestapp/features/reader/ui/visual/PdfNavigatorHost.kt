@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
 import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
 import org.readium.adapter.pdfium.navigator.PdfiumSettings
-import org.readium.r2.navigator.NavigatorFragment
 import org.readium.r2.navigator.OverflowableNavigator
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.input.InputListener
@@ -64,7 +63,7 @@ fun PdfReader(
         fragmentManager.fragmentFactory = factory
 
         var fragment =
-            fragmentManager.findFragmentById(containerId.intValue) as? NavigatorFragment
+            fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
 
         if (fragment == null) {
             fragmentManager.commitNow(allowStateLoss = true) {
@@ -76,7 +75,7 @@ fun PdfReader(
                 )
             }
             fragment =
-                fragmentManager.findFragmentById(containerId.intValue) as? NavigatorFragment
+                fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
         }
 
         (fragment as? OverflowableNavigator)?.let { navigator ->
@@ -92,9 +91,9 @@ fun PdfReader(
                 return true
             }
         }
-        (fragment as? VisualNavigator)?.addInputListener(inputListener)
+        fragment?.addInputListener(inputListener)
 
-        (fragment as? VisualNavigator)?.let { navigator ->
+        fragment?.let { navigator ->
             currentOnNavigatorReady(navigator)
         }
 
@@ -107,7 +106,7 @@ fun PdfReader(
 
         onDispose {
             job.cancel()
-            (fragment as? VisualNavigator)?.removeInputListener(inputListener)
+            fragment?.removeInputListener(inputListener)
             if (!fragmentManager.isStateSaved) {
                 fragmentManager.commitNow(allowStateLoss = true) {
                     val currentFrag = fragmentManager.findFragmentById(containerId.intValue)

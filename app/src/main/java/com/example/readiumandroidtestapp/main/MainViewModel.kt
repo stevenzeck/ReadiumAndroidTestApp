@@ -11,6 +11,7 @@ import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -37,12 +38,17 @@ class MainViewModel @Inject constructor(
     private val userMessageManager: UserMessageManager,
     settingsRepository: SettingsRepository,
     private val urlGateway: UrlGateway,
+    audioPlaybackManager: AudioPlaybackManager,
 ) : ViewModel() {
 
     /**
      * A flow of message resource IDs to be displayed to the user (e.g., via Snackbar).
      */
     val userMessages = userMessageManager.messages
+
+    val activeAudioBook = audioPlaybackManager.book
+    val audioNavigator = audioPlaybackManager.navigator
+    val expandPlayerEvent = audioPlaybackManager.expandPlayerEvent
 
     /**
      * The current application theme (Light, Dark, System).

@@ -8,11 +8,11 @@ import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderPreferencesManager
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFactory
-import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderError
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
@@ -33,10 +33,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
-import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
-import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.r2.navigator.DecorableNavigator
 import org.readium.r2.navigator.VisualNavigator
 import org.readium.r2.navigator.epub.EpubPreferences
@@ -66,7 +63,7 @@ class ReaderViewModel @AssistedInject constructor(
     private val preferencesManager: ReaderPreferencesManager,
     private val decorationManager: ReaderDecorationManager,
     private val sessionFactory: ReaderSessionFactory,
-    private val mediaBinder: ReaderMediaBinder,
+    private val audioPlaybackManager: AudioPlaybackManager,
     @Assisted val bookId: Long,
 ) : ViewModel() {
 
@@ -99,7 +96,6 @@ class ReaderViewModel @AssistedInject constructor(
     // Lifecycle-aware resources
     private var publication: Publication? = null
     private var asset: Asset? = null
-    private var audioNavigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>? = null
 
     // We hold a weak reference (not technically WeakReference, but nullable and transient)
     // to the VisualNavigator to control it from the ViewModel (e.g., for TTS page turning).
@@ -132,6 +128,22 @@ class ReaderViewModel @AssistedInject constructor(
     private fun loadBookData() {
         viewModelScope.launch {
             uiState.value = ReaderUiState.Loading
+
+            val currentGlobalBook = audioPlaybackManager.book.value
+            if (currentGlobalBook?.id == bookId) {
+                val globalNavigator = audioPlaybackManager.navigator.value
+                val globalPublication = audioPlaybackManager.publication.value
+                if (globalNavigator != null && globalPublication != null) {
+                    uiState.value = ReaderUiState.Audio(
+                        publication = globalPublication,
+                        book = currentGlobalBook,
+                        navigator = globalNavigator,
+                        preferencesEditor = null,
+                    )
+                    return@launch
+                }
+            }
+
             val book = bookRepository.get(bookId = bookId)
             val url = book?.url
 
@@ -143,7 +155,11 @@ class ReaderViewModel @AssistedInject constructor(
             openPublicationUseCase(url = url).onSuccess { openedBook ->
                 asset = openedBook.asset
                 publication = openedBook.publication
-                setupSession(book = book, publication = openedBook.publication)
+                setupSession(
+                    book = book,
+                    publication = openedBook.publication,
+                    asset = openedBook.asset,
+                )
             }.onFailure { error ->
                 uiState.value = ReaderUiState.Error(
                     error = ReaderError.PublicationOpenFailed(
@@ -162,11 +178,14 @@ class ReaderViewModel @AssistedInject constructor(
         loadBookData()
     }
 
-    private suspend fun setupSession(book: Book, publication: Publication) {
+    fun expandPlayer() {
+        audioPlaybackManager.expandPlayer()
+    }
+
+    private suspend fun setupSession(book: Book, publication: Publication, asset: Asset) {
         if (publication.conformsTo(profile = Publication.Profile.AUDIOBOOK)) {
             sessionFactory.createAudioSession(book, publication).onSuccess { audioState ->
-                audioNavigator = audioState.navigator
-                mediaBinder.bind(navigator = audioState.navigator)
+                audioPlaybackManager.load(book, publication, asset, audioState.navigator)
                 startObservingAudioLocator(locatorFlow = audioState.navigator.currentLocator)
                 uiState.value = audioState
             }.onFailure { error ->
@@ -182,11 +201,11 @@ class ReaderViewModel @AssistedInject constructor(
 
     override fun onCleared() {
         // Cleanup all resources
-        mediaBinder.unbind()
-        audioNavigator?.close()
-        ttsManager.close()
-        publication?.close()
-        asset?.close()
+        if (uiState.value !is ReaderUiState.Audio) {
+            ttsManager.close()
+            publication?.close()
+            asset?.close()
+        }
     }
 
     //region Visual Navigator Interaction
@@ -302,7 +321,7 @@ class ReaderViewModel @AssistedInject constructor(
                 bookId = bookId,
                 preferences = preferences,
                 currentVisualNavigator = currentVisualNavigator,
-                audioNavigator = audioNavigator,
+                audioNavigator = audioPlaybackManager.navigator.value,
                 ttsManager = ttsManager,
             )
             refreshSettings(preferences)

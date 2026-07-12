@@ -31,8 +31,16 @@ object BookshelfNavModule {
             val navigator = LocalNavigator.current
 
             BookshelfScreen(
-                onOpenBook = { bookId ->
-                    navigator.navigate(route = Reader(bookId = bookId))
+                onOpenBook = { book ->
+                    navigator.navigate(
+                        route = Reader(
+                            bookId = book.id,
+                            isAudiobook = book.rawMediaType.contains(
+                                "audiobook",
+                                ignoreCase = true,
+                            ),
+                        ),
+                    )
                 },
             )
         }

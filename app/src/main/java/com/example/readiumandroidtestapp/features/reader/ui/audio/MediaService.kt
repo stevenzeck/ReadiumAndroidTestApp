@@ -98,10 +98,12 @@ class MediaService : MediaSessionService() {
     }
 
     override fun onDestroy() {
-        mediaSession?.run {
-            release()
-            mediaSession = null
-        }
+        binder.closeSession()
         super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Do not call super.onTaskRemoved() to prevent the service from stopping itself
+        // when the user swipes the app away from recents, keeping the notification active.
     }
 }

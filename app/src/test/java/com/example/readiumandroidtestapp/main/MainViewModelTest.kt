@@ -9,6 +9,7 @@ import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -37,6 +38,8 @@ class MainViewModelTest {
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk()
     private val urlGateway: UrlGateway = mockk()
+    private val audioPlaybackManager: AudioPlaybackManager =
+        mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: MainViewModel
@@ -47,11 +50,18 @@ class MainViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { settingsRepository.appTheme } returns appThemeFlow
+
+        // Mock StateFlows for AudioPlaybackManager
+        every { audioPlaybackManager.book } returns MutableStateFlow(null)
+        every { audioPlaybackManager.navigator } returns MutableStateFlow(null)
+        every { audioPlaybackManager.publication } returns MutableStateFlow(null)
+
         viewModel = MainViewModel(
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
             urlGateway = urlGateway,
+            audioPlaybackManager = audioPlaybackManager,
         )
     }
 

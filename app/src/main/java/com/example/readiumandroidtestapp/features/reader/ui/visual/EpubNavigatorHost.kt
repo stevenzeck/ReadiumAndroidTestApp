@@ -20,7 +20,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
 import com.example.readiumandroidtestapp.features.reader.ui.utils.AnnotationActionModeCallback
 import kotlinx.coroutines.launch
-import org.readium.r2.navigator.NavigatorFragment
 import org.readium.r2.navigator.OverflowableNavigator
 import org.readium.r2.navigator.SelectableNavigator
 import org.readium.r2.navigator.VisualNavigator
@@ -93,7 +92,7 @@ fun EpubReader(
             )
         }
         val fragment =
-            fragmentManager.findFragmentById(containerId.intValue) as? NavigatorFragment
+            fragmentManager.findFragmentById(containerId.intValue) as? VisualNavigator
 
         (fragment as? OverflowableNavigator)?.let { navigator ->
             val navigationAdapter = DirectionalNavigationAdapter(
@@ -109,9 +108,9 @@ fun EpubReader(
                 return true
             }
         }
-        (fragment as? VisualNavigator)?.addInputListener(inputListener)
+        fragment?.addInputListener(inputListener)
 
-        (fragment as? VisualNavigator)?.let { navigator ->
+        fragment?.let { navigator ->
             currentOnNavigatorReady(navigator)
 
             if (navigator is SelectableNavigator) {
@@ -129,7 +128,7 @@ fun EpubReader(
         onDispose {
             job.cancel()
             actionModeCallback.navigator = null
-            (fragment as? VisualNavigator)?.removeInputListener(inputListener)
+            fragment?.removeInputListener(inputListener)
             if (!fragmentManager.isStateSaved) {
                 fragmentManager.commitNow(allowStateLoss = true) {
                     val currentFrag = fragmentManager.findFragmentById(containerId.intValue)

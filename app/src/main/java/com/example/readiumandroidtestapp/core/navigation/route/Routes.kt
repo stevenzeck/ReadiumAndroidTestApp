@@ -51,7 +51,7 @@ sealed class CatalogScreens : Parcelable {
  * @param bookId The unique identifier of the book to open.
  */
 @Serializable
-data class Reader(val bookId: Long) : Route
+data class Reader(val bookId: Long, val isAudiobook: Boolean = false) : Route
 
 /**
  * The root destination for the Account feature (Top-Level Destination).

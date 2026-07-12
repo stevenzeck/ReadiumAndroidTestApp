@@ -25,6 +25,7 @@ import com.example.readiumandroidtestapp.core.navigation.route.Catalogs
 import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.core.navigation.route.Reader
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,6 +45,8 @@ class ReadiumAppTest {
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val urlGateway: UrlGateway = mockk(relaxed = true)
+    private val audioPlaybackManager: AudioPlaybackManager =
+        mockk(relaxed = true)
 
     private lateinit var viewModel: MainViewModel
     private val messagesFlow = MutableSharedFlow<Int>(extraBufferCapacity = 1)
@@ -53,12 +56,16 @@ class ReadiumAppTest {
     fun setup() {
         every { userMessageManager.messages } returns messagesFlow
         every { settingsRepository.appTheme } returns appThemeFlow
+        every { audioPlaybackManager.book } returns MutableStateFlow(null)
+        every { audioPlaybackManager.navigator } returns MutableStateFlow(null)
+        every { audioPlaybackManager.publication } returns MutableStateFlow(null)
 
         viewModel = MainViewModel(
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
             urlGateway = urlGateway,
+            audioPlaybackManager = audioPlaybackManager,
         )
     }
 

@@ -33,7 +33,7 @@ import java.io.File
 @Composable
 fun BooksGrid(
     books: List<Book>,
-    onBookClick: (Long) -> Unit,
+    onBookClick: (Book) -> Unit,
     onMenuClick: (Book) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -48,7 +48,7 @@ fun BooksGrid(
             BookItem(
                 title = book.title ?: "",
                 coverModel = coverFile,
-                onClick = { onBookClick(book.id) },
+                onClick = { onBookClick(book) },
                 menuContent = { dismiss ->
                     DropdownMenuItem(
                         text = {

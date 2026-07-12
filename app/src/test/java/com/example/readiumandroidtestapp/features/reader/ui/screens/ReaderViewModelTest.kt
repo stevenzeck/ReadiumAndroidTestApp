@@ -4,12 +4,12 @@ import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.repository.FakeBookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
 import com.example.readiumandroidtestapp.features.reader.domain.OpenedBook
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderPreferencesManager
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderSessionFactory
-import com.example.readiumandroidtestapp.features.reader.ui.audio.ReaderMediaBinder
 import com.example.readiumandroidtestapp.features.reader.ui.search.ReaderSearchManager
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
@@ -48,7 +48,8 @@ class ReaderViewModelTest {
     private val ttsManager: ReaderTtsManager = mockk(relaxed = true)
     private val preferencesManager: ReaderPreferencesManager = mockk(relaxed = true)
     private val decorationManager: ReaderDecorationManager = mockk(relaxed = true)
-    private val mediaBinder: ReaderMediaBinder = mockk(relaxed = true)
+    private val audioPlaybackManager: AudioPlaybackManager =
+        mockk(relaxed = true)
     private val application: Application = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
@@ -67,6 +68,9 @@ class ReaderViewModelTest {
         Dispatchers.setMain(dispatcher = testDispatcher)
         every { ttsManager.isTtsActive } returns MutableStateFlow(value = false)
         every { decorationManager.showAnnotationDialog } returns MutableStateFlow(value = false)
+        every { audioPlaybackManager.book } returns MutableStateFlow(null)
+        every { audioPlaybackManager.navigator } returns MutableStateFlow(null)
+        every { audioPlaybackManager.publication } returns MutableStateFlow(null)
 
         runTest(context = testDispatcher) {
             bookRepository.addBooks(testBook)
@@ -271,7 +275,7 @@ class ReaderViewModelTest {
             preferencesManager = preferencesManager,
             decorationManager = decorationManager,
             sessionFactory = sessionFactory,
-            mediaBinder = mediaBinder,
+            audioPlaybackManager = audioPlaybackManager,
             bookId = bookId,
         )
     }

@@ -1,6 +1,7 @@
 package com.example.readiumandroidtestapp.main
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -11,24 +12,34 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
@@ -44,6 +55,8 @@ import com.example.readiumandroidtestapp.core.navigation.route.Catalogs
 import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.core.navigation.route.Reader
 import com.example.readiumandroidtestapp.core.navigation.toEntries
+import com.example.readiumandroidtestapp.features.reader.ui.audio.ExpandableAudioPlayer
+import kotlinx.coroutines.launch
 
 /**
  * The main entry point composable for the application (The "Shell").
@@ -59,6 +72,7 @@ import com.example.readiumandroidtestapp.core.navigation.toEntries
  *                      logic into the shell without the shell needing hardcoded dependencies on them.
  * @param viewModel The global [MainViewModel] used for handling app-wide events like snackbar messages.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReadiumApp(
     entryBuilders: Set<NavEntryBuilder>,
@@ -75,6 +89,7 @@ fun ReadiumApp(
 
     val currentRoute = navigationState.topLevelRoute
     val currentDestination = navigationState.currentDestination
+    val isReaderMode = currentDestination is Reader && !currentDestination.isAudiobook
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -107,7 +122,7 @@ fun ReadiumApp(
         // We switch layout strategies based on the current destination.
         // IF the user is in the Reader, we want a fully immersive, edge-to-edge experience (No navigation bars).
         // ELSE, we use the standard NavigationSuiteScaffold (Adaptive Nav Rail/Bottom Bar).
-        if (currentDestination is Reader) {
+        if (isReaderMode) {
             val activity = LocalActivity.current
             Box(
                 modifier = Modifier
@@ -185,34 +200,121 @@ fun ReadiumApp(
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 ) { innerPadding ->
                     val activity = LocalActivity.current
-                    Box(
-                        modifier = Modifier
-                            .padding(paddingValues = innerPadding)
-                            .consumeWindowInsets(paddingValues = innerPadding),
-                    ) {
-                        NavDisplay(
-                            entries = navigationState.toEntries(entryProvider = entryProvider),
-                            onBack = { if (!navigator.goBack()) activity?.finish() },
-                            modifier = Modifier.fillMaxSize(),
-                            transitionSpec = {
-                                val initialKey = initialState.key
-                                val targetKey = targetState.key
-                                if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
-                                    EnterTransition.None togetherWith ExitTransition.None
-                                } else {
-                                    fadeIn() togetherWith fadeOut()
+                    val activeBook by viewModel.activeAudioBook.collectAsState()
+                    val audioNavigator by viewModel.audioNavigator.collectAsState()
+
+                    val currentBook = activeBook
+                    val currentNavigator = audioNavigator
+
+                    if (currentBook != null && currentNavigator != null) {
+                        val bottomSheetState =
+                            rememberBottomSheetState(
+                                initialValue = SheetValue.PartiallyExpanded,
+                                enabledValues = setOf(
+                                    SheetValue.PartiallyExpanded,
+                                    SheetValue.Expanded,
+                                ),
+                            )
+                        val scaffoldState =
+                            rememberBottomSheetScaffoldState(
+                                bottomSheetState,
+                            )
+                        val scope = rememberCoroutineScope()
+
+                        LaunchedEffect(Unit) {
+                            viewModel.expandPlayerEvent.collect {
+                                bottomSheetState.expand()
+                            }
+                        }
+
+                        BackHandler(enabled = bottomSheetState.currentValue == SheetValue.Expanded) {
+                            scope.launch {
+                                bottomSheetState.partialExpand()
+                            }
+                        }
+
+                        BottomSheetScaffold(
+                            scaffoldState = scaffoldState,
+                            sheetPeekHeight = 80.dp,
+                            sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            sheetDragHandle = null,
+                            sheetShape = RectangleShape,
+                            sheetContent = {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                ) {
+                                    ExpandableAudioPlayer(
+                                        book = currentBook,
+                                        navigator = currentNavigator,
+                                        sheetState = bottomSheetState,
+                                        onExpand = { scope.launch { bottomSheetState.expand() } },
+                                        onCollapse = { scope.launch { bottomSheetState.partialExpand() } },
+                                    )
                                 }
                             },
-                            popTransitionSpec = {
-                                val initialKey = initialState.key
-                                val targetKey = targetState.key
-                                if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
-                                    EnterTransition.None togetherWith ExitTransition.None
-                                } else {
-                                    fadeIn() togetherWith fadeOut()
-                                }
-                            },
-                        )
+                        ) { _ ->
+                            Box(
+                                modifier = Modifier
+                                    .padding(paddingValues = innerPadding)
+                                    .consumeWindowInsets(paddingValues = innerPadding),
+                            ) {
+                                NavDisplay(
+                                    entries = navigationState.toEntries(entryProvider = entryProvider),
+                                    onBack = { if (!navigator.goBack()) activity?.finish() },
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(bottom = 80.dp),
+                                    transitionSpec = {
+                                        val initialKey = initialState.key
+                                        val targetKey = targetState.key
+                                        if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
+                                            EnterTransition.None togetherWith ExitTransition.None
+                                        } else {
+                                            fadeIn() togetherWith fadeOut()
+                                        }
+                                    },
+                                    popTransitionSpec = {
+                                        val initialKey = initialState.key
+                                        val targetKey = targetState.key
+                                        if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
+                                            EnterTransition.None togetherWith ExitTransition.None
+                                        } else {
+                                            fadeIn() togetherWith fadeOut()
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .padding(paddingValues = innerPadding)
+                                .consumeWindowInsets(paddingValues = innerPadding),
+                        ) {
+                            NavDisplay(
+                                entries = navigationState.toEntries(entryProvider = entryProvider),
+                                onBack = { if (!navigator.goBack()) activity?.finish() },
+                                modifier = Modifier.fillMaxSize(),
+                                transitionSpec = {
+                                    val initialKey = initialState.key
+                                    val targetKey = targetState.key
+                                    if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
+                                        EnterTransition.None togetherWith ExitTransition.None
+                                    } else {
+                                        fadeIn() togetherWith fadeOut()
+                                    }
+                                },
+                                popTransitionSpec = {
+                                    val initialKey = initialState.key
+                                    val targetKey = targetState.key
+                                    if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
+                                        EnterTransition.None togetherWith ExitTransition.None
+                                    } else {
+                                        fadeIn() togetherWith fadeOut()
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }

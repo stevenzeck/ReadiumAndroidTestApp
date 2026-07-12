@@ -45,7 +45,7 @@ import com.example.readiumandroidtestapp.main.MainViewModel
  */
 @Composable
 fun BookshelfScreen(
-    onOpenBook: (Long) -> Unit,
+    onOpenBook: (Book) -> Unit,
     viewModel: BookshelfViewModel = hiltViewModel(),
     mainViewModel: MainViewModel = hiltViewModel(),
 ) {
@@ -106,7 +106,7 @@ fun BookshelfScreen(
                 is BookshelfUiState.Success -> {
                     BooksGrid(
                         books = state.books,
-                        onBookClick = { bookId -> onOpenBook(bookId) },
+                        onBookClick = { book -> onOpenBook(book) },
                         onMenuClick = { bookToDelete = it },
                     )
                 }
