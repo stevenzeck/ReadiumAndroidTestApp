@@ -68,7 +68,7 @@
                matching. Instead of setting `android:scheme`, you need to set `android:mimeType="*/*"`
                to match file extensions with SEND.
 
-            4. `android:pathPattern` is case sensitive and is not using a true regex (it's just
+            4. `android:pathPattern` is case-sensitive and is not using a true regex (it's just
                 globbing), so we need to match the uppercase versions of file extensions as well.
             -->
 
