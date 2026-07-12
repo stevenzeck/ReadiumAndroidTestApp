@@ -118,11 +118,11 @@ fun AnnotationDialogContent(
             text = stringResource(id = R.string.annotation_style),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             ReaderAnnotation.Style.entries.forEach { style ->
                 val isSelected = selectedStyle == style
@@ -134,16 +134,16 @@ fun AnnotationDialogContent(
                         .border(
                             width = 1.dp,
                             color = if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray,
-                            shape = RoundedCornerShape(size = 8.dp)
+                            shape = RoundedCornerShape(size = 8.dp),
                         )
                         .clickable { selectedStyle = style }
                         .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = style.name.lowercase().replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }

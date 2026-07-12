@@ -1,8 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.ui.search
 
-import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.paging.PagingData
@@ -13,9 +11,6 @@ import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.readium.r2.shared.publication.Locator
-import org.readium.r2.shared.util.Url
-import org.readium.r2.shared.util.mediatype.MediaType
 
 @RunWith(AndroidJUnit4::class)
 class ReaderSearchTest {

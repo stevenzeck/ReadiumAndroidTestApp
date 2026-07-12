@@ -72,7 +72,9 @@ class ReaderViewModel @AssistedInject constructor(
 
     val uiState: StateFlow<ReaderUiState> field = MutableStateFlow<ReaderUiState>(value = ReaderUiState.Loading)
 
-    val settingsSheetState: StateFlow<ReaderSettingsSheet?> field = MutableStateFlow<ReaderSettingsSheet?>(value = null)
+    val settingsSheetState: StateFlow<ReaderSettingsSheet?> field = MutableStateFlow<ReaderSettingsSheet?>(
+        value = null,
+    )
 
     // Reactive streams for book data, switched dynamically based on the current bookId.
     val bookmarks: Flow<List<Bookmark>> = bookRepository.bookmarksForBook(bookId = bookId)
@@ -377,6 +379,7 @@ class ReaderViewModel @AssistedInject constructor(
     fun onAnnotateAction(selection: Locator) = decorationManager.onAnnotateAction(selection)
     fun onEditAnnotationAction(annotation: ReaderAnnotation) =
         decorationManager.onEditAnnotationAction(annotation)
+
     fun dismissAnnotationDialog() = decorationManager.dismissAnnotationDialog()
     fun saveAnnotation(note: String, color: Int, style: ReaderAnnotation.Style) {
         viewModelScope.launch {
@@ -388,6 +391,7 @@ class ReaderViewModel @AssistedInject constructor(
             )
         }
     }
+
     fun deleteAnnotation(id: Long) {
         viewModelScope.launch {
             bookRepository.deleteAnnotation(id = id)

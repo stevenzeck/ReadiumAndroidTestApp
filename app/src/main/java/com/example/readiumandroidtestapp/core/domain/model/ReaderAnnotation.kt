@@ -130,7 +130,8 @@ data class ReaderAnnotation(
 
 class ReaderAnnotationConverters {
     @ColumnTypeConverter
-    fun styleFromString(value: String?): ReaderAnnotation.Style = ReaderAnnotation.Style.getOrDefault(value)
+    fun styleFromString(value: String?): ReaderAnnotation.Style =
+        ReaderAnnotation.Style.getOrDefault(value)
 
     @ColumnTypeConverter
     fun styleToString(style: ReaderAnnotation.Style): String = style.value
