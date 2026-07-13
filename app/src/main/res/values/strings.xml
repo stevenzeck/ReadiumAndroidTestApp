@@ -107,6 +107,7 @@
     <string name="pitch">Pitch</string>
     <string name="speed">Speed</string>
     <string name="unsupported_format">Unsupported Format</string>
+    <string name="minimize">minimize</string>
 
     <!-- Preferences -->
     <string name="reset_to_defaults">Reset to Defaults</string>

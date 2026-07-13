@@ -6,28 +6,20 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
-import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
-import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
-import org.readium.navigator.media.audio.AudioNavigator
-import org.readium.navigator.media.common.MediaNavigator
 import org.readium.r2.navigator.preferences.PreferencesEditor
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class AudioReaderTest {
@@ -51,17 +43,16 @@ class AudioReaderTest {
 
     @Test
     fun audioReader_displaysBookInfo() {
-        val navigator = createMockNavigator()
 
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                navigator = navigator,
                 settingsSheetState = null,
                 onNavigateBack = {},
                 onSettingsClick = {},
                 onSettingsChange = {},
                 onSettingsDismiss = {},
+                onOpenPlayer = {},
             )
         }
 
@@ -71,187 +62,37 @@ class AudioReaderTest {
 
     @Test
     fun audioReader_displaysControls() {
-        val navigator = createMockNavigator()
 
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                navigator = navigator,
                 settingsSheetState = null,
                 onNavigateBack = {},
                 onSettingsClick = {},
                 onSettingsChange = {},
                 onSettingsDismiss = {},
-            )
-        }
-
-        val previous = context.getString(R.string.previous_chapter)
-        val next = context.getString(R.string.next_chapter)
-        val rewind = context.getString(R.string.rewind_30)
-        val forward = context.getString(R.string.forward_30)
-        val play = context.getString(R.string.play)
-
-        composeTestRule.onNodeWithContentDescription(label = previous).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = next).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = rewind).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = forward).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = play).assertIsDisplayed()
-    }
-
-    @Test
-    fun audioReader_togglesPlayPause() {
-        val navigator = createMockNavigator(isPlaying = false)
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                navigator = navigator,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
+                onOpenPlayer = {},
             )
         }
 
         val play = context.getString(R.string.play)
-        composeTestRule.onNodeWithContentDescription(label = play).performClick()
 
-        verify { navigator.play() }
-    }
-
-    @Test
-    fun audioReader_pausesWhenPlaying() {
-        val navigator = createMockNavigator(isPlaying = true)
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                navigator = navigator,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-            )
-        }
-
-        val pause = context.getString(R.string.pause)
-        composeTestRule.onNodeWithContentDescription(label = pause).performClick()
-
-        verify { navigator.pause() }
-    }
-
-    @Test
-    fun audioReader_skipsToPrevious() {
-        val navigator = createMockNavigator(index = 1)
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                navigator = navigator,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-            )
-        }
-
-        val previous = context.getString(R.string.previous_chapter)
-        composeTestRule.onNodeWithContentDescription(label = previous).performClick()
-
-        composeTestRule.waitForIdle()
-
-        coVerify { navigator.skipTo(index = any(), offset = any()) }
-    }
-
-    @Test
-    fun audioReader_skipsToNext() {
-        val navigator = createMockNavigator(index = 0)
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                navigator = navigator,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-            )
-        }
-
-        val next = context.getString(R.string.next_chapter)
-        composeTestRule.onNodeWithContentDescription(label = next).performClick()
-
-        composeTestRule.waitForIdle()
-
-        coVerify { navigator.skipTo(index = any(), offset = any()) }
-    }
-
-    @Test
-    fun audioReader_rewinds() {
-        val navigator = createMockNavigator()
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                navigator = navigator,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-            )
-        }
-
-        val rewind = context.getString(R.string.rewind_30)
-        composeTestRule.onNodeWithContentDescription(label = rewind).performClick()
-
-        composeTestRule.waitForIdle()
-
-        coVerify { navigator.skip(duration = (-30).seconds) }
-    }
-
-    @Test
-    fun audioReader_forwards() {
-        val navigator = createMockNavigator()
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                navigator = navigator,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-            )
-        }
-
-        val forward = context.getString(R.string.forward_30)
-        composeTestRule.onNodeWithContentDescription(label = forward).performClick()
-
-        composeTestRule.waitForIdle()
-
-        coVerify { navigator.skip(duration = 30.seconds) }
+        composeTestRule.onNodeWithText(text = play).assertIsDisplayed()
     }
 
     @Test
     fun audioReader_settingsClick_triggersCallback() {
-        val navigator = createMockNavigator()
         var settingsClicked = false
 
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                navigator = navigator,
                 settingsSheetState = null,
                 onNavigateBack = {},
                 onSettingsClick = { settingsClicked = true },
                 onSettingsChange = {},
                 onSettingsDismiss = {},
+                onOpenPlayer = {},
             )
         }
 
@@ -263,18 +104,17 @@ class AudioReaderTest {
 
     @Test
     fun audioReader_backClick_triggersCallback() {
-        val navigator = createMockNavigator()
         var backClicked = false
 
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                navigator = navigator,
                 settingsSheetState = null,
                 onNavigateBack = { backClicked = true },
                 onSettingsClick = {},
                 onSettingsChange = {},
                 onSettingsDismiss = {},
+                onOpenPlayer = {},
             )
         }
 
@@ -286,7 +126,6 @@ class AudioReaderTest {
 
     @Test
     fun audioReader_displaysSettingsSheet_whenStateIsConfigurable() {
-        val navigator = createMockNavigator()
 
         val mockEditor = mockk<PreferencesEditor<ExoPlayerPreferences>>(relaxed = true)
         val settingsState = ReaderSettingsSheet.Configurable(mockEditor)
@@ -294,33 +133,13 @@ class AudioReaderTest {
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                navigator = navigator,
                 settingsSheetState = settingsState,
                 onNavigateBack = {},
                 onSettingsClick = {},
                 onSettingsChange = {},
                 onSettingsDismiss = {},
+                onOpenPlayer = {},
             )
         }
-    }
-
-    private fun createMockNavigator(
-        isPlaying: Boolean = false,
-        index: Int = 0,
-    ): AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences> {
-        val navigator =
-            mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(relaxed = true)
-
-        val playbackState = mockk<AudioNavigator.Playback>(relaxed = true)
-        every { playbackState.playWhenReady } returns isPlaying
-        every { playbackState.index } returns index
-        every { playbackState.offset } returns Duration.ZERO
-        every { playbackState.state } returns mockk<MediaNavigator.State.Ready>()
-
-        val playbackFlow = MutableStateFlow(value = playbackState)
-        every { navigator.playback } returns playbackFlow
-        every { navigator.readingOrder.items } returns emptyList()
-
-        return navigator
     }
 }

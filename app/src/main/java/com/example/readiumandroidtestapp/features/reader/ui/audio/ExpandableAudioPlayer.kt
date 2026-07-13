@@ -97,7 +97,7 @@ fun ExpandableAudioPlayer(
                     IconButton(onClick = onCollapse) {
                         Icon(
                             painter = painterResource(id = R.drawable.chevron_down),
-                            contentDescription = "Minimize",
+                            contentDescription = stringResource(id = R.string.minimize),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
