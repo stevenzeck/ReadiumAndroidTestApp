@@ -96,6 +96,7 @@ class ReaderViewModel @AssistedInject constructor(
     // Lifecycle-aware resources
     private var publication: Publication? = null
     private var asset: Asset? = null
+    private var isAudioBookLoadedIntoGlobalManager = false
 
     // We hold a weak reference (not technically WeakReference, but nullable and transient)
     // to the VisualNavigator to control it from the ViewModel (e.g., for TTS page turning).
@@ -134,11 +135,12 @@ class ReaderViewModel @AssistedInject constructor(
                 val globalNavigator = audioPlaybackManager.navigator.value
                 val globalPublication = audioPlaybackManager.publication.value
                 if (globalNavigator != null && globalPublication != null) {
+                    isAudioBookLoadedIntoGlobalManager = true
                     uiState.value = ReaderUiState.Audio(
                         publication = globalPublication,
                         book = currentGlobalBook,
                         navigator = globalNavigator,
-                        preferencesEditor = null,
+                        preferencesEditor = audioPlaybackManager.preferencesEditor.value,
                     )
                     return@launch
                 }
@@ -182,10 +184,26 @@ class ReaderViewModel @AssistedInject constructor(
         audioPlaybackManager.expandPlayer()
     }
 
+    fun playAudiobook() {
+        val state = uiState.value
+        if (state is ReaderUiState.Audio) {
+            if (!isAudioBookLoadedIntoGlobalManager) {
+                audioPlaybackManager.load(
+                    book = state.book,
+                    publication = state.publication,
+                    asset = asset!!,
+                    audioNavigator = state.navigator,
+                    editor = state.preferencesEditor,
+                )
+                isAudioBookLoadedIntoGlobalManager = true
+            }
+            state.navigator.play()
+        }
+    }
+
     private suspend fun setupSession(book: Book, publication: Publication, asset: Asset) {
         if (publication.conformsTo(profile = Publication.Profile.AUDIOBOOK)) {
             sessionFactory.createAudioSession(book, publication).onSuccess { audioState ->
-                audioPlaybackManager.load(book, publication, asset, audioState.navigator)
                 startObservingAudioLocator(locatorFlow = audioState.navigator.currentLocator)
                 uiState.value = audioState
             }.onFailure { error ->
@@ -201,7 +219,7 @@ class ReaderViewModel @AssistedInject constructor(
 
     override fun onCleared() {
         // Cleanup all resources
-        if (uiState.value !is ReaderUiState.Audio) {
+        if (uiState.value !is ReaderUiState.Audio || !isAudioBookLoadedIntoGlobalManager) {
             ttsManager.close()
             publication?.close()
             asset?.close()

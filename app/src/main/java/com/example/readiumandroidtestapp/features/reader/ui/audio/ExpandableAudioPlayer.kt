@@ -1,15 +1,19 @@
 package com.example.readiumandroidtestapp.features.reader.ui.audio
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,7 +23,9 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,11 +40,14 @@ import com.example.readiumandroidtestapp.features.reader.ui.audio.components.Aud
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioMiniPlayer
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioPlayerControls
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioProgressBar
+import com.example.readiumandroidtestapp.features.reader.ui.preferences.StepperPreference
 import kotlinx.coroutines.launch
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
+import org.readium.adapter.exoplayer.audio.ExoPlayerPreferencesEditor
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
+import org.readium.r2.navigator.preferences.PreferencesEditor
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,6 +56,7 @@ import kotlin.time.Duration.Companion.seconds
 fun ExpandableAudioPlayer(
     book: Book,
     navigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>,
+    editor: PreferencesEditor<ExoPlayerPreferences>?,
     sheetState: SheetState,
     onExpand: () -> Unit,
     onCollapse: () -> Unit,
@@ -59,10 +69,15 @@ fun ExpandableAudioPlayer(
     val isPlaying =
         playback.playWhenReady && playback.state !is MediaNavigator.State.Failure && playback.state !is MediaNavigator.State.Ended
 
-    // We crossfade/animate between the mini player and the big player based on sheet expansion.
-    // The sheetState.targetValue tells us if we are dragging up or down.
-    val isExpanded =
-        sheetState.targetValue == SheetValue.Expanded || sheetState.currentValue == SheetValue.Expanded
+    val isExpanded by remember(sheetState) {
+        derivedStateOf {
+            sheetState.targetValue == SheetValue.Expanded || sheetState.currentValue == SheetValue.Expanded
+        }
+    }
+
+    BackHandler(enabled = isExpanded) {
+        onCollapse()
+    }
 
     Crossfade(
         targetState = isExpanded,
@@ -84,7 +99,8 @@ fun ExpandableAudioPlayer(
                     .fillMaxWidth()
                     .systemBarsPadding()
                     // Use unbounded height so it doesn't squish while dragging up
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(
@@ -119,7 +135,10 @@ fun ExpandableAudioPlayer(
 
                 AudioCoverArt(
                     book = book,
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .padding(horizontal = 16.dp),
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -184,6 +203,28 @@ fun ExpandableAudioPlayer(
                         }
                     },
                 )
+
+                if (editor is ExoPlayerPreferencesEditor) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (editor.speed.isEffective) {
+                        StepperPreference(
+                            title = stringResource(id = R.string.speed),
+                            preference = editor.speed,
+                            onCommit = { navigator.submitPreferences(editor.preferences) },
+                            formatValue = { "%.1fx".format(it) },
+                        )
+                    }
+
+                    if (editor.pitch.isEffective) {
+                        StepperPreference(
+                            title = stringResource(id = R.string.pitch),
+                            preference = editor.pitch,
+                            onCommit = { navigator.submitPreferences(editor.preferences) },
+                            formatValue = { "%.1fx".format(it) },
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(48.dp))
             }

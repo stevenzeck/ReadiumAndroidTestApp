@@ -108,6 +108,7 @@
     <string name="speed">Speed</string>
     <string name="unsupported_format">Unsupported Format</string>
     <string name="minimize">minimize</string>
+    <string name="playback_error">There was a problem playing this audiobook</string>
 
     <!-- Preferences -->
     <string name="reset_to_defaults">Reset to Defaults</string>

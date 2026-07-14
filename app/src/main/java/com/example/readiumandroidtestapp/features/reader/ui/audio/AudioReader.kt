@@ -23,18 +23,11 @@ import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioCoverArt
-import com.example.readiumandroidtestapp.features.reader.ui.preferences.SettingsBottomSheet
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
-import org.readium.r2.navigator.preferences.Configurable
 
 @Composable
 fun AudioReader(
     book: Book,
-    settingsSheetState: ReaderSettingsSheet?,
     onNavigateBack: () -> Unit,
-    onSettingsClick: () -> Unit,
-    onSettingsChange: (Configurable.Preferences<*>) -> Unit,
-    onSettingsDismiss: () -> Unit,
     onOpenPlayer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -46,15 +39,6 @@ fun AudioReader(
                 Icon(
                     painter = painterResource(id = R.drawable.arrow_back),
                     contentDescription = stringResource(id = R.string.back),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    painter = painterResource(id = R.drawable.settings),
-                    contentDescription = stringResource(id = R.string.reading_preferences),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -97,21 +81,15 @@ fun AudioReader(
 
             Button(
                 onClick = onOpenPlayer,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(all = 16.dp),
             ) {
-                Text(text = "Play", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = stringResource(id = R.string.play),
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
 
             Spacer(modifier = Modifier.height(height = 48.dp))
-        }
-
-        if (settingsSheetState is ReaderSettingsSheet.Configurable) {
-            SettingsBottomSheet(
-                settings = settingsSheetState.editor,
-                isFixedLayout = false,
-                onCommit = { preferences -> onSettingsChange(preferences) },
-                onDismissRequest = onSettingsDismiss,
-            )
         }
     }
 }

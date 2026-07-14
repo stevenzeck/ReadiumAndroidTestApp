@@ -1,7 +1,6 @@
 package com.example.readiumandroidtestapp.main
 
 import android.annotation.SuppressLint
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -202,9 +201,11 @@ fun ReadiumApp(
                     val activity = LocalActivity.current
                     val activeBook by viewModel.activeAudioBook.collectAsState()
                     val audioNavigator by viewModel.audioNavigator.collectAsState()
+                    val audioEditor by viewModel.audioPreferencesEditor.collectAsState()
 
                     val currentBook = activeBook
                     val currentNavigator = audioNavigator
+                    val currentEditor = audioEditor
 
                     if (currentBook != null && currentNavigator != null) {
                         val bottomSheetState =
@@ -227,12 +228,6 @@ fun ReadiumApp(
                             }
                         }
 
-                        BackHandler(enabled = bottomSheetState.currentValue == SheetValue.Expanded) {
-                            scope.launch {
-                                bottomSheetState.partialExpand()
-                            }
-                        }
-
                         BottomSheetScaffold(
                             scaffoldState = scaffoldState,
                             sheetPeekHeight = 80.dp,
@@ -246,6 +241,7 @@ fun ReadiumApp(
                                     ExpandableAudioPlayer(
                                         book = currentBook,
                                         navigator = currentNavigator,
+                                        editor = currentEditor,
                                         sheetState = bottomSheetState,
                                         onExpand = { scope.launch { bottomSheetState.expand() } },
                                         onCollapse = { scope.launch { bottomSheetState.partialExpand() } },
