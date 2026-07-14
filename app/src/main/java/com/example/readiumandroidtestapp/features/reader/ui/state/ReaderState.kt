@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.ui.state
 
+import androidx.compose.runtime.Immutable
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
@@ -17,10 +18,17 @@ import org.readium.r2.shared.util.Language
 /**
  * Represents specific error states for the Reader.
  */
+@Immutable
 sealed class ReaderError {
     data object InvalidBookLocation : ReaderError()
+
+    @Immutable
     data class AssetRetrievalFailed(val cause: Throwable) : ReaderError()
+
+    @Immutable
     data class PublicationOpenFailed(val cause: Throwable) : ReaderError()
+
+    @Immutable
     data class NavigatorCreationFailed(val cause: Throwable) : ReaderError()
 }
 
@@ -30,9 +38,14 @@ data class ReaderCapabilities(
     val hasPreferences: Boolean,
 )
 
+@Immutable
 sealed interface ReaderUiState {
     data object Loading : ReaderUiState
+
+    @Immutable
     data class Error(val error: ReaderError) : ReaderUiState
+
+    @Immutable
     data class Visual(
         val publication: Publication,
         val book: Book,
@@ -45,6 +58,7 @@ sealed interface ReaderUiState {
         val isFixedLayout: Boolean = false,
     ) : ReaderUiState
 
+    @Immutable
     data class Audio(
         val publication: Publication,
         val book: Book,
@@ -55,9 +69,11 @@ sealed interface ReaderUiState {
 
 sealed class SearchItem {
     data class Header(val title: String) : SearchItem()
+
     data class Result(val locator: Locator) : SearchItem()
 }
 
+@Immutable
 data class TtsSettingsSession(
     val editor: AndroidTtsPreferencesEditor,
     val voice: Preference<AndroidTtsEngine.Voice?>,
@@ -65,7 +81,11 @@ data class TtsSettingsSession(
     val availableVoices: List<AndroidTtsEngine.Voice>,
 )
 
+@Immutable
 sealed interface ReaderSettingsSheet {
+    @Immutable
     data class Tts(val session: TtsSettingsSession) : ReaderSettingsSheet
+
+    @Immutable
     data class Configurable(val editor: PreferencesEditor<*>) : ReaderSettingsSheet
 }

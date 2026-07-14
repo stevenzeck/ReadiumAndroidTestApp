@@ -1,10 +1,10 @@
 [versions]
 # -- Android & Tools --
-agp = "9.2.1"
+agp = "9.3.0"
 desugar-jdk-libs = "2.1.5"
 
 # -- Kotlin --
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.9"

@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.bookshelf.ui
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.readiumandroidtestapp.R
@@ -76,9 +77,14 @@ class BookshelfViewModel @Inject constructor(
 /**
  * Represents the various UI states for the Bookshelf screen.
  */
+@Immutable
 sealed interface BookshelfUiState {
     data object Loading : BookshelfUiState
+
+    @Immutable
     data class Success(val books: List<Book>) : BookshelfUiState
+
     data object Error : BookshelfUiState
+
     data object Empty : BookshelfUiState
 }

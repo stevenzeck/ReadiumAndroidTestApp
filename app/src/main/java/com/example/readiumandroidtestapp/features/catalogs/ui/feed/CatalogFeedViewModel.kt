@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.catalogs.ui.feed
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.readiumandroidtestapp.R
@@ -65,8 +66,12 @@ class CatalogFeedViewModel @Inject constructor(
     }
 }
 
+@Immutable
 sealed interface CatalogFeedUiState {
     data object Loading : CatalogFeedUiState
+
+    @Immutable
     data class Success(val catalogs: List<Catalog>) : CatalogFeedUiState
+
     data object Error : CatalogFeedUiState
 }

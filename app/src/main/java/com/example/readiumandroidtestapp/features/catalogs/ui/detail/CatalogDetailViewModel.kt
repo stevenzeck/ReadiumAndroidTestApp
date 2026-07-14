@@ -49,6 +49,8 @@ class CatalogDetailViewModel @AssistedInject constructor(
 
 sealed interface FeedState {
     data object Loading : FeedState
+
     data class Success(val feed: Feed?) : FeedState
+
     data class Error(val message: String?) : FeedState
 }
