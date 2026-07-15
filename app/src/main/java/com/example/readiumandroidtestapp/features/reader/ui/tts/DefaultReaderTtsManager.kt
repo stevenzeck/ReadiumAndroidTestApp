@@ -1,10 +1,11 @@
 package com.example.readiumandroidtestapp.features.reader.ui.tts
 
+import android.app.Application
+import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.fragment.app.Fragment
-import com.example.readiumandroidtestapp.features.reader.domain.TtsNavigatorGateway
-import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -14,8 +15,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.readium.navigator.media.tts.AndroidTtsNavigator
+import org.readium.navigator.media.tts.AndroidTtsNavigatorFactory
+import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.navigator.media.tts.android.AndroidTtsEngine
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.r2.navigator.DecorableNavigator
@@ -27,16 +32,17 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultReaderTtsManager @Inject constructor(
-    private val ttsServiceGateway: TtsServiceGateway,
+    @ApplicationContext private val applicationContext: Context,
 ) : ReaderTtsManager {
-    private var ttsNavigator: TtsNavigatorGateway? = null
+    private var ttsNavigator: AndroidTtsNavigator? = null
+    internal var ttsNavigatorFactory: AndroidTtsNavigatorFactory? = null
     private var ttsJob: Job? = null
     private var publication: Publication? = null
 
     override val isTtsActive: StateFlow<Boolean> field = MutableStateFlow(value = false)
 
     override val ttsPlayback: Flow<Boolean> = isTtsActive.flatMapLatest { active ->
-        if (active) ttsNavigator?.playback ?: emptyFlow()
+        if (active) ttsNavigator?.playback?.map { it.playWhenReady } ?: emptyFlow()
         else emptyFlow()
     }
 
@@ -60,15 +66,25 @@ class DefaultReaderTtsManager @Inject constructor(
         scope.launch {
             val initialLocator = visualNavigator.firstVisibleElementLocator() ?: return@launch
 
-            ttsServiceGateway.createNavigator(
+            val factory = ttsNavigatorFactory ?: AndroidTtsNavigatorFactory(
+                application = applicationContext as Application,
                 publication = pub,
+            )
+            if (factory == null) {
+                Timber.e(message = "Failed to create TTS navigator factory: TTS might not be supported")
+                return@launch
+            }
+
+            val navigatorTry = factory.createNavigator(
                 initialLocator = initialLocator,
-                listener = object : TtsNavigatorGateway.Listener {
+                listener = object : TtsNavigator.Listener {
                     override fun onStopRequested() {
                         onStop()
                     }
                 },
-            ).onSuccess { navigator ->
+            )
+            println("TTS Navigator Try: $navigatorTry")
+            navigatorTry.onSuccess { navigator ->
                 ttsNavigator = navigator
                 isTtsActive.value = true
                 navigator.play()

@@ -49,6 +49,7 @@ class MainViewModel @Inject constructor(
     val activeAudioBook = audioPlaybackManager.book
     val audioNavigator = audioPlaybackManager.navigator
     val audioPreferencesEditor = audioPlaybackManager.preferencesEditor
+    val audioPublication = audioPlaybackManager.publication
     val expandPlayerEvent = audioPlaybackManager.expandPlayerEvent
 
     /**

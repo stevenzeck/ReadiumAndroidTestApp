@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -89,7 +90,8 @@ class ReaderViewModel @AssistedInject constructor(
     val ttsPlayback: Flow<Boolean> = ttsManager.ttsPlayback
 
     val searchResults: Flow<PagingData<SearchItem>> = searchManager.getSearchResults(
-        publicationFlow = uiState.map { (it as? ReaderUiState.Visual)?.publication },
+        publicationFlow = uiState.map { (it as? ReaderUiState.Visual)?.publication }
+            .distinctUntilChanged(),
         scope = viewModelScope,
     )
 

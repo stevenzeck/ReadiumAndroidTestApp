@@ -48,6 +48,7 @@ import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
 import org.readium.r2.navigator.preferences.PreferencesEditor
+import org.readium.r2.shared.publication.Publication
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -55,6 +56,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun ExpandableAudioPlayer(
     book: Book,
+    publication: Publication?,
     navigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>,
     editor: PreferencesEditor<ExoPlayerPreferences>?,
     sheetState: SheetState,
@@ -88,6 +90,7 @@ fun ExpandableAudioPlayer(
             // Mini Player mode
             AudioMiniPlayer(
                 book = book,
+                publication = publication,
                 navigator = navigator,
                 onClick = onExpand,
                 modifier = modifier,
@@ -100,7 +103,7 @@ fun ExpandableAudioPlayer(
                     .systemBarsPadding()
                     // Use unbounded height so it doesn't squish while dragging up
                     .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(state = rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(
@@ -128,7 +131,7 @@ fun ExpandableAudioPlayer(
                         textAlign = TextAlign.Center,
                     )
                     // Placeholder for symmetry
-                    Spacer(modifier = Modifier.padding(24.dp))
+                    Spacer(modifier = Modifier.padding(all = 24.dp))
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -178,7 +181,7 @@ fun ExpandableAudioPlayer(
                     isPlaying = isPlaying,
                     onSkipPrevious = {
                         scope.launch {
-                            val newIndex = (playback.index - 1).coerceAtLeast(0)
+                            val newIndex = (playback.index - 1).coerceAtLeast(minimumValue = 0)
                             if (newIndex != playback.index) {
                                 navigator.skipTo(index = newIndex, offset = Duration.ZERO)
                             }
@@ -196,7 +199,7 @@ fun ExpandableAudioPlayer(
                     onSkipNext = {
                         scope.launch {
                             val newIndex =
-                                (playback.index + 1).coerceAtMost(navigator.readingOrder.items.lastIndex)
+                                (playback.index + 1).coerceAtMost(maximumValue = navigator.readingOrder.items.lastIndex)
                             if (newIndex != playback.index) {
                                 navigator.skipTo(index = newIndex, offset = Duration.ZERO)
                             }

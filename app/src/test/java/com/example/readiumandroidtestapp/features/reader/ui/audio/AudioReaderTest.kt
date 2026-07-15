@@ -12,14 +12,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderSettingsSheet
-import io.mockk.mockk
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
-import org.readium.r2.navigator.preferences.PreferencesEditor
 
 @RunWith(AndroidJUnit4::class)
 class AudioReaderTest {
@@ -47,11 +43,7 @@ class AudioReaderTest {
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                settingsSheetState = null,
                 onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
                 onOpenPlayer = {},
             )
         }
@@ -66,11 +58,7 @@ class AudioReaderTest {
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                settingsSheetState = null,
                 onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
                 onOpenPlayer = {},
             )
         }
@@ -81,39 +69,13 @@ class AudioReaderTest {
     }
 
     @Test
-    fun audioReader_settingsClick_triggersCallback() {
-        var settingsClicked = false
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                settingsSheetState = null,
-                onNavigateBack = {},
-                onSettingsClick = { settingsClicked = true },
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-                onOpenPlayer = {},
-            )
-        }
-
-        val settings = context.getString(R.string.reading_preferences)
-        composeTestRule.onNodeWithContentDescription(label = settings).performClick()
-
-        assertTrue(settingsClicked)
-    }
-
-    @Test
     fun audioReader_backClick_triggersCallback() {
         var backClicked = false
 
         composeTestRule.setContent {
             AudioReader(
                 book = book,
-                settingsSheetState = null,
                 onNavigateBack = { backClicked = true },
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
                 onOpenPlayer = {},
             )
         }
@@ -122,24 +84,5 @@ class AudioReaderTest {
         composeTestRule.onNodeWithContentDescription(label = back).performClick()
 
         assertTrue(backClicked)
-    }
-
-    @Test
-    fun audioReader_displaysSettingsSheet_whenStateIsConfigurable() {
-
-        val mockEditor = mockk<PreferencesEditor<ExoPlayerPreferences>>(relaxed = true)
-        val settingsState = ReaderSettingsSheet.Configurable(mockEditor)
-
-        composeTestRule.setContent {
-            AudioReader(
-                book = book,
-                settingsSheetState = settingsState,
-                onNavigateBack = {},
-                onSettingsClick = {},
-                onSettingsChange = {},
-                onSettingsDismiss = {},
-                onOpenPlayer = {},
-            )
-        }
     }
 }

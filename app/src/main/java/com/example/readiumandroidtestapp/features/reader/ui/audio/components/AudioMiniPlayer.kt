@@ -21,46 +21,102 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import kotlinx.coroutines.launch
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
+import org.readium.r2.shared.publication.Publication
 import kotlin.time.DurationUnit
 
 @Composable
 fun AudioMiniPlayer(
     book: Book,
+    publication: Publication?,
     navigator: AudioNavigator<*, *>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val playback by navigator.playback.collectAsState()
-    val isPlaying =
-        playback.playWhenReady && playback.state !is MediaNavigator.State.Failure && playback.state !is MediaNavigator.State.Ended
+    val scope = rememberCoroutineScope()
 
-    val duration = navigator.readingOrder.items.getOrNull(playback.index)?.duration
-    val position = playback.offset
-
-    val progress = if (duration != null && duration.toDouble(DurationUnit.SECONDS) > 0) {
-        (position.toDouble(DurationUnit.SECONDS) / duration.toDouble(DurationUnit.SECONDS)).toFloat()
+    val duration =
+        navigator.readingOrder.items.getOrNull(playback.index)?.duration?.toDouble(unit = DurationUnit.SECONDS)
+            ?: 0.0
+    val offset = playback.offset.toDouble(unit = DurationUnit.SECONDS)
+    val progress = if (duration > 0.0) {
+        (offset / duration).toFloat().coerceIn(minimumValue = 0f, maximumValue = 1f)
     } else {
         0f
     }
 
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val isPlaying =
+        playback.playWhenReady && playback.state !is MediaNavigator.State.Failure && playback.state !is MediaNavigator.State.Ended
+    val currentIndex = playback.index
+    val itemsCount = navigator.readingOrder.items.size
+    val canGoBackward = currentIndex > 0
+    val canGoForward = currentIndex < itemsCount - 1
+    val title = book.title ?: stringResource(id = R.string.unknown_title)
+    val subtitle = publication?.readingOrder?.getOrNull(playback.index)?.title ?: book.author ?: ""
 
+    AudioMiniPlayerContent(
+        book = book,
+        title = title,
+        subtitle = subtitle,
+        progress = progress,
+        isPlaying = isPlaying,
+        canGoBackward = canGoBackward,
+        canGoForward = canGoForward,
+        onClick = onClick,
+        onPlayPauseClick = { if (isPlaying) navigator.pause() else navigator.play() },
+        onPreviousClick = {
+            scope.launch {
+                val newIndex = (playback.index - 1).coerceAtLeast(minimumValue = 0)
+                if (newIndex != playback.index) {
+                    navigator.skipTo(index = newIndex, offset = kotlin.time.Duration.ZERO)
+                }
+            }
+        },
+        onNextClick = {
+            scope.launch {
+                val newIndex = (playback.index + 1).coerceAtMost(maximumValue = itemsCount - 1)
+                if (newIndex != playback.index) {
+                    navigator.skipTo(index = newIndex, offset = kotlin.time.Duration.ZERO)
+                }
+            }
+        },
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun AudioMiniPlayerContent(
+    book: Book?,
+    title: String,
+    subtitle: String,
+    progress: Float,
+    isPlaying: Boolean,
+    canGoBackward: Boolean,
+    canGoForward: Boolean,
+    onClick: () -> Unit,
+    onPlayPauseClick: () -> Unit,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(80.dp)
-            .clickable { onClick() },
+            .clickable(onClick = onClick),
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         tonalElevation = 8.dp,
         shadowElevation = 8.dp,
@@ -73,11 +129,14 @@ fun AudioMiniPlayer(
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Cover Art Thumbnail
-                AudioCoverArt(
-                    book = book,
-                    modifier = Modifier.size(48.dp),
-                )
+                if (book != null) {
+                    AudioCoverArt(
+                        book = book,
+                        modifier = Modifier.size(48.dp),
+                    )
+                } else {
+                    Spacer(modifier = Modifier.size(48.dp))
+                }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
@@ -87,14 +146,14 @@ fun AudioMiniPlayer(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
-                        text = book.title ?: stringResource(id = R.string.unknown_title),
+                        text = title,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = book.author ?: "",
+                        text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -104,29 +163,15 @@ fun AudioMiniPlayer(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                val currentIndex = playback.index
-                val itemsCount = navigator.readingOrder.items.size
-                val canGoBackward = currentIndex > 0
-                val canGoForward = currentIndex < itemsCount - 1
-
                 // Previous
                 IconButton(
-                    onClick = {
-                        scope.launch {
-                            val newIndex = (playback.index - 1).coerceAtLeast(minimumValue = 0)
-                            if (newIndex != playback.index) {
-                                navigator.skipTo(
-                                    index = newIndex,
-                                    offset = kotlin.time.Duration.ZERO,
-                                )
-                            }
-                        }
-                    },
+                    onClick = onPreviousClick,
                     enabled = canGoBackward,
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.skip_previous_filled),
                         contentDescription = stringResource(id = R.string.previous_chapter),
+                        modifier = Modifier.size(size = 32.dp),
                         tint = if (canGoBackward) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
                             alpha = 0.38f,
                         ),
@@ -135,9 +180,7 @@ fun AudioMiniPlayer(
 
                 // Play / Pause
                 IconButton(
-                    onClick = {
-                        if (isPlaying) navigator.pause() else navigator.play()
-                    },
+                    onClick = onPlayPauseClick,
                 ) {
                     Icon(
                         painter = painterResource(
@@ -146,29 +189,20 @@ fun AudioMiniPlayer(
                         contentDescription = stringResource(
                             id = if (isPlaying) R.string.pause else R.string.play,
                         ),
+                        modifier = Modifier.size(size = 32.dp),
                         tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
 
                 // Next
                 IconButton(
-                    onClick = {
-                        scope.launch {
-                            val newIndex =
-                                (playback.index + 1).coerceAtMost(maximumValue = itemsCount - 1)
-                            if (newIndex != playback.index) {
-                                navigator.skipTo(
-                                    index = newIndex,
-                                    offset = kotlin.time.Duration.ZERO,
-                                )
-                            }
-                        }
-                    },
+                    onClick = onNextClick,
                     enabled = canGoForward,
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.skip_next_filled),
                         contentDescription = stringResource(id = R.string.next_chapter),
+                        modifier = Modifier.size(size = 32.dp),
                         tint = if (canGoForward) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
                             alpha = 0.38f,
                         ),

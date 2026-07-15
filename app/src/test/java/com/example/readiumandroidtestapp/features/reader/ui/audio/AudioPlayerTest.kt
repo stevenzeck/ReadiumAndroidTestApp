@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
@@ -55,11 +56,14 @@ class AudioPlayerTest {
         val navigator = createMockNavigator()
         val sheetState = mockk<SheetState>(relaxed = true)
         every { sheetState.currentValue } returns SheetValue.Expanded
+        every { sheetState.targetValue } returns SheetValue.Expanded
 
         composeTestRule.setContent {
             ExpandableAudioPlayer(
                 book = book,
+                publication = null,
                 navigator = navigator,
+                editor = null,
                 sheetState = sheetState,
                 onExpand = {},
                 onCollapse = {},
@@ -75,11 +79,14 @@ class AudioPlayerTest {
         val navigator = createMockNavigator()
         val sheetState = mockk<SheetState>(relaxed = true)
         every { sheetState.currentValue } returns SheetValue.Expanded
+        every { sheetState.targetValue } returns SheetValue.Expanded
 
         composeTestRule.setContent {
             ExpandableAudioPlayer(
                 book = book,
+                publication = null,
                 navigator = navigator,
+                editor = null,
                 sheetState = sheetState,
                 onExpand = {},
                 onCollapse = {},
@@ -92,11 +99,16 @@ class AudioPlayerTest {
         val forward = context.getString(R.string.forward_30)
         val play = context.getString(R.string.play)
 
-        composeTestRule.onNodeWithContentDescription(label = previous).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = next).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = rewind).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = forward).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription(label = play).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(label = previous).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(label = next).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(label = rewind).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(label = forward).performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(label = play).performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
@@ -104,11 +116,15 @@ class AudioPlayerTest {
         val navigator = createMockNavigator()
         val sheetState = mockk<SheetState>(relaxed = true)
         every { sheetState.currentValue } returns SheetValue.Expanded
+        every { sheetState.targetValue } returns SheetValue.Expanded
+        every { sheetState.targetValue } returns SheetValue.Expanded
 
         composeTestRule.setContent {
             ExpandableAudioPlayer(
                 book = book,
+                publication = null,
                 navigator = navigator,
+                editor = null,
                 sheetState = sheetState,
                 onExpand = {},
                 onCollapse = {},
@@ -116,7 +132,7 @@ class AudioPlayerTest {
         }
 
         val play = context.getString(R.string.play)
-        composeTestRule.onNodeWithContentDescription(label = play).performClick()
+        composeTestRule.onNodeWithContentDescription(label = play).performScrollTo().performClick()
 
         composeTestRule.waitForIdle()
         verify(timeout = 1000) { navigator.play() }
@@ -133,7 +149,7 @@ class AudioPlayerTest {
         composeTestRule.waitForIdle()
 
         val pause = context.getString(R.string.pause)
-        composeTestRule.onNodeWithContentDescription(label = pause).performClick()
+        composeTestRule.onNodeWithContentDescription(label = pause).performScrollTo().performClick()
 
         verify(timeout = 1000) { navigator.pause() }
     }
@@ -143,11 +159,14 @@ class AudioPlayerTest {
         val navigator = createMockNavigator()
         val sheetState = mockk<SheetState>(relaxed = true)
         every { sheetState.currentValue } returns SheetValue.Expanded
+        every { sheetState.targetValue } returns SheetValue.Expanded
 
         composeTestRule.setContent {
             ExpandableAudioPlayer(
                 book = book,
+                publication = null,
                 navigator = navigator,
+                editor = null,
                 sheetState = sheetState,
                 onExpand = {},
                 onCollapse = {},
@@ -155,14 +174,16 @@ class AudioPlayerTest {
         }
 
         val rewind = context.getString(R.string.rewind_30)
-        composeTestRule.onNodeWithContentDescription(label = rewind).performClick()
+        composeTestRule.onNodeWithContentDescription(label = rewind).performScrollTo()
+            .performClick()
 
-        coVerify { navigator.skip(Duration.parse("-30s")) }
+        coVerify { navigator.skip(Duration.parse(value = "-30s")) }
 
         val forward = context.getString(R.string.forward_30)
-        composeTestRule.onNodeWithContentDescription(label = forward).performClick()
+        composeTestRule.onNodeWithContentDescription(label = forward).performScrollTo()
+            .performClick()
 
-        coVerify { navigator.skip(Duration.parse("30s")) }
+        coVerify { navigator.skip(Duration.parse(value = "30s")) }
     }
 
     @Test
@@ -170,11 +191,14 @@ class AudioPlayerTest {
         val navigator = createMockNavigator()
         val sheetState = mockk<SheetState>(relaxed = true)
         every { sheetState.currentValue } returns SheetValue.Expanded
+        every { sheetState.targetValue } returns SheetValue.Expanded
 
         composeTestRule.setContent {
             ExpandableAudioPlayer(
                 book = book,
+                publication = null,
                 navigator = navigator,
+                editor = null,
                 sheetState = sheetState,
                 onExpand = {},
                 onCollapse = {},
@@ -194,7 +218,8 @@ class AudioPlayerTest {
         composeTestRule.waitForIdle()
 
         val previous = context.getString(R.string.previous_chapter)
-        composeTestRule.onNodeWithContentDescription(label = previous).performClick()
+        composeTestRule.onNodeWithContentDescription(label = previous).performScrollTo()
+            .performClick()
 
         coVerify(timeout = 1000) { navigator.skipTo(index = 0, offset = Duration.ZERO) }
 
@@ -210,7 +235,7 @@ class AudioPlayerTest {
         composeTestRule.waitForIdle()
 
         val next = context.getString(R.string.next_chapter)
-        composeTestRule.onNodeWithContentDescription(label = next).performClick()
+        composeTestRule.onNodeWithContentDescription(label = next).performScrollTo().performClick()
 
         coVerify(timeout = 1000) { navigator.skipTo(index = 1, offset = Duration.ZERO) }
     }

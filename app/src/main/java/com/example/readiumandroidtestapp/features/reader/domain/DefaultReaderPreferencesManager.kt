@@ -1,21 +1,27 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
 import android.app.Application
-import com.example.readiumandroidtestapp.features.reader.data.AndroidTtsNavigatorFactoryWrapper
+import android.content.Context
 import com.example.readiumandroidtestapp.features.reader.data.BookPreferencesRepository
-import com.example.readiumandroidtestapp.features.reader.data.EpubNavigatorFactoryWrapper
-import com.example.readiumandroidtestapp.features.reader.data.PdfNavigatorFactoryWrapper
 import com.example.readiumandroidtestapp.features.reader.data.PreferencesSerializerFactory
-import com.example.readiumandroidtestapp.features.reader.ui.audio.AppAudioNavigatorFactory
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
 import com.example.readiumandroidtestapp.features.reader.ui.state.TtsSettingsSession
 import com.example.readiumandroidtestapp.features.reader.ui.tts.ReaderTtsManager
+import dagger.hilt.android.qualifiers.ApplicationContext
+import org.readium.adapter.exoplayer.audio.ExoPlayerEngineProvider
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
+import org.readium.adapter.pdfium.navigator.PdfiumDefaults
+import org.readium.adapter.pdfium.navigator.PdfiumEngineProvider
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
 import org.readium.navigator.media.audio.AudioNavigator
+import org.readium.navigator.media.audio.AudioNavigatorFactory
+import org.readium.navigator.media.tts.AndroidTtsNavigatorFactory
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.r2.navigator.VisualNavigator
+import org.readium.r2.navigator.epub.EpubDefaults
+import org.readium.r2.navigator.epub.EpubNavigatorFactory
 import org.readium.r2.navigator.epub.EpubPreferences
+import org.readium.r2.navigator.pdf.PdfNavigatorFactory
 import org.readium.r2.navigator.preferences.Configurable
 import org.readium.r2.navigator.preferences.PreferencesEditor
 import org.readium.r2.navigator.preferences.map
@@ -23,11 +29,8 @@ import org.readium.r2.shared.publication.Publication
 import javax.inject.Inject
 
 class DefaultReaderPreferencesManager @Inject constructor(
+    @ApplicationContext private val applicationContext: Context,
     private val bookPreferencesRepository: BookPreferencesRepository,
-    private val audioNavigatorFactory: AppAudioNavigatorFactory,
-    private val ttsNavigatorFactoryWrapper: AndroidTtsNavigatorFactoryWrapper,
-    private val epubNavigatorFactoryWrapper: EpubNavigatorFactoryWrapper,
-    private val pdfNavigatorFactoryWrapper: PdfNavigatorFactoryWrapper,
     private val preferencesSerializerFactory: PreferencesSerializerFactory,
 ) : ReaderPreferencesManager {
 
@@ -106,24 +109,26 @@ class DefaultReaderPreferencesManager @Inject constructor(
     ): PreferencesEditor<*>? {
         return when (preferences) {
             is EpubPreferences -> {
-                epubNavigatorFactoryWrapper.createPreferencesEditor(
+                EpubNavigatorFactory(
                     publication = publication,
-                    initialPreferences = preferences,
-                )
+                    configuration = EpubNavigatorFactory.Configuration(defaults = EpubDefaults()),
+                ).createPreferencesEditor(currentPreferences = preferences)
             }
 
             is PdfiumPreferences -> {
-                pdfNavigatorFactoryWrapper.createPreferencesEditor(
+                PdfNavigatorFactory(
                     publication = publication,
-                    initialPreferences = preferences,
-                )
+                    pdfEngineProvider = PdfiumEngineProvider(
+                        defaults = PdfiumDefaults(),
+                    ),
+                ).createPreferencesEditor(initialPreferences = preferences)
             }
 
             is ExoPlayerPreferences -> {
-                audioNavigatorFactory.createPreferencesEditor(
+                AudioNavigatorFactory(
                     publication = publication,
-                    initialPreferences = preferences,
-                )
+                    audioEngineProvider = ExoPlayerEngineProvider(application = applicationContext as Application),
+                )?.createAudioPreferencesEditor(currentPreferences = preferences)
             }
 
             else -> null
@@ -179,11 +184,11 @@ class DefaultReaderPreferencesManager @Inject constructor(
             }
                 ?: AndroidTtsPreferences()
 
-        val factory = ttsNavigatorFactoryWrapper.createFactory(
-            application = application,
+        val factory = AndroidTtsNavigatorFactory(
+            application = applicationContext as Application,
             publication = publication,
-        ) ?: return null
-        val editor = factory.createPreferencesEditor(preferences)
+        )
+        val editor = factory?.createPreferencesEditor(preferences) ?: return null
 
         val voices = ttsManager.voices
         val allLanguages =

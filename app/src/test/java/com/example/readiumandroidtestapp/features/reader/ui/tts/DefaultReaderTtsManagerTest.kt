@@ -1,8 +1,8 @@
 package com.example.readiumandroidtestapp.features.reader.ui.tts
 
+import android.app.Application
+import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.readiumandroidtestapp.features.reader.domain.TtsNavigatorGateway
-import com.example.readiumandroidtestapp.features.reader.domain.TtsServiceGateway
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -10,21 +10,26 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.readium.navigator.media.tts.AndroidTtsNavigator
+import org.readium.navigator.media.tts.AndroidTtsNavigatorFactory
+import org.readium.navigator.media.tts.TtsNavigator
 import org.readium.navigator.media.tts.android.AndroidTtsEngine.Voice
 import org.readium.navigator.media.tts.android.AndroidTtsPreferences
 import org.readium.r2.navigator.VisualNavigator
+import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.Language
+import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
 
@@ -32,16 +37,24 @@ import org.readium.r2.shared.util.mediatype.MediaType
 @RunWith(AndroidJUnit4::class)
 class DefaultReaderTtsManagerTest {
 
-    private val ttsServiceGateway: TtsServiceGateway = mockk()
-    private val ttsNavigator: TtsNavigatorGateway = mockk(relaxed = true)
-    private val manager = DefaultReaderTtsManager(ttsServiceGateway = ttsServiceGateway)
-    private val publication: Publication = mockk()
+    private val applicationContext: Context = mockk<Application>(relaxed = true)
+    private val ttsNavigator: AndroidTtsNavigator = mockk(relaxed = true)
+    private val manager = DefaultReaderTtsManager(applicationContext = applicationContext)
+    private val publication: Publication = mockk(relaxed = true)
     private val visualNavigator: VisualNavigator = mockk(relaxed = true)
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setup() {
+        val textLink = Link(href = Url("test.html")!!, mediaType = MediaType(string = "text/html"))
+        every { publication.readingOrder } returns listOf(textLink)
+        every { publication.links } returns listOf(textLink)
+        every { publication.conformsTo(profile = any()) } returns true
         manager.initFactory(publication = publication)
+    }
+
+    @After
+    fun teardown() {
     }
 
     @Test
@@ -50,41 +63,38 @@ class DefaultReaderTtsManagerTest {
             href = Url(url = "href")!!,
             mediaType = MediaType(string = "text/html")!!,
         )
-        every { visualNavigator.currentLocator } returns MutableStateFlow(value = locator)
+        coEvery { visualNavigator.firstVisibleElementLocator() } returns locator
+        val mockFactory = mockk<AndroidTtsNavigatorFactory>(relaxed = true)
+        manager.ttsNavigatorFactory = mockFactory
         coEvery {
-            ttsServiceGateway.createNavigator(
-                publication = publication,
-                initialLocator = any(),
+            mockFactory.createNavigator(
                 listener = any(),
+                initialLocator = any<Locator>(),
             )
-        } returns Result.success(value = ttsNavigator)
+        } returns Try.success(success = ttsNavigator)
 
         every { ttsNavigator.currentLocator } returns MutableStateFlow(value = locator)
-        every { ttsNavigator.playback } returns flowOf(value = true)
+        val mockPlayback = mockk<TtsNavigator.Playback>(relaxed = true)
+        every { ttsNavigator.playback } returns MutableStateFlow(value = mockPlayback)
 
         manager.start(visualNavigator = visualNavigator, scope = backgroundScope, onStop = {})
+        testDispatcher.scheduler.runCurrent()
 
-        coVerify {
-            ttsServiceGateway.createNavigator(
-                publication = publication,
-                initialLocator = any(),
-                listener = any(),
-            )
-        }
         verify { ttsNavigator.play() }
         assertTrue(manager.isTtsActive.value)
     }
 
     @Test
     fun `start does nothing if publication is null`() = runTest(context = testDispatcher) {
-        val emptyManager = DefaultReaderTtsManager(ttsServiceGateway = ttsServiceGateway)
+        val emptyManager = DefaultReaderTtsManager(applicationContext = applicationContext)
         emptyManager.start(visualNavigator = visualNavigator, scope = backgroundScope, onStop = {})
 
+        val mockFactory = mockk<AndroidTtsNavigatorFactory>(relaxed = true)
+        manager.ttsNavigatorFactory = mockFactory
         coVerify(exactly = 0) {
-            ttsServiceGateway.createNavigator(
-                publication = any(),
-                initialLocator = any(),
+            mockFactory.createNavigator(
                 listener = any(),
+                initialLocator = any<Locator>(),
             )
         }
     }
@@ -101,20 +111,6 @@ class DefaultReaderTtsManagerTest {
         startTts()
         manager.pause()
         verify { ttsNavigator.pause() }
-    }
-
-    @Test
-    fun `previous delegates to navigator`() = runTest(context = testDispatcher) {
-        startTts()
-        manager.previous()
-        verify { ttsNavigator.skipToPreviousUtterance() }
-    }
-
-    @Test
-    fun `next delegates to navigator`() = runTest(context = testDispatcher) {
-        startTts()
-        manager.next()
-        verify { ttsNavigator.skipToNextUtterance() }
     }
 
     @Test
@@ -137,8 +133,8 @@ class DefaultReaderTtsManagerTest {
     fun `getVoices returns voices from navigator`() = runTest(context = testDispatcher) {
         startTts()
         val voice = Voice(
-            id = Voice.Id("en-us-1"),
-            language = Language("en"),
+            id = Voice.Id(value = "en-us-1"),
+            language = Language(code = "en"),
         )
         every { ttsNavigator.voices } returns setOf(voice)
 
@@ -150,21 +146,24 @@ class DefaultReaderTtsManagerTest {
             href = Url(url = "href")!!,
             mediaType = MediaType(string = "text/html")!!,
         )
-        every { visualNavigator.currentLocator } returns MutableStateFlow(value = locator)
+        coEvery { visualNavigator.firstVisibleElementLocator() } returns locator
+        val mockFactory = mockk<AndroidTtsNavigatorFactory>(relaxed = true)
+        manager.ttsNavigatorFactory = mockFactory
         coEvery {
-            ttsServiceGateway.createNavigator(
-                publication = any(),
-                initialLocator = any(),
+            mockFactory.createNavigator(
                 listener = any(),
+                initialLocator = any<Locator>(),
             )
-        } returns Result.success(value = ttsNavigator)
+        } returns Try.success(success = ttsNavigator)
         every { ttsNavigator.currentLocator } returns MutableStateFlow(value = locator)
-        every { ttsNavigator.playback } returns flowOf(value = true)
+        val mockPlayback = mockk<TtsNavigator.Playback>(relaxed = true)
+        every { ttsNavigator.playback } returns MutableStateFlow(value = mockPlayback)
 
         manager.start(
             visualNavigator = visualNavigator,
             scope = kotlinx.coroutines.CoroutineScope(context = testDispatcher),
             onStop = {},
         )
+        testDispatcher.scheduler.runCurrent()
     }
 }

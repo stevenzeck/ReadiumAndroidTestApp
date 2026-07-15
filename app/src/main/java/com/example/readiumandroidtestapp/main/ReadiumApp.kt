@@ -55,6 +55,7 @@ import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.core.navigation.route.Reader
 import com.example.readiumandroidtestapp.core.navigation.toEntries
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ExpandableAudioPlayer
+import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioMiniPlayer
 import kotlinx.coroutines.launch
 
 /**
@@ -202,44 +203,53 @@ fun ReadiumApp(
                     val activeBook by viewModel.activeAudioBook.collectAsState()
                     val audioNavigator by viewModel.audioNavigator.collectAsState()
                     val audioEditor by viewModel.audioPreferencesEditor.collectAsState()
+                    val audioPublication by viewModel.audioPublication.collectAsState()
 
                     val currentBook = activeBook
                     val currentNavigator = audioNavigator
                     val currentEditor = audioEditor
+                    val currentPublication = audioPublication
 
-                    if (currentBook != null && currentNavigator != null) {
-                        val bottomSheetState =
-                            rememberBottomSheetState(
-                                initialValue = SheetValue.PartiallyExpanded,
-                                enabledValues = setOf(
-                                    SheetValue.PartiallyExpanded,
-                                    SheetValue.Expanded,
-                                ),
-                            )
-                        val scaffoldState =
-                            rememberBottomSheetScaffoldState(
-                                bottomSheetState,
-                            )
-                        val scope = rememberCoroutineScope()
+                    val bottomSheetState = rememberBottomSheetState(
+                        initialValue = SheetValue.PartiallyExpanded,
+                        enabledValues = setOf(
+                            SheetValue.PartiallyExpanded,
+                            SheetValue.Expanded,
+                        ),
+                    )
+                    val scaffoldState = rememberBottomSheetScaffoldState(
+                        bottomSheetState = bottomSheetState,
+                    )
+                    val scope = rememberCoroutineScope()
 
-                        LaunchedEffect(Unit) {
-                            viewModel.expandPlayerEvent.collect {
+                    LaunchedEffect(currentBook, currentNavigator) {
+                        if (currentBook == null || currentNavigator == null) {
+                            // Close or hide the sheet if needed, though we'll control visibility via peekHeight
+                        }
+                    }
+
+                    LaunchedEffect(Unit) {
+                        viewModel.expandPlayerEvent.collect {
+                            if (currentBook != null) {
                                 bottomSheetState.expand()
                             }
                         }
+                    }
 
-                        BottomSheetScaffold(
-                            scaffoldState = scaffoldState,
-                            sheetPeekHeight = 80.dp,
-                            sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            sheetDragHandle = null,
-                            sheetShape = RectangleShape,
-                            sheetContent = {
+                    BottomSheetScaffold(
+                        scaffoldState = scaffoldState,
+                        sheetPeekHeight = if (currentBook != null && currentNavigator != null) 80.dp else 0.dp,
+                        sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        sheetDragHandle = null,
+                        sheetShape = RectangleShape,
+                        sheetContent = {
+                            if (currentBook != null && currentNavigator != null && currentEditor != null) {
                                 Box(
                                     modifier = Modifier.fillMaxSize(),
                                 ) {
                                     ExpandableAudioPlayer(
                                         book = currentBook,
+                                        publication = currentPublication,
                                         navigator = currentNavigator,
                                         editor = currentEditor,
                                         sheetState = bottomSheetState,
@@ -247,41 +257,11 @@ fun ReadiumApp(
                                         onCollapse = { scope.launch { bottomSheetState.partialExpand() } },
                                     )
                                 }
-                            },
-                        ) { _ ->
-                            Box(
-                                modifier = Modifier
-                                    .padding(paddingValues = innerPadding)
-                                    .consumeWindowInsets(paddingValues = innerPadding),
-                            ) {
-                                NavDisplay(
-                                    entries = navigationState.toEntries(entryProvider = entryProvider),
-                                    onBack = { if (!navigator.goBack()) activity?.finish() },
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(bottom = 80.dp),
-                                    transitionSpec = {
-                                        val initialKey = initialState.key
-                                        val targetKey = targetState.key
-                                        if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
-                                            EnterTransition.None togetherWith ExitTransition.None
-                                        } else {
-                                            fadeIn() togetherWith fadeOut()
-                                        }
-                                    },
-                                    popTransitionSpec = {
-                                        val initialKey = initialState.key
-                                        val targetKey = targetState.key
-                                        if (initialKey in navigationState.topLevelDestinations && targetKey in navigationState.topLevelDestinations) {
-                                            EnterTransition.None togetherWith ExitTransition.None
-                                        } else {
-                                            fadeIn() togetherWith fadeOut()
-                                        }
-                                    },
-                                )
+                            } else {
+                                Box(modifier = Modifier.fillMaxSize()) // Empty content when not visible
                             }
-                        }
-                    } else {
+                        },
+                    ) { _ ->
                         Box(
                             modifier = Modifier
                                 .padding(paddingValues = innerPadding)
@@ -290,7 +270,9 @@ fun ReadiumApp(
                             NavDisplay(
                                 entries = navigationState.toEntries(entryProvider = entryProvider),
                                 onBack = { if (!navigator.goBack()) activity?.finish() },
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(bottom = if (currentBook != null && currentNavigator != null) 80.dp else 0.dp),
                                 transitionSpec = {
                                     val initialKey = initialState.key
                                     val targetKey = targetState.key
@@ -310,6 +292,16 @@ fun ReadiumApp(
                                     }
                                 },
                             )
+
+                            if (currentBook != null && currentNavigator != null) {
+                                AudioMiniPlayer(
+                                    book = currentBook,
+                                    publication = currentPublication,
+                                    navigator = currentNavigator,
+                                    onClick = { scope.launch { bottomSheetState.expand() } },
+                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                )
+                            }
                         }
                     }
                 }

@@ -59,6 +59,8 @@ class ReadiumAppTest {
         every { audioPlaybackManager.book } returns MutableStateFlow(null)
         every { audioPlaybackManager.navigator } returns MutableStateFlow(null)
         every { audioPlaybackManager.publication } returns MutableStateFlow(null)
+        every { audioPlaybackManager.preferencesEditor } returns MutableStateFlow(null)
+        every { audioPlaybackManager.expandPlayerEvent } returns MutableSharedFlow()
 
         viewModel = MainViewModel(
             bookRepository = bookRepository,
