@@ -22,7 +22,10 @@ class CoverImageSaverTest {
 
     private val tempDir = Files.createTempDirectory("robo_test").toFile()
     private val fakeGateway = FakeStorageGateway(filesDir = tempDir)
-    private val saver = DefaultCoverImageSaver(storageGateway = fakeGateway)
+    private val fakeHttpGateway = object : com.example.readiumandroidtestapp.core.domain.network.HttpGateway {
+        override suspend fun fetch(url: org.readium.r2.shared.util.AbsoluteUrl) = org.readium.r2.shared.util.Try.failure(Exception())
+    }
+    private val saver = DefaultCoverImageSaver(storageGateway = fakeGateway, httpGateway = fakeHttpGateway)
 
     @After
     fun tearDown() {

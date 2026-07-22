@@ -23,7 +23,8 @@ object BookModule {
     @Singleton
     fun provideCoverImageSaver(
         storageGateway: StorageGateway,
-    ): CoverImageSaver = DefaultCoverImageSaver(storageGateway = storageGateway)
+        httpGateway: HttpGateway,
+    ): CoverImageSaver = DefaultCoverImageSaver(storageGateway = storageGateway, httpGateway = httpGateway)
 
     @Provides
     @Singleton

@@ -25,7 +25,7 @@ androidx-navigation3 = "1.1.4"
 
 # -- Compose --
 compose-bom = "2026.06.01"
-compose-material3 = "1.5.0-alpha23"
+compose-material3 = "1.5.0-alpha24"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
