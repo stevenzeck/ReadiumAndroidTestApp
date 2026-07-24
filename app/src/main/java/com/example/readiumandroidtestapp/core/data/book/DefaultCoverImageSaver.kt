@@ -23,9 +23,20 @@ class DefaultCoverImageSaver @Inject constructor(
             val coverFile = File(storageGateway.filesDir, "covers/${Uuid.random()}.jpg")
             
             if (coverBitmap == null) {
-                val coverLink = publication.linkWithRel("cover")?.href?.toString() ?: publication.manifest.links.firstOrNull { it.rels.contains("cover") }?.href?.toString()
-                if (coverLink != null) {
-                    val url = AbsoluteUrl(coverLink)
+                val link = publication.linkWithRel("cover")
+                    ?: publication.manifest.links.firstOrNull { it.rels.contains("cover") }
+                if (link != null) {
+                    val resourceData = publication.get(link)?.read()?.getOrNull()
+                    if (resourceData != null) {
+                        coverFile.parentFile?.mkdirs()
+                        FileOutputStream(coverFile).use { out ->
+                            out.write(resourceData)
+                        }
+                        return coverFile.absolutePath
+                    }
+
+                    val coverLinkStr = link.href.toString()
+                    val url = AbsoluteUrl(coverLinkStr)
                     if (url != null) {
                         val result = httpGateway.fetch(url).getOrNull()
                         if (result != null) {
