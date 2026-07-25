@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -60,7 +61,12 @@ fun BookshelfFab(
     val toggleDescription = stringResource(id = R.string.toggle_import_menu)
 
     FloatingActionButtonMenu(
-        modifier = Modifier,
+        modifier = Modifier.layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            layout(placeable.width, placeable.height) {
+                placeable.placeRelative(0, 16.dp.roundToPx())
+            }
+        },
         expanded = expanded,
         button = {
             ToggleFloatingActionButton(

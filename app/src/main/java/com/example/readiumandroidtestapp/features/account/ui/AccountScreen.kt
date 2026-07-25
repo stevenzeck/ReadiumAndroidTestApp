@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
@@ -25,13 +27,23 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AccountScreen(
-    settingsScreen: @Composable () -> Unit = { SettingsScreen() },
-    aboutScreen: @Composable () -> Unit = { AboutInfoScreen() },
+    settingsScreen: @Composable (showBackButton: Boolean, onNavigateBack: () -> Unit) -> Unit = { showBackButton, onNavigateBack ->
+        SettingsScreen(showBackButton = showBackButton, onNavigateBack = onNavigateBack)
+    },
+    aboutScreen: @Composable (showBackButton: Boolean, onNavigateBack: () -> Unit) -> Unit = { showBackButton, onNavigateBack ->
+        AboutInfoScreen(showBackButton = showBackButton, onNavigateBack = onNavigateBack)
+    },
 ) {
     val navigator = rememberListDetailPaneScaffoldNavigator<AccountScreens>()
     val scope = rememberCoroutineScope()
 
-    BackHandler(enabled = navigator.canNavigateBack()) {
+    val isListAndDetailVisible =
+        navigator.scaffoldValue[ListDetailPaneScaffoldRole.List] == PaneAdaptedValue.Expanded &&
+                navigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Expanded
+
+    val isInternalBackEnabled = navigator.canNavigateBack() && !isListAndDetailVisible
+
+    BackHandler(enabled = isInternalBackEnabled) {
         scope.launch { navigator.navigateBack() }
     }
 
@@ -56,8 +68,13 @@ fun AccountScreen(
                 val detail = navigator.currentDestination?.contentKey
                 if (detail != null) {
                     when (detail) {
-                        AccountScreens.Settings -> settingsScreen()
-                        AccountScreens.About -> aboutScreen()
+                        AccountScreens.Settings -> settingsScreen(isInternalBackEnabled) {
+                            scope.launch { navigator.navigateBack() }
+                        }
+
+                        AccountScreens.About -> aboutScreen(isInternalBackEnabled) {
+                            scope.launch { navigator.navigateBack() }
+                        }
                     }
                 }
             }
@@ -79,11 +96,15 @@ fun AccountListPane(onItemClick: (AccountScreens) -> Unit) {
         ) {
             ListItem(
                 modifier = Modifier.clickable { onItemClick(AccountScreens.Settings) },
+                colors = ListItemDefaults.colors(),
+                elevation = ListItemDefaults.elevation(),
                 content = { Text(text = stringResource(id = R.string.settings)) },
             )
             HorizontalDivider()
             ListItem(
                 modifier = Modifier.clickable { onItemClick(AccountScreens.About) },
+                colors = ListItemDefaults.colors(),
+                elevation = ListItemDefaults.elevation(),
                 content = { Text(text = stringResource(id = R.string.about)) },
             )
         }

@@ -3,6 +3,7 @@ package com.example.readiumandroidtestapp.core.data.book
 import android.graphics.Bitmap
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.storage.FakeStorageGateway
+import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -14,6 +15,7 @@ import org.readium.r2.shared.publication.Manifest
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.CoverService
+import org.readium.r2.shared.util.AbsoluteUrl
 import java.io.File
 import java.nio.file.Files
 
@@ -22,10 +24,13 @@ class CoverImageSaverTest {
 
     private val tempDir = Files.createTempDirectory("robo_test").toFile()
     private val fakeGateway = FakeStorageGateway(filesDir = tempDir)
-    private val fakeHttpGateway = object : com.example.readiumandroidtestapp.core.domain.network.HttpGateway {
-        override suspend fun fetch(url: org.readium.r2.shared.util.AbsoluteUrl) = org.readium.r2.shared.util.Try.failure(Exception())
-    }
-    private val saver = DefaultCoverImageSaver(storageGateway = fakeGateway, httpGateway = fakeHttpGateway)
+    private val fakeHttpGateway =
+        object : HttpGateway {
+            override suspend fun fetch(url: AbsoluteUrl) =
+                org.readium.r2.shared.util.Try.failure(Exception())
+        }
+    private val saver =
+        DefaultCoverImageSaver(storageGateway = fakeGateway, httpGateway = fakeHttpGateway)
 
     @After
     fun tearDown() {

@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -16,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -26,6 +29,8 @@ import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 
 @Composable
 fun SettingsScreen(
+    showBackButton: Boolean = false,
+    onNavigateBack: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val theme by viewModel.appTheme.collectAsStateWithLifecycle()
@@ -35,6 +40,16 @@ fun SettingsScreen(
         title = stringResource(id = R.string.settings),
         scrollBehavior = scrollBehavior,
         modifier = Modifier.nestedScroll(connection = scrollBehavior.nestedScrollConnection),
+        navigationIcon = {
+            if (showBackButton) {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.arrow_back),
+                        contentDescription = stringResource(id = R.string.back),
+                    )
+                }
+            }
+        },
     ) {
         Column(
             modifier = Modifier

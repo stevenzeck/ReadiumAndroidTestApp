@@ -21,7 +21,7 @@ class DefaultCoverImageSaver @Inject constructor(
         return try {
             val coverBitmap = publication.cover()
             val coverFile = File(storageGateway.filesDir, "covers/${Uuid.random()}.jpg")
-            
+
             if (coverBitmap == null) {
                 val link = publication.linkWithRel("cover")
                     ?: publication.manifest.links.firstOrNull { it.rels.contains("cover") }
