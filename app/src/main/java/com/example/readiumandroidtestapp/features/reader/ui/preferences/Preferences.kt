@@ -64,11 +64,13 @@ fun <T : Comparable<T>> StepperPreference(
 ) {
     if (!preference.isEffective) return
 
-    val value = preference.value ?: preference.effectiveValue
+    var currentValue by remember(preference) {
+        mutableStateOf(preference.value ?: preference.effectiveValue)
+    }
     val range = preference.supportedRange
 
-    val canDecrement = value > range.start
-    val canIncrement = value < range.endInclusive
+    val canDecrement = currentValue > range.start
+    val canIncrement = currentValue < range.endInclusive
 
     Row(
         modifier = modifier
@@ -86,6 +88,7 @@ fun <T : Comparable<T>> StepperPreference(
             IconButton(
                 onClick = {
                     preference.decrement()
+                    currentValue = preference.value ?: preference.effectiveValue
                     onCommit()
                 },
                 enabled = canDecrement,
@@ -98,7 +101,7 @@ fun <T : Comparable<T>> StepperPreference(
             }
 
             Text(
-                text = formatValue(value),
+                text = formatValue(currentValue),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
@@ -106,6 +109,7 @@ fun <T : Comparable<T>> StepperPreference(
             IconButton(
                 onClick = {
                     preference.increment()
+                    currentValue = preference.value ?: preference.effectiveValue
                     onCommit()
                 },
                 enabled = canIncrement,
