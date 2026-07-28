@@ -76,13 +76,13 @@ class AccountScreenTest {
     fun navigatesToSettings_whenSettingsClicked() {
         composeTestRule.setContent {
             AccountScreen(
-                settingsScreen = {
+                settingsScreen = { _, _ ->
                     Text(
                         text = "Settings Detail",
                         modifier = Modifier.testTag(tag = "settings_detail"),
                     )
                 },
-                aboutScreen = {
+                aboutScreen = { _, _ ->
                     Text(
                         text = "About Detail",
                         modifier = Modifier.testTag(tag = "about_detail"),
@@ -103,13 +103,13 @@ class AccountScreenTest {
     fun navigatesToAbout_whenAboutClicked() {
         composeTestRule.setContent {
             AccountScreen(
-                settingsScreen = {
+                settingsScreen = { _, _ ->
                     Text(
                         text = "Settings Detail",
                         modifier = Modifier.testTag(tag = "settings_detail"),
                     )
                 },
-                aboutScreen = {
+                aboutScreen = { _, _ ->
                     Text(
                         text = "About Detail",
                         modifier = Modifier.testTag(tag = "about_detail"),
