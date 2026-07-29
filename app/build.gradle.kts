@@ -96,6 +96,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.datastore.preferences)
 
+    // --- AppFunctions ---
+    implementation(libs.androidx.appfunctions)
+    ksp(libs.androidx.appfunctions.compiler)
+
     // --- Dependency Injection (Hilt) ---
     implementation(libs.dagger.hilt.android)
     ksp(libs.dagger.hilt.compiler)

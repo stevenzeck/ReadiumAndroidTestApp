@@ -40,6 +40,10 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
 
+        val initialBookId = intent?.getLongExtra("APP_FUNCTION_OPEN_BOOK_ID", -1L) ?: -1L
+        val initialIsAudiobook =
+            intent?.getBooleanExtra("APP_FUNCTION_IS_AUDIOBOOK", false) ?: false
+
         setContent {
             val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
 
@@ -52,6 +56,8 @@ class MainActivity : AppCompatActivity() {
             AppTheme(useDarkTheme = useDarkTheme) {
                 ReadiumApp(
                     entryBuilders = entryBuilders,
+                    initialBookId = if (initialBookId != -1L) initialBookId else null,
+                    initialIsAudiobook = initialIsAudiobook,
                 )
             }
         }

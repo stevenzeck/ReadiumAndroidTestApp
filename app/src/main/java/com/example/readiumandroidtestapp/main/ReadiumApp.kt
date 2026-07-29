@@ -77,6 +77,8 @@ import kotlinx.coroutines.launch
 fun ReadiumApp(
     entryBuilders: Set<NavEntryBuilder>,
     viewModel: MainViewModel = hiltViewModel(),
+    initialBookId: Long? = null,
+    initialIsAudiobook: Boolean = false,
 ) {
     // 1. Initialize Navigation State
     // We explicitly define the start route (Bookshelf) and the top-level tabs.
@@ -90,6 +92,17 @@ fun ReadiumApp(
     val currentRoute = navigationState.topLevelRoute
     val currentDestination = navigationState.currentDestination
     val isReaderMode = currentDestination is Reader && !currentDestination.isAudiobook
+
+    LaunchedEffect(initialBookId) {
+        if (initialBookId != null) {
+            navigator.navigate(
+                route = Reader(
+                    bookId = initialBookId,
+                    isAudiobook = initialIsAudiobook,
+                ),
+            )
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 

@@ -202,6 +202,32 @@
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
+
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Jetpack AppFunctions: Generated Service -->
+        <service
+            android:name=".features.appfunctions.GeneratedLibraryService"
+            android:exported="true"
+            android:permission="android.permission.BIND_APP_FUNCTION_SERVICE">
+            <property
+                android:name="android.app.appfunctions"
+                android:value="library_functions.xml" />
+            <intent-filter>
+                <action android:name="android.app.appfunctions.AppFunctionService" />
+            </intent-filter>
+        </service>
+
+        <property
+            android:name="android.app.appfunctions.app_metadata"
+            android:resource="@xml/app_metadata" />
+
     </application>
 
 </manifest>
