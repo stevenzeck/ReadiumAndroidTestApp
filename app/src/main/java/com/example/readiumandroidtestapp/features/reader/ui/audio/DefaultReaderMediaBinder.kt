@@ -6,12 +6,14 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.main.MainActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.readium.navigator.media.audio.AudioNavigator
 import timber.log.Timber
 import javax.inject.Inject
 
+@UnstableApi
 class DefaultReaderMediaBinder @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ReaderMediaBinder {

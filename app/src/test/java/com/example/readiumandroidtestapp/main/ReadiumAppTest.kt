@@ -67,6 +67,7 @@ class ReadiumAppTest {
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
             urlGateway = urlGateway,
+            context = ApplicationProvider.getApplicationContext(),
             audioPlaybackManager = audioPlaybackManager,
         )
     }

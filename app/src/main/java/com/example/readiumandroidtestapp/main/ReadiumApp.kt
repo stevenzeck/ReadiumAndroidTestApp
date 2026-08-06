@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.example.readiumandroidtestapp.R
@@ -55,7 +56,6 @@ import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import com.example.readiumandroidtestapp.core.navigation.route.Reader
 import com.example.readiumandroidtestapp.core.navigation.toEntries
 import com.example.readiumandroidtestapp.features.reader.ui.audio.ExpandableAudioPlayer
-import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioMiniPlayer
 import kotlinx.coroutines.launch
 
 /**
@@ -73,6 +73,7 @@ import kotlinx.coroutines.launch
  * @param viewModel The global [MainViewModel] used for handling app-wide events like snackbar messages.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@UnstableApi
 @Composable
 fun ReadiumApp(
     entryBuilders: Set<NavEntryBuilder>,
@@ -203,12 +204,12 @@ fun ReadiumApp(
                     val activeBook by viewModel.activeAudioBook.collectAsState()
                     val audioNavigator by viewModel.audioNavigator.collectAsState()
                     val audioEditor by viewModel.audioPreferencesEditor.collectAsState()
-                    val audioPublication by viewModel.audioPublication.collectAsState()
+                    val mediaController by viewModel.mediaController.collectAsState()
+                    val isAudioPlaying by viewModel.isAudioPlaying.collectAsState()
 
                     val currentBook = activeBook
                     val currentNavigator = audioNavigator
                     val currentEditor = audioEditor
-                    val currentPublication = audioPublication
 
                     val bottomSheetState = rememberBottomSheetState(
                         initialValue = SheetValue.PartiallyExpanded,
@@ -230,15 +231,13 @@ fun ReadiumApp(
 
                     LaunchedEffect(Unit) {
                         viewModel.expandPlayerEvent.collect {
-                            if (currentBook != null) {
-                                bottomSheetState.expand()
-                            }
+                            bottomSheetState.expand()
                         }
                     }
 
                     BottomSheetScaffold(
                         scaffoldState = scaffoldState,
-                        sheetPeekHeight = if (currentBook != null && currentNavigator != null) 80.dp else 0.dp,
+                        sheetPeekHeight = if (isAudioPlaying) 70.dp else 0.dp,
                         sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         sheetDragHandle = null,
                         sheetShape = RectangleShape,
@@ -249,9 +248,9 @@ fun ReadiumApp(
                                 ) {
                                     ExpandableAudioPlayer(
                                         book = currentBook,
-                                        publication = currentPublication,
                                         navigator = currentNavigator,
                                         editor = currentEditor,
+                                        mediaController = mediaController,
                                         sheetState = bottomSheetState,
                                         onExpand = { scope.launch { bottomSheetState.expand() } },
                                         onCollapse = { scope.launch { bottomSheetState.partialExpand() } },
@@ -272,7 +271,7 @@ fun ReadiumApp(
                                 onBack = { if (!navigator.goBack()) activity?.finish() },
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(bottom = if (currentBook != null && currentNavigator != null) 80.dp else 0.dp),
+                                    .padding(bottom = 80.dp),
                                 transitionSpec = {
                                     val initialKey = initialState.key
                                     val targetKey = targetState.key
@@ -292,16 +291,6 @@ fun ReadiumApp(
                                     }
                                 },
                             )
-
-                            if (currentBook != null && currentNavigator != null) {
-                                AudioMiniPlayer(
-                                    book = currentBook,
-                                    publication = currentPublication,
-                                    navigator = currentNavigator,
-                                    onClick = { scope.launch { bottomSheetState.expand() } },
-                                    modifier = Modifier.align(Alignment.BottomCenter),
-                                )
-                            }
                         }
                     }
                 }

@@ -11,65 +11,69 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.media3.cast.MediaRouteButton
+import androidx.media3.cast.rememberMediaRouteButtonState
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
+import androidx.media3.ui.compose.material3.MiniController
+import androidx.media3.ui.compose.material3.buttons.NextButton
+import androidx.media3.ui.compose.material3.buttons.PlayPauseButton
+import androidx.media3.ui.compose.material3.buttons.PreviousButton
+import androidx.media3.ui.compose.material3.buttons.SeekBackButton
+import androidx.media3.ui.compose.material3.buttons.SeekForwardButton
+import androidx.media3.ui.compose.material3.indicator.DurationText
+import androidx.media3.ui.compose.material3.indicator.PositionText
+import androidx.media3.ui.compose.material3.indicator.ProgressSlider
+import coil3.compose.rememberAsyncImagePainter
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioCoverArt
-import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioMiniPlayer
-import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioPlayerControls
-import com.example.readiumandroidtestapp.features.reader.ui.audio.components.AudioProgressBar
 import com.example.readiumandroidtestapp.features.reader.ui.preferences.StepperPreference
-import kotlinx.coroutines.launch
+import com.google.android.gms.cast.framework.CastContext
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferences
 import org.readium.adapter.exoplayer.audio.ExoPlayerPreferencesEditor
 import org.readium.adapter.exoplayer.audio.ExoPlayerSettings
 import org.readium.navigator.media.audio.AudioNavigator
-import org.readium.navigator.media.common.MediaNavigator
 import org.readium.r2.navigator.preferences.PreferencesEditor
-import org.readium.r2.shared.publication.Publication
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
+@UnstableApi
 @Composable
 fun ExpandableAudioPlayer(
     book: Book,
-    publication: Publication?,
     navigator: AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>,
     editor: PreferencesEditor<ExoPlayerPreferences>?,
+    mediaController: MediaController?,
     sheetState: SheetState,
     onExpand: () -> Unit,
     onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val playback by navigator.playback.collectAsState()
-    val scope = rememberCoroutineScope()
-
-    val currentDuration = navigator.readingOrder.items.getOrNull(index = playback.index)?.duration
-    val isPlaying =
-        playback.playWhenReady && playback.state !is MediaNavigator.State.Failure && playback.state !is MediaNavigator.State.Ended
 
     val isExpanded by remember(sheetState) {
         derivedStateOf {
@@ -88,13 +92,21 @@ fun ExpandableAudioPlayer(
     ) { expanded ->
         if (!expanded) {
             // Mini Player mode
-            AudioMiniPlayer(
-                book = book,
-                publication = publication,
-                navigator = navigator,
-                onClick = onExpand,
-                modifier = modifier,
-            )
+            if (mediaController != null) {
+                val defaultCover = painterResource(id = R.drawable.book_2)
+                val coverArtPainter = rememberAsyncImagePainter(
+                    model = book.cover?.let { java.io.File(it) },
+                    error = defaultCover,
+                    fallback = defaultCover,
+                )
+
+                MiniController(
+                    player = mediaController,
+                    modifier = modifier,
+                    defaultArtwork = coverArtPainter,
+                    onClick = onExpand,
+                )
+            }
         } else {
             // Expanded Player Mode
             Column(
@@ -130,8 +142,32 @@ fun ExpandableAudioPlayer(
                             .padding(horizontal = 8.dp),
                         textAlign = TextAlign.Center,
                     )
-                    // Placeholder for symmetry
-                    Spacer(modifier = Modifier.padding(all = 24.dp))
+
+                    val context = LocalContext.current
+
+//                    Cannot get cast to work with on-device server (like ktor)
+//                    due to router/gateway configurations and policies
+                    val isRemoteUrl = remember(book.href) {
+                        book.href.startsWith("http://", ignoreCase = true) ||
+                                book.href.startsWith("https://", ignoreCase = true)
+                    }
+
+                    val isCastAvailable = remember(isRemoteUrl) {
+                        if (!isRemoteUrl) return@remember false
+                        try {
+                            CastContext.getSharedInstance(
+                                context,
+                            )
+                            true
+                        } catch (e: Exception) {
+                            Timber.e(e)
+                            false
+                        }
+                    }
+
+                    if (isCastAvailable) {
+                        MediaRouteButton(state = rememberMediaRouteButtonState())
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -141,71 +177,55 @@ fun ExpandableAudioPlayer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                if (mediaController != null) {
+                    ProgressSlider(
+                        player = mediaController,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
 
-                Text(
-                    text = book.title ?: stringResource(id = R.string.unknown_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        PositionText(
+                            player = mediaController,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        DurationText(
+                            player = mediaController,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = book.author ?: stringResource(id = R.string.unknown_author),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                AudioProgressBar(
-                    currentOffset = playback.offset,
-                    duration = currentDuration,
-                    onSeek = { offset ->
-                        scope.launch { navigator.skipTo(index = playback.index, offset = offset) }
-                    },
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                AudioPlayerControls(
-                    isPlaying = isPlaying,
-                    onSkipPrevious = {
-                        scope.launch {
-                            val newIndex = (playback.index - 1).coerceAtLeast(minimumValue = 0)
-                            if (newIndex != playback.index) {
-                                navigator.skipTo(index = newIndex, offset = Duration.ZERO)
-                            }
-                        }
-                    },
-                    onRewind = {
-                        scope.launch { navigator.skip(duration = (-30).seconds) }
-                    },
-                    onPlayPause = {
-                        if (playback.playWhenReady) navigator.pause() else navigator.play()
-                    },
-                    onForward = {
-                        scope.launch { navigator.skip(duration = 30.seconds) }
-                    },
-                    onSkipNext = {
-                        scope.launch {
-                            val newIndex =
-                                (playback.index + 1).coerceAtMost(maximumValue = navigator.readingOrder.items.lastIndex)
-                            if (newIndex != playback.index) {
-                                navigator.skipTo(index = newIndex, offset = Duration.ZERO)
-                            }
-                        }
-                    },
-                )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        PreviousButton(player = mediaController, iconSize = 48.dp)
+                        SeekBackButton(player = mediaController, iconSize = 48.dp)
+                        PlayPauseButton(
+                            player = mediaController,
+                            modifier = Modifier.size(72.dp),
+                            iconSize = 42.dp,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            ),
+                        )
+                        SeekForwardButton(player = mediaController, iconSize = 48.dp)
+                        NextButton(player = mediaController, iconSize = 48.dp)
+                    }
+                }
 
                 if (editor is ExoPlayerPreferencesEditor) {
                     Spacer(modifier = Modifier.height(24.dp))

@@ -19,6 +19,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
 import com.example.readiumandroidtestapp.features.reader.ui.utils.AnnotationActionModeCallback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.readium.r2.navigator.OverflowableNavigator
 import org.readium.r2.navigator.SelectableNavigator
@@ -118,8 +121,8 @@ fun EpubReader(
             }
         }
 
-        val scope = kotlinx.coroutines.CoroutineScope(context = kotlinx.coroutines.Dispatchers.Main)
-        val job = scope.launch(start = kotlinx.coroutines.CoroutineStart.DEFAULT) {
+        val scope = CoroutineScope(context = Dispatchers.Main)
+        val job = scope.launch(start = CoroutineStart.DEFAULT) {
             fragment?.currentLocator?.collect { locator ->
                 currentOnLocatorChanged(locator)
             }

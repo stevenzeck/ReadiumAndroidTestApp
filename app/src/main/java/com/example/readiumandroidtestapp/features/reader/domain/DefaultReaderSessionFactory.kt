@@ -3,6 +3,7 @@ package com.example.readiumandroidtestapp.features.reader.domain
 import android.app.Application
 import android.content.Context
 import androidx.media3.common.MediaMetadata
+import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderCapabilities
 import com.example.readiumandroidtestapp.features.reader.ui.state.ReaderUiState
@@ -77,11 +78,11 @@ class DefaultReaderSessionFactory @Inject constructor(
         val metadataProvider = MediaMetadataProvider { pub ->
             ChapterMediaMetadataFactory(
                 bookTitle = book.title
-                    ?: applicationContext.getString(com.example.readiumandroidtestapp.R.string.unknown_title),
+                    ?: applicationContext.getString(R.string.unknown_title),
                 bookAuthor = book.author
-                    ?: applicationContext.getString(com.example.readiumandroidtestapp.R.string.unknown_author),
+                    ?: applicationContext.getString(R.string.unknown_author),
                 publication = pub,
-                unknownAuthorString = applicationContext.getString(com.example.readiumandroidtestapp.R.string.unknown_author),
+                unknownAuthorString = applicationContext.getString(R.string.unknown_author),
             )
         }
 

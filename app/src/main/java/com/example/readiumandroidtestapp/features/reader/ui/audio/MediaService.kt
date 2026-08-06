@@ -3,7 +3,10 @@ package com.example.readiumandroidtestapp.features.reader.ui.audio
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import androidx.annotation.OptIn
+import androidx.media3.cast.CastPlayer
+import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -24,6 +27,7 @@ import javax.inject.Inject
  * - Text-to-Speech (TTS) functionality.
  * - Media library browsing & playback for Android Auto.
  */
+@UnstableApi
 @AndroidEntryPoint
 class MediaService : MediaLibraryService() {
 
@@ -34,15 +38,17 @@ class MediaService : MediaLibraryService() {
     lateinit var sessionCallback: AudiobookLibrarySessionCallback
 
     private var mediaLibrarySession: MediaLibrarySession? = null
-    private var fallbackPlayer: Player? = null
+    private lateinit var fallbackPlayer: Player
+    private var castPlayer: CastPlayer? = null
+    private var localPlayer: Player? = null
 
-    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build())
 
         val player = ExoPlayer.Builder(this).build()
         fallbackPlayer = player
+        localPlayer = player
 
         val session = mediaSessionFactory.createLibrarySession(
             service = this,
@@ -51,6 +57,30 @@ class MediaService : MediaLibraryService() {
         )
         addSession(session)
         mediaLibrarySession = session
+
+        try {
+            castPlayer = CastPlayer.Builder(this).build().apply {
+                addListener(
+                    object : Player.Listener {
+                        override fun onDeviceInfoChanged(deviceInfo: DeviceInfo) {
+                            val isRemote =
+                                deviceInfo.playbackType == DeviceInfo.PLAYBACK_TYPE_REMOTE
+                            val activeLocalPlayer = localPlayer ?: fallbackPlayer
+                            val currentPlayer = mediaLibrarySession?.player ?: activeLocalPlayer
+
+                            val newPlayer = if (isRemote) this@apply else activeLocalPlayer
+
+                            if (currentPlayer !== newPlayer) {
+                                transferState(previousPlayer = currentPlayer, newPlayer = newPlayer)
+                                mediaLibrarySession?.player = newPlayer
+                            }
+                        }
+                    },
+                )
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
     }
 
     /**
@@ -70,9 +100,15 @@ class MediaService : MediaLibraryService() {
                     return
                 }
 
+            localPlayer = player
+
             val session = mediaLibrarySession
             if (session != null) {
-                session.player = player
+                if (castPlayer?.deviceInfo?.playbackType == DeviceInfo.PLAYBACK_TYPE_REMOTE) {
+                    session.player = castPlayer!!
+                } else {
+                    session.player = player
+                }
             } else {
                 val newSession = mediaSessionFactory.createLibrarySession(
                     service = this@MediaService,
@@ -86,15 +122,44 @@ class MediaService : MediaLibraryService() {
         }
 
         fun closeSession() {
-            fallbackPlayer?.let { player ->
-                mediaLibrarySession?.player = player
+            localPlayer = fallbackPlayer
+            if (castPlayer?.deviceInfo?.playbackType == DeviceInfo.PLAYBACK_TYPE_REMOTE) {
+                mediaLibrarySession?.player = castPlayer!!
+            } else {
+                mediaLibrarySession?.player = fallbackPlayer
             }
         }
     }
 
+    private fun transferState(previousPlayer: Player, newPlayer: Player) {
+        val playWhenReady = previousPlayer.playWhenReady
+        val currentItemIndex = previousPlayer.currentMediaItemIndex
+        val currentPosition = previousPlayer.currentPosition
+
+        if (newPlayer === castPlayer) {
+            val mediaItems = mutableListOf<MediaItem>()
+            for (i in 0 until previousPlayer.mediaItemCount) {
+                mediaItems.add(previousPlayer.getMediaItemAt(i))
+            }
+            if (mediaItems.isNotEmpty()) {
+                val index =
+                    if (currentItemIndex != C.INDEX_UNSET) currentItemIndex else 0
+                newPlayer.setMediaItems(mediaItems, index, currentPosition)
+            }
+        } else {
+            if (currentItemIndex != C.INDEX_UNSET) {
+                newPlayer.seekTo(currentItemIndex, currentPosition)
+            }
+        }
+
+        newPlayer.prepare()
+        newPlayer.playWhenReady = playWhenReady
+        previousPlayer.pause()
+    }
+
     private val binder = LocalBinder()
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(intent: Intent?): IBinder {
         super.onBind(intent)?.let { return it }
         return binder
     }
@@ -110,8 +175,11 @@ class MediaService : MediaLibraryService() {
             session.release()
             mediaLibrarySession = null
         }
-        fallbackPlayer?.release()
-        fallbackPlayer = null
+        castPlayer?.release()
+        castPlayer = null
+        if (this::fallbackPlayer.isInitialized) {
+            fallbackPlayer.release()
+        }
         super.onDestroy()
     }
 

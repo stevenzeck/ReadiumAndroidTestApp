@@ -30,7 +30,8 @@ class AudiobookPlaybackLauncherTest {
     private val audioPlaybackManager: AudioPlaybackManager = mockk(relaxed = true)
 
     private val bookFlow = MutableStateFlow<Book?>(null)
-    private val navigatorFlow = MutableStateFlow<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>?>(null)
+    private val navigatorFlow =
+        MutableStateFlow<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>?>(null)
     private val publicationFlow = MutableStateFlow<Publication?>(null)
 
     private lateinit var launcher: AudiobookPlaybackLauncher
@@ -63,7 +64,8 @@ class AudiobookPlaybackLauncherTest {
         val book = mockk<Book> {
             every { id } returns 1L
         }
-        val navigator = mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(relaxed = true)
+        val navigator =
+            mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(relaxed = true)
         bookFlow.value = book
         navigatorFlow.value = navigator
 
@@ -83,7 +85,8 @@ class AudiobookPlaybackLauncherTest {
         val asset = mockk<Asset>(relaxed = true)
         val publication = mockk<Publication>(relaxed = true)
         val openedBook = OpenedBook(publication = publication, asset = asset)
-        val navigator = mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(relaxed = true)
+        val navigator =
+            mockk<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>>(relaxed = true)
         val audioState = ReaderUiState.Audio(
             publication = publication,
             book = book,
@@ -95,12 +98,25 @@ class AudiobookPlaybackLauncherTest {
         navigatorFlow.value = null
         coEvery { bookRepository.get(bookId = 1L) } returns book
         coEvery { openPublicationUseCase(url = url) } returns Result.success(value = openedBook)
-        coEvery { readerSessionFactory.createAudioSession(book = book, publication = publication) } returns Result.success(value = audioState)
+        coEvery {
+            readerSessionFactory.createAudioSession(
+                book = book,
+                publication = publication,
+            )
+        } returns Result.success(value = audioState)
 
         val result = launcher.launchPlayback(bookId = 1L)
 
         assertTrue(result.isSuccess)
-        verify { audioPlaybackManager.load(book = book, publication = publication, asset = asset, audioNavigator = navigator, editor = null) }
+        verify {
+            audioPlaybackManager.load(
+                book = book,
+                publication = publication,
+                asset = asset,
+                audioNavigator = navigator,
+                editor = null,
+            )
+        }
         verify { navigator.play() }
     }
 }

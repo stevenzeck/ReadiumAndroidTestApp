@@ -32,6 +32,8 @@ class AudioPlaybackManager @Inject constructor(
 
     val book: StateFlow<Book?> field = MutableStateFlow<Book?>(null)
 
+    val isPlaying: StateFlow<Boolean> field = MutableStateFlow<Boolean>(false)
+
     val publication: StateFlow<Publication?> field = MutableStateFlow<Publication?>(null)
 
     val navigator: StateFlow<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>?> field = MutableStateFlow<AudioNavigator<ExoPlayerSettings, ExoPlayerPreferences>?>(
@@ -67,6 +69,7 @@ class AudioPlaybackManager @Inject constructor(
         playbackScope = MainScope().apply {
             audioNavigator.playback
                 .onEach { playback ->
+                    this@AudioPlaybackManager.isPlaying.value = playback.playWhenReady
                     if (playback.state is MediaNavigator.State.Failure) {
                         userMessageManager.emitMessage(messageId = R.string.playback_error)
                     }

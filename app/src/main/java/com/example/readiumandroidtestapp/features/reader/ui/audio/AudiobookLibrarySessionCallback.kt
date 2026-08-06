@@ -117,7 +117,8 @@ class AudiobookLibrarySessionCallback @Inject constructor(
                 val publication = if (activeBook?.id == bookId && activePublication != null) {
                     activePublication
                 } else {
-                    val url = book.url ?: return@future LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+                    val url = book.url
+                        ?: return@future LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
                     openPublicationUseCase(url = url).getOrNull()?.publication
                         ?: return@future LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
                 }
@@ -191,7 +192,8 @@ class AudiobookLibrarySessionCallback @Inject constructor(
                 LibraryResult.ofItem(rootItem, null)
             } else if (mediaId.startsWith(prefix = "book_")) {
                 val bookId = if (mediaId.contains(other = "_chapter_")) {
-                    mediaId.substringAfter(delimiter = "book_").substringBefore(delimiter = "_chapter_").toLongOrNull()
+                    mediaId.substringAfter(delimiter = "book_")
+                        .substringBefore(delimiter = "_chapter_").toLongOrNull()
                 } else {
                     mediaId.substringAfter(delimiter = "book_").toLongOrNull()
                 }
@@ -233,7 +235,8 @@ class AudiobookLibrarySessionCallback @Inject constructor(
             val bookId: Long?
             val chapterIndex: Int?
             if (mediaId.contains(other = "_chapter_")) {
-                bookId = mediaId.substringAfter(delimiter = "book_").substringBefore(delimiter = "_chapter_").toLongOrNull()
+                bookId = mediaId.substringAfter(delimiter = "book_")
+                    .substringBefore(delimiter = "_chapter_").toLongOrNull()
                 chapterIndex = mediaId.substringAfter(delimiter = "_chapter_").toIntOrNull()
             } else {
                 bookId = mediaId.substringAfter(delimiter = "book_").toLongOrNull()

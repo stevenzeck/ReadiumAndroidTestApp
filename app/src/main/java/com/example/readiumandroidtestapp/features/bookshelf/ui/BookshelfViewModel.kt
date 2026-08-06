@@ -7,6 +7,7 @@ import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,7 @@ import javax.inject.Inject
 class BookshelfViewModel @Inject constructor(
     private val bookRepository: BookRepository,
     private val userMessageManager: UserMessageManager,
+    private val audioPlaybackManager: AudioPlaybackManager,
 ) : ViewModel() {
 
     /**
@@ -66,6 +68,9 @@ class BookshelfViewModel @Inject constructor(
      */
     fun deleteBook(bookId: Long) {
         viewModelScope.launch {
+            if (audioPlaybackManager.book.value?.id == bookId) {
+                audioPlaybackManager.close()
+            }
             bookRepository.deleteBook(bookId = bookId)
                 .onFailure {
                     userMessageManager.emitMessage(messageId = R.string.error_deleting_book)

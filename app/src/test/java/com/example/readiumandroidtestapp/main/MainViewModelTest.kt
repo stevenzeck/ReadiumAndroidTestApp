@@ -40,6 +40,7 @@ class MainViewModelTest {
     private val urlGateway: UrlGateway = mockk()
     private val audioPlaybackManager: AudioPlaybackManager =
         mockk(relaxed = true)
+    private val context: android.content.Context = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: MainViewModel
@@ -61,6 +62,7 @@ class MainViewModelTest {
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
             urlGateway = urlGateway,
+            context = context,
             audioPlaybackManager = audioPlaybackManager,
         )
     }

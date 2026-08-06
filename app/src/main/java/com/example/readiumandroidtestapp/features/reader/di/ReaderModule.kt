@@ -1,5 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.di
 
+import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.features.reader.data.DefaultPreferencesSerializerFactory
 import com.example.readiumandroidtestapp.features.reader.data.DefaultSearchGateway
 import com.example.readiumandroidtestapp.features.reader.data.PreferencesSerializerFactory
@@ -27,6 +28,7 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
+@UnstableApi
 abstract class ReaderModule {
 
     @Binds

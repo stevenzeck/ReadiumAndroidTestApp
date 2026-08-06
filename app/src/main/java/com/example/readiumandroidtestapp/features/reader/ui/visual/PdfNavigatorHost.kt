@@ -17,6 +17,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commitNow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.readium.adapter.pdfium.navigator.PdfiumPreferences
 import org.readium.adapter.pdfium.navigator.PdfiumPreferencesEditor
@@ -97,8 +100,8 @@ fun PdfReader(
             currentOnNavigatorReady(navigator)
         }
 
-        val scope = kotlinx.coroutines.CoroutineScope(context = kotlinx.coroutines.Dispatchers.Main)
-        val job = scope.launch(start = kotlinx.coroutines.CoroutineStart.DEFAULT) {
+        val scope = CoroutineScope(context = Dispatchers.Main)
+        val job = scope.launch(start = CoroutineStart.DEFAULT) {
             fragment?.currentLocator?.collect { locator ->
                 currentOnLocatorChanged(locator)
             }

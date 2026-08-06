@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.designsystem.components.BookItem
 import com.example.readiumandroidtestapp.core.designsystem.components.ReadiumScaffold
@@ -35,6 +36,7 @@ import org.readium.r2.shared.publication.Manifest
 import timber.log.Timber
 
 @Composable
+@UnstableApi
 fun PublicationDetailScreen(
     manifestJson: String,
     onNavigateBack: () -> Unit,

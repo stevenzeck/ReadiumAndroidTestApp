@@ -3,6 +3,7 @@ package com.example.readiumandroidtestapp.features.reader.ui.utils
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.readium.r2.navigator.SelectableNavigator
@@ -28,7 +29,7 @@ class AnnotationActionModeCallback(
         if (item.itemId == 100) {
             val nav = navigator ?: return false
 
-            val scope = (nav as? androidx.fragment.app.Fragment)?.viewLifecycleOwner?.lifecycleScope
+            val scope = (nav as? Fragment)?.viewLifecycleOwner?.lifecycleScope
 
             scope?.launch {
                 val selection = nav.currentSelection()

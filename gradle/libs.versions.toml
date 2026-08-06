@@ -17,19 +17,19 @@ androidx-core = "1.19.0"
 androidx-datastore = "1.2.1"
 androidx-fragment = "1.8.9"
 androidx-lifecycle = "2.11.0"
-androidx-room3 = "3.0.0"
+androidx-room3 = "3.0.1"
 androidx-paging = "3.5.0"
 
 # -- Navigation (v3) --
-androidx-navigation3 = "1.1.4"
+androidx-navigation3 = "1.1.5"
 
 # -- Compose --
 compose-bom = "2026.06.01"
-compose-material3 = "1.5.0-alpha24"
+compose-material3 = "1.5.0-alpha25"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
-androidx-media3 = "1.10.1"
+androidx-media3 = "1.11.0-rc01"
 readium = "3.3.0"
 
 # -- DI (Hilt) --
@@ -94,12 +94,15 @@ androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", v
 # --- Paging ---
 androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "androidx-paging" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "androidx-paging" }
-androidx-paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "androidx-paging"}
+androidx-paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "androidx-paging" }
 
 # --- Media & Coil ---
 androidx-media3-common = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "androidx-media3" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "androidx-media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "androidx-media3" }
+androidx-media3-cast = { group = "androidx.media3", name = "media3-cast", version.ref = "androidx-media3" }
+androidx-media3-ui-compose = { group = "androidx.media3", name = "media3-ui-compose", version.ref = "androidx-media3" }
+androidx-media3-ui-compose-material3 = { group = "androidx.media3", name = "media3-ui-compose-material3", version.ref = "androidx-media3" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 
@@ -157,7 +160,10 @@ navigation = [
 media3 = [
     "androidx-media3-common",
     "androidx-media3-exoplayer",
-    "androidx-media3-session"
+    "androidx-media3-session",
+    "androidx-media3-cast",
+    "androidx-media3-ui-compose",
+    "androidx-media3-ui-compose-material3"
 ]
 readium = [
     "readium-shared",

@@ -25,6 +25,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.designsystem.components.EmptyView
 import com.example.readiumandroidtestapp.core.designsystem.components.ErrorView
@@ -44,6 +45,7 @@ import com.example.readiumandroidtestapp.main.MainViewModel
  * - Hosts the [BookshelfFab] for importing new content.
  */
 @Composable
+@UnstableApi
 fun BookshelfScreen(
     onOpenBook: (Book) -> Unit,
     viewModel: BookshelfViewModel = hiltViewModel(),
