@@ -39,7 +39,11 @@ class BookshelfScreenTest {
 
     @Test
     fun `shows loading state`() {
-        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Loading)
+        every { bookshelfViewModel.uiState } returns MutableStateFlow(
+            value = BookshelfUiState(
+                isLoading = true,
+            ),
+        )
         every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
         every { mainViewModel.userMessages } returns flowOf()
 
@@ -56,7 +60,7 @@ class BookshelfScreenTest {
 
     @Test
     fun `shows empty state`() {
-        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Empty)
+        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState(books = emptyList()))
         every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
         every { mainViewModel.userMessages } returns flowOf()
 
@@ -75,7 +79,7 @@ class BookshelfScreenTest {
 
     @Test
     fun `shows error state`() {
-        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Error)
+        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState(error = "error"))
         every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
         every { mainViewModel.userMessages } returns flowOf()
 
@@ -105,7 +109,7 @@ class BookshelfScreenTest {
             ),
         )
         every { bookshelfViewModel.uiState } returns MutableStateFlow(
-            value = BookshelfUiState.Success(
+            value = BookshelfUiState(
                 books = books,
             ),
         )
@@ -141,7 +145,7 @@ class BookshelfScreenTest {
 
     @Test
     fun `handles FAB import from URL`() {
-        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState.Empty)
+        every { bookshelfViewModel.uiState } returns MutableStateFlow(value = BookshelfUiState(books = emptyList()))
         every { mainViewModel.appTheme } returns MutableStateFlow(value = AppTheme.SYSTEM)
         every { mainViewModel.userMessages } returns flowOf()
 
@@ -180,7 +184,7 @@ class BookshelfScreenTest {
         val mockBookshelfVM = mockk<BookshelfViewModel>(relaxed = true)
         val mockMainVM = mockk<MainViewModel>(relaxed = true)
 
-        every { mockBookshelfVM.uiState } returns MutableStateFlow(BookshelfUiState.Success(books = emptyList()))
+        every { mockBookshelfVM.uiState } returns MutableStateFlow(BookshelfUiState(books = emptyList()))
 
         composeTestRule.setContent {
             BookshelfScreen(

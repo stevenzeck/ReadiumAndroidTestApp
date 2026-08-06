@@ -41,7 +41,7 @@ class BookImporterTest {
     private val httpGateway: HttpGateway = mockk()
     private val coverImageSaver: CoverImageSaver = mockk()
 
-    private val importer = DefaultBookImporter(
+    private val importer = BookImporter(
         storageGateway = fakeStorageGateway,
         booksDao = booksDao,
         assetRetriever = assetRetriever,

@@ -37,7 +37,7 @@ class ReaderSessionFactoryTest {
     private val pdfiumDocumentFactory: PdfiumDocumentFactory = mockk(relaxed = true)
     private val applicationContext = ApplicationProvider.getApplicationContext<Application>()
 
-    private val factory = DefaultReaderSessionFactory(
+    private val factory = ReaderSessionFactory(
         applicationContext = applicationContext,
         preferencesManager = preferencesManager,
         pdfiumDocumentFactory = pdfiumDocumentFactory,

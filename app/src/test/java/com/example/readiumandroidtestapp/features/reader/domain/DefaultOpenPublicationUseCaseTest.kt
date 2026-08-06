@@ -21,7 +21,7 @@ class DefaultOpenPublicationUseCaseTest {
     private val assetRetriever: AssetRetrieverGateway = mockk()
     private val publicationOpener: PublicationOpenerGateway = mockk()
     private val testDispatcher = StandardTestDispatcher()
-    private val useCase = DefaultOpenPublicationUseCase(
+    private val useCase = OpenPublicationUseCase(
         assetRetriever = assetRetriever,
         publicationOpener = publicationOpener,
         ioDispatcher = testDispatcher,

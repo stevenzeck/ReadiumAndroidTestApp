@@ -5,11 +5,14 @@ import com.example.readiumandroidtestapp.core.data.repository.FakeBookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
+import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -31,12 +34,14 @@ class BookshelfViewModelTest {
     private lateinit var viewModel: BookshelfViewModel
     private lateinit var fakeRepository: FakeBookRepository
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
+    private val audioPlaybackManager: AudioPlaybackManager = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
         fakeRepository = FakeBookRepository()
+        every { audioPlaybackManager.book } returns MutableStateFlow(null)
     }
 
     @After
@@ -69,6 +74,7 @@ class BookshelfViewModelTest {
         viewModel = BookshelfViewModel(
             bookRepository = fakeRepository,
             userMessageManager = userMessageManager,
+            audioPlaybackManager = audioPlaybackManager,
         )
 
         backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
@@ -78,8 +84,9 @@ class BookshelfViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        Assert.assertTrue(state is BookshelfUiState.Success)
-        Assert.assertEquals(books, (state as BookshelfUiState.Success).books)
+        Assert.assertFalse(state.isLoading)
+        Assert.assertNull(state.error)
+        Assert.assertEquals(books, state.books)
     }
 
     @Test
@@ -87,6 +94,7 @@ class BookshelfViewModelTest {
         viewModel = BookshelfViewModel(
             bookRepository = fakeRepository,
             userMessageManager = userMessageManager,
+            audioPlaybackManager = audioPlaybackManager,
         )
 
         backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
@@ -95,7 +103,9 @@ class BookshelfViewModelTest {
 
         advanceUntilIdle()
 
-        Assert.assertTrue(viewModel.uiState.value is BookshelfUiState.Empty)
+        val stateEmpty = viewModel.uiState.value
+        Assert.assertFalse(stateEmpty.isLoading)
+        Assert.assertTrue(stateEmpty.books.isEmpty())
     }
 
     @Test
@@ -113,6 +123,7 @@ class BookshelfViewModelTest {
         viewModel = BookshelfViewModel(
             bookRepository = fakeRepository,
             userMessageManager = userMessageManager,
+            audioPlaybackManager = audioPlaybackManager,
         )
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -120,12 +131,16 @@ class BookshelfViewModelTest {
         }
         advanceUntilIdle()
 
-        Assert.assertTrue(viewModel.uiState.value is BookshelfUiState.Success)
+        val state1 = viewModel.uiState.value
+        Assert.assertFalse(state1.isLoading)
+        Assert.assertEquals(1, state1.books.size)
 
         viewModel.deleteBook(bookId = book.id)
         advanceUntilIdle()
 
-        Assert.assertTrue(viewModel.uiState.value is BookshelfUiState.Empty)
+        val stateEmpty = viewModel.uiState.value
+        Assert.assertFalse(stateEmpty.isLoading)
+        Assert.assertTrue(stateEmpty.books.isEmpty())
     }
 
     @Test
@@ -143,7 +158,11 @@ class BookshelfViewModelTest {
         coEvery { mockRepo.deleteBook(bookId = any()) } returns Try.failure(failure = Exception("Fail"))
 
         val viewModelWithMock =
-            BookshelfViewModel(bookRepository = mockRepo, userMessageManager = userMessageManager)
+            BookshelfViewModel(
+                bookRepository = mockRepo,
+                userMessageManager = userMessageManager,
+                audioPlaybackManager = audioPlaybackManager,
+            )
 
         viewModelWithMock.deleteBook(bookId = book.id)
         advanceUntilIdle()

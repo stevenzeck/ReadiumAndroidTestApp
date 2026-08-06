@@ -30,7 +30,7 @@ class CoverImageSaverTest {
                 org.readium.r2.shared.util.Try.failure(Exception())
         }
     private val saver =
-        DefaultCoverImageSaver(storageGateway = fakeGateway, httpGateway = fakeHttpGateway)
+        CoverImageSaver(storageGateway = fakeGateway, httpGateway = fakeHttpGateway)
 
     @After
     fun tearDown() {

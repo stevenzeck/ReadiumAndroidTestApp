@@ -39,10 +39,10 @@ import org.readium.r2.shared.util.mediatype.MediaType
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class DefaultReaderSearchManagerTest {
+class ReaderSearchManagerTest {
 
     private val searchGateway: SearchGateway = mockk()
-    private val manager = DefaultReaderSearchManager(searchGateway = searchGateway)
+    private val manager = ReaderSearchManager(searchGateway = searchGateway)
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before

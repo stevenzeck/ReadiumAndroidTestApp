@@ -16,10 +16,10 @@ import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.Q])
-class DefaultMediaSessionFactoryTest {
+class MediaSessionFactoryTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val factory = DefaultMediaSessionFactory()
+    private val factory = MediaSessionFactory()
 
     @Test
     fun `createLibrarySession creates session with correct player`() {
@@ -58,7 +58,7 @@ class DefaultMediaSessionFactoryTest {
         val player = FakePlayer()
         val intent = Intent(
             context,
-            DefaultMediaSessionFactoryTest::class.java,
+            MediaSessionFactoryTest::class.java,
         )
 
         val session = factory.createLibrarySession(

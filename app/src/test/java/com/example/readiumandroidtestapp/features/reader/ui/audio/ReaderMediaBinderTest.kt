@@ -21,7 +21,7 @@ class ReaderMediaBinderTest {
     @Before
     fun setUp() {
         application = ApplicationProvider.getApplicationContext()
-        binder = DefaultReaderMediaBinder(context = application)
+        binder = ReaderMediaBinder(context = application)
     }
 
     @Test

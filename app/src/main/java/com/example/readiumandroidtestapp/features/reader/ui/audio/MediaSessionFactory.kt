@@ -6,23 +6,16 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.uuid.Uuid
 
-interface MediaSessionFactory {
+@Singleton
+class MediaSessionFactory @Inject constructor() {
     fun createLibrarySession(
         service: MediaLibraryService,
         player: Player,
         callback: MediaLibrarySession.Callback,
         activityIntent: Intent? = null,
-    ): MediaLibrarySession
-}
-
-class DefaultMediaSessionFactory @Inject constructor() : MediaSessionFactory {
-    override fun createLibrarySession(
-        service: MediaLibraryService,
-        player: Player,
-        callback: MediaLibrarySession.Callback,
-        activityIntent: Intent?,
     ): MediaLibrarySession {
         return MediaLibrarySession.Builder(service, player, callback)
             .setId(Uuid.random().toString())

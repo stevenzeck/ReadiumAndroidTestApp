@@ -23,7 +23,7 @@ import org.readium.r2.shared.util.mediatype.MediaType
 class DefaultReaderDecorationManagerTest {
 
     private val bookRepository: BookRepository = mockk(relaxed = true)
-    private val manager = DefaultReaderDecorationManager(bookRepository)
+    private val manager = ReaderDecorationManager(bookRepository)
 
     @Test
     fun `decorationFlow maps annotations to decorations`() = runTest {

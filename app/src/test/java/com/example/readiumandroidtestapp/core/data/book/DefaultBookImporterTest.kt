@@ -38,7 +38,7 @@ import java.io.IOException
 @RunWith(AndroidJUnit4::class)
 class DefaultBookImporterTest {
 
-    private val storageGateway: StorageGateway = mockk()
+    private val fakeStorageGateway: StorageGateway = mockk()
     private val booksDao: BooksDao = mockk()
     private val assetRetriever: AssetRetrieverGateway = mockk()
     private val publicationOpener: PublicationOpenerGateway = mockk()
@@ -46,12 +46,12 @@ class DefaultBookImporterTest {
     private val coverImageSaver: CoverImageSaver = mockk()
     private val dispatcher = StandardTestDispatcher()
 
-    private lateinit var importer: DefaultBookImporter
+    private lateinit var importer: BookImporter
 
     @Before
     fun setup() {
-        importer = DefaultBookImporter(
-            storageGateway,
+        importer = BookImporter(
+            fakeStorageGateway,
             booksDao,
             assetRetriever,
             publicationOpener,
@@ -80,15 +80,15 @@ class DefaultBookImporterTest {
         )
 
         coEvery { httpGateway.fetch(url) } returns Try.success(success = httpResult)
-        every { storageGateway.resolveExtensionFromMimeType(mimeType = "application/epub+zip") } returns "epub"
+        every { fakeStorageGateway.resolveExtensionFromMimeType(mimeType = "application/epub+zip") } returns "epub"
         coEvery {
-            storageGateway.saveFileFromStream(
+            fakeStorageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
         } returns Try.success(success = savedFile)
 
-        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        every { fakeStorageGateway.toUrl(file = savedFile) } returns fileUrl
         coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(
@@ -132,9 +132,9 @@ class DefaultBookImporterTest {
         val ioException = IOException("Storage full")
 
         coEvery { httpGateway.fetch(url) } returns Try.success(success = httpResult)
-        every { storageGateway.resolveExtensionFromMimeType(mimeType = "application/epub+zip") } returns "epub"
+        every { fakeStorageGateway.resolveExtensionFromMimeType(mimeType = "application/epub+zip") } returns "epub"
         coEvery {
-            storageGateway.saveFileFromStream(
+            fakeStorageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
@@ -164,16 +164,16 @@ class DefaultBookImporterTest {
             fileExtension = FileExtension(value = "epub"),
         )
 
-        every { storageGateway.openInputStream(uri = uri) } returns inputStream
-        every { storageGateway.resolveExtension(uri = uri) } returns "epub"
+        every { fakeStorageGateway.openInputStream(uri = uri) } returns inputStream
+        every { fakeStorageGateway.resolveExtension(uri = uri) } returns "epub"
         coEvery {
-            storageGateway.saveFileFromStream(
+            fakeStorageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
         } returns Try.success(success = savedFile)
 
-        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        every { fakeStorageGateway.toUrl(file = savedFile) } returns fileUrl
         coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(
@@ -198,7 +198,7 @@ class DefaultBookImporterTest {
     @Test
     fun `importFromUri fails on storage error`() = runTest(context = dispatcher) {
         val uri = Uri.parse("content://com.example/book")
-        every { storageGateway.openInputStream(uri) } throws IOException("Disk error")
+        every { fakeStorageGateway.openInputStream(uri) } throws IOException("Disk error")
 
         val result = importer.importFromUri(uri)
 
@@ -214,16 +214,16 @@ class DefaultBookImporterTest {
             val savedFile = File("saved.epub")
             val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
 
-            every { storageGateway.openInputStream(uri = uri) } returns inputStream
-            every { storageGateway.resolveExtension(uri = uri) } returns "epub"
+            every { fakeStorageGateway.openInputStream(uri = uri) } returns inputStream
+            every { fakeStorageGateway.resolveExtension(uri = uri) } returns "epub"
             coEvery {
-                storageGateway.saveFileFromStream(
+                fakeStorageGateway.saveFileFromStream(
                     input = any(),
                     extension = "epub",
                 )
             } returns Try.success(success = savedFile)
 
-            every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+            every { fakeStorageGateway.toUrl(file = savedFile) } returns fileUrl
             coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.failure(
                 exception = Exception("Retrieve failed"),
             )
@@ -242,16 +242,16 @@ class DefaultBookImporterTest {
         val fileUrl = Url(url = "file:///saved.epub")!! as AbsoluteUrl
         val asset = mockk<Asset>()
 
-        every { storageGateway.openInputStream(uri = uri) } returns inputStream
-        every { storageGateway.resolveExtension(uri = uri) } returns "epub"
+        every { fakeStorageGateway.openInputStream(uri = uri) } returns inputStream
+        every { fakeStorageGateway.resolveExtension(uri = uri) } returns "epub"
         coEvery {
-            storageGateway.saveFileFromStream(
+            fakeStorageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
         } returns Try.success(success = savedFile)
 
-        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        every { fakeStorageGateway.toUrl(file = savedFile) } returns fileUrl
         coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(
@@ -285,16 +285,16 @@ class DefaultBookImporterTest {
             fileExtension = FileExtension(value = "epub"),
         )
 
-        every { storageGateway.openInputStream(uri = uri) } returns inputStream
-        every { storageGateway.resolveExtension(uri = uri) } returns "epub"
+        every { fakeStorageGateway.openInputStream(uri = uri) } returns inputStream
+        every { fakeStorageGateway.resolveExtension(uri = uri) } returns "epub"
         coEvery {
-            storageGateway.saveFileFromStream(
+            fakeStorageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
         } returns Try.success(success = savedFile)
 
-        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        every { fakeStorageGateway.toUrl(file = savedFile) } returns fileUrl
         coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(
@@ -336,16 +336,16 @@ class DefaultBookImporterTest {
             fileExtension = FileExtension(value = "epub"),
         )
 
-        every { storageGateway.openInputStream(uri = uri) } returns inputStream
-        every { storageGateway.resolveExtension(uri = uri) } returns "epub"
+        every { fakeStorageGateway.openInputStream(uri = uri) } returns inputStream
+        every { fakeStorageGateway.resolveExtension(uri = uri) } returns "epub"
         coEvery {
-            storageGateway.saveFileFromStream(
+            fakeStorageGateway.saveFileFromStream(
                 input = any(),
                 extension = "epub",
             )
         } returns Try.success(success = savedFile)
 
-        every { storageGateway.toUrl(file = savedFile) } returns fileUrl
+        every { fakeStorageGateway.toUrl(file = savedFile) } returns fileUrl
         coEvery { assetRetriever.retrieve(url = fileUrl) } returns Result.success(value = asset)
         coEvery {
             publicationOpener.open(

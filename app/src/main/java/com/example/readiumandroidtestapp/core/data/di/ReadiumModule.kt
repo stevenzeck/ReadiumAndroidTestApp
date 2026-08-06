@@ -7,9 +7,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.readium.adapter.pdfium.document.PdfiumDocumentFactory
+import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.http.DefaultHttpClient
 import org.readium.r2.shared.util.http.HttpClient
+import org.readium.r2.shared.util.http.HttpRequest
+import org.readium.r2.shared.util.http.HttpResponse
+import org.readium.r2.shared.util.http.HttpTry
 import org.readium.r2.streamer.PublicationOpener
 import org.readium.r2.streamer.parser.DefaultPublicationParser
 import javax.inject.Singleton
@@ -20,7 +24,17 @@ object ReadiumModule {
 
     @Provides
     @Singleton
-    fun provideHttpClient(): HttpClient = DefaultHttpClient()
+    fun provideHttpClient(): HttpClient = DefaultHttpClient(
+        callback = object : DefaultHttpClient.Callback {
+            override suspend fun onFollowUnsafeRedirect(
+                request: HttpRequest,
+                response: HttpResponse,
+                newRequest: HttpRequest,
+            ): HttpTry<HttpRequest> {
+                return Try.success(newRequest)
+            }
+        },
+    )
 
     /**
      * Provides a singleton instance of [AssetRetriever].

@@ -41,13 +41,13 @@ import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
 
 @RunWith(AndroidJUnit4::class)
-class DefaultReaderPreferencesManagerTest {
+class ReaderPreferencesManagerTest {
 
     private val bookPreferencesRepository: BookPreferencesRepository = mockk(relaxed = true)
     private val preferencesSerializerFactory: PreferencesSerializerFactory = mockk(relaxed = true)
     private val applicationContext = mockk<Application>(relaxed = true)
 
-    private lateinit var manager: DefaultReaderPreferencesManager
+    private lateinit var manager: ReaderPreferencesManager
 
     private val epubSerializer = mockk<EpubPreferencesSerializer>(relaxed = true)
     private val pdfSerializer = mockk<PdfiumPreferencesSerializer>(relaxed = true)
@@ -67,7 +67,7 @@ class DefaultReaderPreferencesManagerTest {
         every { preferencesSerializerFactory.createAndroidTtsSerializer() } returns ttsSerializer
         every { preferencesSerializerFactory.createExoPlayerSerializer() } returns audioSerializer
 
-        manager = DefaultReaderPreferencesManager(
+        manager = ReaderPreferencesManager(
             applicationContext = applicationContext,
             bookPreferencesRepository = bookPreferencesRepository,
             preferencesSerializerFactory = preferencesSerializerFactory,

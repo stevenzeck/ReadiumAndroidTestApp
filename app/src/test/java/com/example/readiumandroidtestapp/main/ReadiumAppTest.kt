@@ -57,6 +57,7 @@ class ReadiumAppTest {
         every { userMessageManager.messages } returns messagesFlow
         every { settingsRepository.appTheme } returns appThemeFlow
         every { audioPlaybackManager.book } returns MutableStateFlow(null)
+        every { audioPlaybackManager.isPlaying } returns MutableStateFlow(false)
         every { audioPlaybackManager.navigator } returns MutableStateFlow(null)
         every { audioPlaybackManager.publication } returns MutableStateFlow(null)
         every { audioPlaybackManager.preferencesEditor } returns MutableStateFlow(null)

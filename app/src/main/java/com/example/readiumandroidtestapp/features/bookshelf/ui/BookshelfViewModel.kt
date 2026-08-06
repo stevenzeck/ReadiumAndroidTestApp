@@ -42,20 +42,16 @@ class BookshelfViewModel @Inject constructor(
      */
     val uiState: StateFlow<BookshelfUiState> = bookRepository.books
         .map { books ->
-            if (books.isEmpty()) {
-                BookshelfUiState.Empty
-            } else {
-                BookshelfUiState.Success(books = books)
-            }
+            BookshelfUiState(books = books, isLoading = false)
         }
         .catch { e ->
             Timber.e(e)
-            emit(value = BookshelfUiState.Error)
+            emit(value = BookshelfUiState(isLoading = false, error = "Error loading books"))
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-            initialValue = BookshelfUiState.Loading,
+            initialValue = BookshelfUiState(isLoading = true),
         )
 
     /**
@@ -83,13 +79,8 @@ class BookshelfViewModel @Inject constructor(
  * Represents the various UI states for the Bookshelf screen.
  */
 @Immutable
-sealed interface BookshelfUiState {
-    data object Loading : BookshelfUiState
-
-    @Immutable
-    data class Success(val books: List<Book>) : BookshelfUiState
-
-    data object Error : BookshelfUiState
-
-    data object Empty : BookshelfUiState
-}
+data class BookshelfUiState(
+    val books: List<Book> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null,
+)

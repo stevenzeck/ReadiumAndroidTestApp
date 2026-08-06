@@ -86,32 +86,24 @@ fun BookshelfScreen(
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
-            when (val state = uiState) {
-                is BookshelfUiState.Loading -> {
-                    LoadingView(modifier = Modifier.align(alignment = Alignment.Center))
-                }
-
-                is BookshelfUiState.Empty -> {
-                    EmptyView(
-                        message = stringResource(id = R.string.empty_bookshelf),
-                        modifier = Modifier.align(alignment = Alignment.Center),
-                    )
-                }
-
-                is BookshelfUiState.Error -> {
-                    ErrorView(
-                        message = stringResource(id = R.string.bookshelf_error),
-                        modifier = Modifier.align(alignment = Alignment.Center),
-                    )
-                }
-
-                is BookshelfUiState.Success -> {
-                    BooksGrid(
-                        books = state.books,
-                        onBookClick = { book -> onOpenBook(book) },
-                        onMenuClick = { bookToDelete = it },
-                    )
-                }
+            if (uiState.isLoading) {
+                LoadingView(modifier = Modifier.align(alignment = Alignment.Center))
+            } else if (uiState.error != null) {
+                ErrorView(
+                    message = stringResource(id = R.string.bookshelf_error),
+                    modifier = Modifier.align(alignment = Alignment.Center),
+                )
+            } else if (uiState.books.isEmpty()) {
+                EmptyView(
+                    message = stringResource(id = R.string.empty_bookshelf),
+                    modifier = Modifier.align(alignment = Alignment.Center),
+                )
+            } else {
+                BooksGrid(
+                    books = uiState.books,
+                    onBookClick = { book -> onOpenBook(book) },
+                    onMenuClick = { bookToDelete = it },
+                )
             }
 
             // Close the FAB when clicking anywhere outside of it

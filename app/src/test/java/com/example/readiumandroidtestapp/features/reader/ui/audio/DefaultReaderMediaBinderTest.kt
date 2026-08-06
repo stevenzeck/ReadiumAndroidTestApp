@@ -25,7 +25,7 @@ class DefaultReaderMediaBinderTest {
 
     @Test
     fun `bind binds to MediaService`() {
-        val binder = DefaultReaderMediaBinder(context = application)
+        val binder = ReaderMediaBinder(context = application)
         val navigator = mockk<AudioNavigator<*, *>>()
 
         binder.bind(navigator = navigator)
@@ -38,7 +38,7 @@ class DefaultReaderMediaBinderTest {
     @Test
     fun `bind verifies interactions using mock Context`() {
         val mockContext = mockk<Context>(relaxed = true)
-        val binder = DefaultReaderMediaBinder(context = mockContext)
+        val binder = ReaderMediaBinder(context = mockContext)
         val navigator = mockk<AudioNavigator<*, *>>()
 
         val intentSlot = slot<Intent>()
@@ -83,7 +83,7 @@ class DefaultReaderMediaBinderTest {
     @Test
     fun `unbind unbinds service`() {
         val mockContext = mockk<Context>(relaxed = true)
-        val binder = DefaultReaderMediaBinder(context = mockContext)
+        val binder = ReaderMediaBinder(context = mockContext)
         val navigator = mockk<AudioNavigator<*, *>>()
 
         val connectionSlot = slot<ServiceConnection>()

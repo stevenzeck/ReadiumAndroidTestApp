@@ -35,11 +35,11 @@ import org.readium.r2.shared.util.mediatype.MediaType
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-class DefaultReaderTtsManagerTest {
+class ReaderTtsManagerTest {
 
     private val applicationContext: Context = mockk<Application>(relaxed = true)
     private val ttsNavigator: AndroidTtsNavigator = mockk(relaxed = true)
-    private val manager = DefaultReaderTtsManager(applicationContext = applicationContext)
+    private val manager = ReaderTtsManager(applicationContext = applicationContext)
     private val publication: Publication = mockk(relaxed = true)
     private val visualNavigator: VisualNavigator = mockk(relaxed = true)
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -86,7 +86,7 @@ class DefaultReaderTtsManagerTest {
 
     @Test
     fun `start does nothing if publication is null`() = runTest(context = testDispatcher) {
-        val emptyManager = DefaultReaderTtsManager(applicationContext = applicationContext)
+        val emptyManager = ReaderTtsManager(applicationContext = applicationContext)
         emptyManager.start(visualNavigator = visualNavigator, scope = backgroundScope, onStop = {})
 
         val mockFactory = mockk<AndroidTtsNavigatorFactory>(relaxed = true)
