@@ -29,7 +29,8 @@ compose-material3 = "1.5.0-alpha25"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
-androidx-media3 = "1.11.0-rc01"
+androidx-media3 = "1.11.0"
+ktor = "3.5.2"
 readium = "3.3.0"
 
 # -- DI (Hilt) --
@@ -48,6 +49,11 @@ robolectric = "4.16.1"
 kover = "0.9.9"
 
 [libraries]
+ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
+ktor-server-cio = { group = "io.ktor", name = "ktor-server-cio", version.ref = "ktor" }
+ktor-server-partial-content = { group = "io.ktor", name = "ktor-server-partial-content", version.ref = "ktor" }
+ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
+
 # --- Core & Architecture ---
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }

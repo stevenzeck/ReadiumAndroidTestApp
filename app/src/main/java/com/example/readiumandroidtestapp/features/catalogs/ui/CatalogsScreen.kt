@@ -29,7 +29,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.domain.model.Catalog
 import com.example.readiumandroidtestapp.core.navigation.route.CatalogScreens
@@ -40,7 +39,6 @@ import kotlinx.coroutines.launch
 import org.readium.r2.shared.publication.Publication
 
 @Composable
-@UnstableApi
 fun CatalogsScreen(
     feedScreen: @Composable (onCatalogClick: (Catalog) -> Unit) -> Unit = { onCatalogClick ->
         CatalogFeedScreen(onCatalogClick = onCatalogClick)

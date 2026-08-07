@@ -5,11 +5,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
 import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,8 +22,6 @@ import javax.inject.Inject
  * 3. **Theme Management**: Observes the app theme preference and applies the [AppTheme].
  */
 @AndroidEntryPoint
-@ExperimentalFoundationApi
-@UnstableApi
 class MainActivity : AppCompatActivity() {
 
     /**

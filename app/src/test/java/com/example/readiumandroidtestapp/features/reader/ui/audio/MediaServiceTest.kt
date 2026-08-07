@@ -16,6 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.navigator.media.audio.AudioNavigator
 import org.readium.navigator.media.common.MediaNavigator
+import org.readium.r2.shared.publication.Publication
 import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
@@ -82,7 +83,11 @@ class MediaServiceTest {
 
         val binder = service.onBind(intent = null) as MediaService.LocalBinder
 
-        binder.openSession(navigator = navigator, activityIntent = null)
+        binder.openSession(
+            navigator = navigator,
+            publication = mockk<Publication>(),
+            activityIntent = null,
+        )
 
         ShadowLooper.shadowMainLooper().idle()
 
@@ -122,7 +127,7 @@ class MediaServiceTest {
         val navigator = mockk<MediaNavigator<*, *, *>>(relaxed = true)
 
         val binder = service.onBind(intent = null) as MediaService.LocalBinder
-        binder.openSession(navigator = navigator)
+        binder.openSession(navigator = navigator, publication = mockk<Publication>())
 
         verify(exactly = 0) {
             sessionFactory.createLibrarySession(
@@ -163,7 +168,7 @@ class MediaServiceTest {
         controller.create()
 
         val binder = service.onBind(intent = null) as MediaService.LocalBinder
-        binder.openSession(navigator = navigator)
+        binder.openSession(navigator = navigator, publication = mockk<Publication>())
 
         ShadowLooper.shadowMainLooper().idle()
 
@@ -202,7 +207,7 @@ class MediaServiceTest {
         controller.create()
 
         val binder = service.onBind(intent = null) as MediaService.LocalBinder
-        binder.openSession(navigator = navigator)
+        binder.openSession(navigator = navigator, publication = mockk<Publication>())
 
         ShadowLooper.shadowMainLooper().idle()
 

@@ -8,14 +8,15 @@ import androidx.media3.common.C
 import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import com.example.readiumandroidtestapp.features.reader.ui.audio.server.LocalAudioServer
 import dagger.hilt.android.AndroidEntryPoint
 import org.readium.navigator.media.common.Media3Adapter
 import org.readium.navigator.media.common.MediaNavigator
+import org.readium.r2.shared.publication.Publication
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -27,7 +28,6 @@ import javax.inject.Inject
  * - Text-to-Speech (TTS) functionality.
  * - Media library browsing & playback for Android Auto.
  */
-@UnstableApi
 @AndroidEntryPoint
 class MediaService : MediaLibraryService() {
 
@@ -42,8 +42,13 @@ class MediaService : MediaLibraryService() {
     private var castPlayer: CastPlayer? = null
     private var localPlayer: Player? = null
 
+    private var localAudioServer: LocalAudioServer? = null
+
     override fun onCreate() {
         super.onCreate()
+        localAudioServer = LocalAudioServer()
+        localAudioServer?.start()
+
         setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build())
 
         val player = ExoPlayer.Builder(this).build()
@@ -92,6 +97,7 @@ class MediaService : MediaLibraryService() {
          */
         fun openSession(
             navigator: MediaNavigator<*, *, *>,
+            publication: Publication,
             activityIntent: Intent? = null,
         ) {
             val player = (navigator as? Media3Adapter)?.asMedia3Player()
@@ -99,6 +105,8 @@ class MediaService : MediaLibraryService() {
                     Timber.e(message = "Navigator does not expose a Media3 Player")
                     return
                 }
+
+            localAudioServer?.publication = publication
 
             localPlayer = player
 
@@ -139,7 +147,28 @@ class MediaService : MediaLibraryService() {
         if (newPlayer === castPlayer) {
             val mediaItems = mutableListOf<MediaItem>()
             for (i in 0 until previousPlayer.mediaItemCount) {
-                mediaItems.add(previousPlayer.getMediaItemAt(i))
+                val originalItem = previousPlayer.getMediaItemAt(i)
+                val originalUri = originalItem.localConfiguration?.uri?.toString()
+
+                var finalItem = originalItem
+                if (originalUri != null && !originalUri.startsWith(
+                        prefix = "http",
+                        ignoreCase = true,
+                    )
+                ) {
+                    val path = if (originalUri.startsWith(prefix = "file://")) {
+                        originalUri.substring(startIndex = "file://".length)
+                    } else {
+                        originalUri
+                    }
+                    val remoteUrl = localAudioServer?.getServerUrl(filePath = path)
+                    if (remoteUrl != null) {
+                        Timber.i("Casting local file via Ktor server: $remoteUrl")
+                        finalItem = originalItem.buildUpon().setUri(remoteUrl).build()
+                    }
+                }
+
+                mediaItems.add(finalItem)
             }
             if (mediaItems.isNotEmpty()) {
                 val index =
@@ -170,6 +199,7 @@ class MediaService : MediaLibraryService() {
 
     override fun onDestroy() {
         binder.closeSession()
+        localAudioServer?.stop()
         mediaLibrarySession?.let { session ->
             removeSession(session)
             session.release()

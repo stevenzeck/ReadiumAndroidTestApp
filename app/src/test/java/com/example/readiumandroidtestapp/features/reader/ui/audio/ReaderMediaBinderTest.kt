@@ -10,6 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.navigator.media.audio.AudioNavigator
+import org.readium.r2.shared.publication.Publication
 import org.robolectric.Shadows
 
 @RunWith(AndroidJUnit4::class)
@@ -27,7 +28,7 @@ class ReaderMediaBinderTest {
     @Test
     fun `bind calls bindService with correct intent`() {
         val navigator = mockk<AudioNavigator<*, *>>()
-        binder.bind(navigator = navigator)
+        binder.bind(navigator = navigator, publication = mockk<Publication>())
 
         val shadowApp = Shadows.shadowOf(application)
         val boundIntent = shadowApp.nextStartedService
@@ -39,7 +40,7 @@ class ReaderMediaBinderTest {
     @Test
     fun `unbind unbinds service`() {
         val navigator = mockk<AudioNavigator<*, *>>()
-        binder.bind(navigator = navigator)
+        binder.bind(navigator = navigator, publication = mockk<Publication>())
 
         val shadowApp = Shadows.shadowOf(application)
 

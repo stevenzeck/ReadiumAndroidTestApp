@@ -3,7 +3,6 @@ package com.example.readiumandroidtestapp.main
 import android.app.Application
 import androidx.media3.cast.Cast
 import androidx.media3.cast.CastParams
-import androidx.media3.common.util.UnstableApi
 import com.google.android.gms.cast.CastMediaControlIntent
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -15,7 +14,6 @@ import timber.log.Timber
  * serving as the application-level dependency container.
  */
 @HiltAndroidApp
-@UnstableApi
 class Application : Application() {
 
     override fun onCreate() {

@@ -1,6 +1,5 @@
 package com.example.readiumandroidtestapp.features.bookshelf.di
 
-import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.core.navigation.LocalNavigator
 import com.example.readiumandroidtestapp.core.navigation.route.Bookshelf
 import com.example.readiumandroidtestapp.core.navigation.route.NavEntryBuilder
@@ -17,7 +16,6 @@ import dagger.multibindings.IntoSet
  */
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-@UnstableApi
 object BookshelfNavModule {
 
     /**

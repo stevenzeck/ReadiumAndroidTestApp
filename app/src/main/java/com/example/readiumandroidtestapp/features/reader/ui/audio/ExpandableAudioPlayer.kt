@@ -1,6 +1,11 @@
 package com.example.readiumandroidtestapp.features.reader.ui.audio
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +29,12 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,9 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.media3.cast.MediaRouteButton
 import androidx.media3.cast.rememberMediaRouteButtonState
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.material3.MiniController
 import androidx.media3.ui.compose.material3.buttons.NextButton
@@ -62,7 +70,6 @@ import org.readium.r2.navigator.preferences.PreferencesEditor
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
-@UnstableApi
 @Composable
 fun ExpandableAudioPlayer(
     book: Book,
@@ -74,6 +81,58 @@ fun ExpandableAudioPlayer(
     onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
+    val postNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.POST_NOTIFICATIONS
+    } else null
+
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { isGranted ->
+        if (!isGranted) Timber.w("POST_NOTIFICATIONS permission denied")
+    }
+
+    LaunchedEffect(Unit) {
+        postNotificationPermission?.let {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    it,
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationLauncher.launch(it)
+            }
+        }
+    }
+
+    val nearbyPermissions = mutableListOf<String>()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        nearbyPermissions.add(Manifest.permission.BLUETOOTH_SCAN)
+        nearbyPermissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        nearbyPermissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+        nearbyPermissions.add(Manifest.permission.ACCESS_LOCAL_NETWORK)
+    }
+
+    var hasNearbyPermission by remember {
+        mutableStateOf(
+            nearbyPermissions.isEmpty() || nearbyPermissions.all {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            },
+        )
+    }
+
+    val nearbyLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) { permissions ->
+        hasNearbyPermission = permissions.entries.all { it.value }
+        if (!hasNearbyPermission) {
+            Timber.w("Nearby devices permission denied")
+        }
+    }
 
     val isExpanded by remember(sheetState) {
         derivedStateOf {
@@ -142,18 +201,12 @@ fun ExpandableAudioPlayer(
                             .padding(horizontal = 8.dp),
                         textAlign = TextAlign.Center,
                     )
-
-                    val context = LocalContext.current
-
-//                    Cannot get cast to work with on-device server (like ktor)
-//                    due to router/gateway configurations and policies
                     val isRemoteUrl = remember(book.href) {
                         book.href.startsWith("http://", ignoreCase = true) ||
                                 book.href.startsWith("https://", ignoreCase = true)
                     }
 
                     val isCastAvailable = remember(isRemoteUrl) {
-                        if (!isRemoteUrl) return@remember false
                         try {
                             CastContext.getSharedInstance(
                                 context,
@@ -166,7 +219,23 @@ fun ExpandableAudioPlayer(
                     }
 
                     if (isCastAvailable) {
-                        MediaRouteButton(state = rememberMediaRouteButtonState())
+                        if (hasNearbyPermission) {
+                            MediaRouteButton(state = rememberMediaRouteButtonState())
+                        } else {
+                            IconButton(
+                                onClick = {
+                                    if (nearbyPermissions.isNotEmpty()) {
+                                        nearbyLauncher.launch(nearbyPermissions.toTypedArray())
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.cast),
+                                    contentDescription = "Cast",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
 

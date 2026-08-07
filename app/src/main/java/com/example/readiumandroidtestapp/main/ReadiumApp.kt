@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
-import androidx.media3.common.util.UnstableApi
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.example.readiumandroidtestapp.R
@@ -73,7 +72,6 @@ import kotlinx.coroutines.launch
  * @param viewModel The global [MainViewModel] used for handling app-wide events like snackbar messages.
  */
 @OptIn(ExperimentalMaterial3Api::class)
-@UnstableApi
 @Composable
 fun ReadiumApp(
     entryBuilders: Set<NavEntryBuilder>,
@@ -205,7 +203,6 @@ fun ReadiumApp(
                     val audioNavigator by viewModel.audioNavigator.collectAsState()
                     val audioEditor by viewModel.audioPreferencesEditor.collectAsState()
                     val mediaController by viewModel.mediaController.collectAsState()
-                    val isAudioPlaying by viewModel.isAudioPlaying.collectAsState()
 
                     val currentBook = activeBook
                     val currentNavigator = audioNavigator
@@ -237,7 +234,7 @@ fun ReadiumApp(
 
                     BottomSheetScaffold(
                         scaffoldState = scaffoldState,
-                        sheetPeekHeight = if (isAudioPlaying) 70.dp else 0.dp,
+                        sheetPeekHeight = 70.dp,
                         sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         sheetDragHandle = null,
                         sheetShape = RectangleShape,

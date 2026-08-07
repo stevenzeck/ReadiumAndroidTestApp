@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.readiumandroidtestapp.R
@@ -45,7 +44,6 @@ import javax.inject.Inject
  * @param settingsRepository Repository for persisting app preferences.
  * @param urlGateway Gateway for parsing URLs, enabling unit testing without Android/Readium dependencies.
  */
-@UnstableApi
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -76,7 +74,7 @@ class MainViewModel @Inject constructor(
             true
         } catch (_: ClassNotFoundException) {
             false
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
         if (isTest) return
@@ -101,8 +99,6 @@ class MainViewModel @Inject constructor(
     val activeAudioBook = audioPlaybackManager.book
     val audioNavigator = audioPlaybackManager.navigator
     val audioPreferencesEditor = audioPlaybackManager.preferencesEditor
-    val audioPublication = audioPlaybackManager.publication
-    val isAudioPlaying = audioPlaybackManager.isPlaying
     val expandPlayerEvent = audioPlaybackManager.expandPlayerEvent
 
     /**

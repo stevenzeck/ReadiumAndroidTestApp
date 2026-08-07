@@ -6,15 +6,14 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.media3.common.util.UnstableApi
 import com.example.readiumandroidtestapp.main.MainActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.readium.navigator.media.audio.AudioNavigator
+import org.readium.r2.shared.publication.Publication
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@UnstableApi
 @Singleton
 class ReaderMediaBinder @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -25,6 +24,7 @@ class ReaderMediaBinder @Inject constructor(
     @OptIn(ExperimentalFoundationApi::class)
     fun bind(
         navigator: AudioNavigator<*, *>,
+        publication: Publication,
     ) {
         if (isServiceBound) return
 
@@ -39,7 +39,11 @@ class ReaderMediaBinder @Inject constructor(
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
 
-                binder?.openSession(navigator = navigator, activityIntent = activityIntent)
+                binder?.openSession(
+                    navigator = navigator,
+                    publication = publication,
+                    activityIntent = activityIntent,
+                )
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {

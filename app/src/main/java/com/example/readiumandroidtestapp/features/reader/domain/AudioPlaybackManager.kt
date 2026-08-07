@@ -77,7 +77,7 @@ class AudioPlaybackManager @Inject constructor(
                 .launchIn(this)
         }
 
-        mediaBinder.bind(navigator = audioNavigator)
+        mediaBinder.bind(navigator = audioNavigator, publication = publication)
     }
 
     fun close() {

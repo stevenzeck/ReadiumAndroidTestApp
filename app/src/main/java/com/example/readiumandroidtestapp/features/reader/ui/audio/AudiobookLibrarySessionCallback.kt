@@ -1,11 +1,9 @@
 package com.example.readiumandroidtestapp.features.reader.ui.audio
 
 import android.net.Uri
-import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
@@ -25,7 +23,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(UnstableApi::class)
 class AudiobookLibrarySessionCallback @Inject constructor(
     private val bookRepository: BookRepository,
     private val openPublicationUseCase: OpenPublicationUseCase,

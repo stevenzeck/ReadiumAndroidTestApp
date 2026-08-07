@@ -27,7 +27,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -65,6 +66,12 @@ kotlin {
             "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
             "-opt-in=org.readium.r2.shared.ExperimentalReadiumApi",
         )
+    }
+}
+
+android {
+    lint {
+        disable.add("UnsafeOptInUsageError")
     }
 }
 
@@ -106,6 +113,10 @@ dependencies {
 //    implementation(libs.bundles.readium.navigator2)
     implementation(libs.bundles.paging)
     implementation(libs.bundles.media3)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.partial.content)
+    implementation(libs.ktor.server.cors)
     implementation(libs.bundles.coil)
 
     // --- Compose & Navigation ---

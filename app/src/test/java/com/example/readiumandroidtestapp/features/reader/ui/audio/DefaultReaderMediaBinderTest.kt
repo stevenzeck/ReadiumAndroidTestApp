@@ -16,6 +16,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.navigator.media.audio.AudioNavigator
+import org.readium.r2.shared.publication.Publication
 import org.robolectric.Shadows
 
 @RunWith(AndroidJUnit4::class)
@@ -28,7 +29,7 @@ class DefaultReaderMediaBinderTest {
         val binder = ReaderMediaBinder(context = application)
         val navigator = mockk<AudioNavigator<*, *>>()
 
-        binder.bind(navigator = navigator)
+        binder.bind(navigator = navigator, publication = mockk<Publication>())
 
         val shadowApp = Shadows.shadowOf(application)
         val boundServices = shadowApp.boundServiceConnections
@@ -52,7 +53,7 @@ class DefaultReaderMediaBinderTest {
             )
         } returns true
 
-        binder.bind(navigator = navigator)
+        binder.bind(navigator = navigator, publication = mockk<Publication>())
 
         verify {
             mockContext.bindService(
@@ -75,6 +76,7 @@ class DefaultReaderMediaBinderTest {
         verify {
             serviceBinder.openSession(
                 navigator = navigator,
+                publication = any(),
                 activityIntent = any(),
             )
         }
@@ -95,7 +97,7 @@ class DefaultReaderMediaBinderTest {
             )
         } returns true
 
-        binder.bind(navigator = navigator)
+        binder.bind(navigator = navigator, publication = mockk<Publication>())
         binder.unbind()
 
         verify {
