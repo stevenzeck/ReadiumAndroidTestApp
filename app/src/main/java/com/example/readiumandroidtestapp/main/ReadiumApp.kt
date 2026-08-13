@@ -20,7 +20,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -165,7 +165,7 @@ fun ReadiumApp(
             // Standard App UI Shell
             NavigationSuiteScaffold(
                 layoutType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(
-                    adaptiveInfo = currentWindowAdaptiveInfo(),
+                    adaptiveInfo = currentWindowAdaptiveInfoV2(),
                 ),
                 navigationSuiteItems = {
                     navigationState.topLevelDestinations.forEach { screen ->
