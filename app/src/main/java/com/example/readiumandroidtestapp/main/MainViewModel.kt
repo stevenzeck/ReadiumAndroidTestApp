@@ -9,11 +9,10 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.data.book.ImportError
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
+import com.example.readiumandroidtestapp.core.data.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
-import com.example.readiumandroidtestapp.core.domain.gateway.UrlGateway
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
-import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import com.example.readiumandroidtestapp.features.reader.ui.audio.MediaService
@@ -27,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import timber.log.Timber
 import javax.inject.Inject
@@ -42,7 +42,6 @@ import javax.inject.Inject
  * @param bookRepository Repository for managing book data and imports.
  * @param userMessageManager Utility class for queuing user-facing messages.
  * @param settingsRepository Repository for persisting app preferences.
- * @param urlGateway Gateway for parsing URLs, enabling unit testing without Android/Readium dependencies.
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -50,7 +49,6 @@ class MainViewModel @Inject constructor(
     private val bookRepository: BookRepository,
     private val userMessageManager: UserMessageManager,
     settingsRepository: SettingsRepository,
-    private val urlGateway: UrlGateway,
     audioPlaybackManager: AudioPlaybackManager,
 ) : ViewModel() {
 
@@ -59,7 +57,7 @@ class MainViewModel @Inject constructor(
      */
     val userMessages = userMessageManager.messages
 
-    private val _mediaController = MutableStateFlow<MediaController?>(null)
+    private val _mediaController = MutableStateFlow<MediaController?>(value = null)
     val mediaController: StateFlow<MediaController?> = _mediaController.asStateFlow()
 
     private var controllerFuture: ListenableFuture<MediaController>? = null
@@ -116,7 +114,7 @@ class MainViewModel @Inject constructor(
     fun importBook(uri: Uri) {
         viewModelScope.launch {
             val result = bookRepository.addBook(uri = uri)
-            handleImportResult(result)
+            handleImportResult(result = result)
         }
     }
 
@@ -125,14 +123,14 @@ class MainViewModel @Inject constructor(
      */
     fun importBook(url: String) {
         viewModelScope.launch {
-            val absoluteUrl = urlGateway.parseAbsoluteUrl(url)
+            val absoluteUrl = AbsoluteUrl(url = url)
             if (absoluteUrl == null) {
                 userMessageManager.emitMessage(messageId = R.string.error_invalid_url)
                 return@launch
             }
 
             val result = bookRepository.addBook(url = absoluteUrl)
-            handleImportResult(result)
+            handleImportResult(result = result)
         }
     }
 

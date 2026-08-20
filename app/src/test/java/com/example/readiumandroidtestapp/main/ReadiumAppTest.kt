@@ -14,10 +14,9 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
+import com.example.readiumandroidtestapp.core.data.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
-import com.example.readiumandroidtestapp.core.domain.gateway.UrlGateway
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
-import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.navigation.LocalNavigator
 import com.example.readiumandroidtestapp.core.navigation.route.Account
 import com.example.readiumandroidtestapp.core.navigation.route.Bookshelf
@@ -44,7 +43,6 @@ class ReadiumAppTest {
     private val bookRepository: BookRepository = mockk(relaxed = true)
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
-    private val urlGateway: UrlGateway = mockk(relaxed = true)
     private val audioPlaybackManager: AudioPlaybackManager =
         mockk(relaxed = true)
 
@@ -67,7 +65,6 @@ class ReadiumAppTest {
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
-            urlGateway = urlGateway,
             context = ApplicationProvider.getApplicationContext(),
             audioPlaybackManager = audioPlaybackManager,
         )

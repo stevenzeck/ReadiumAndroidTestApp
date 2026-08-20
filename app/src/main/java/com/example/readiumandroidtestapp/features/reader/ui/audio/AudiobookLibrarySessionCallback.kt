@@ -9,7 +9,7 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionError
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import com.example.readiumandroidtestapp.features.reader.domain.AudiobookPlaybackLauncher
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase

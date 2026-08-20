@@ -1,6 +1,6 @@
 package com.example.readiumandroidtestapp.features.reader.domain
 
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.util.mediatype.MediaType
 import javax.inject.Inject

@@ -1,13 +1,12 @@
 package com.example.readiumandroidtestapp.core.data.book
 
+import android.content.Context
+import android.net.Uri
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
-import com.example.readiumandroidtestapp.core.data.storage.FakeStorageGateway
-import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
-import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
+import com.example.readiumandroidtestapp.core.data.storage.StorageManager
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
-import com.example.readiumandroidtestapp.core.domain.network.HttpResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -16,44 +15,70 @@ import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
+import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.http.DefaultHttpClient
 import org.readium.r2.shared.util.mediatype.MediaType
+import org.readium.r2.streamer.PublicationOpener
 import java.io.File
-import java.nio.file.Files
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class BookImporterTest {
 
-    private val tempDir = Files.createTempDirectory("test_storage").toFile()
-    private val fakeStorageGateway = FakeStorageGateway(filesDir = tempDir)
+    private lateinit var context: Context
+    private lateinit var storageManager: StorageManager
+    private lateinit var server: MockWebServer
 
     private val booksDao: BooksDao = mockk(relaxed = true)
-    private val assetRetriever: AssetRetrieverGateway = mockk()
-    private val publicationOpener: PublicationOpenerGateway = mockk()
-    private val httpGateway: HttpGateway = mockk()
+    private val assetRetriever: AssetRetriever = mockk()
+    private val publicationOpener: PublicationOpener = mockk()
     private val coverImageSaver: CoverImageSaver = mockk()
 
-    private val importer = BookImporter(
-        storageGateway = fakeStorageGateway,
-        booksDao = booksDao,
-        assetRetriever = assetRetriever,
-        publicationOpener = publicationOpener,
-        httpGateway = httpGateway,
-        coverImageSaver = coverImageSaver,
-        ioDispatcher = UnconfinedTestDispatcher(),
-    )
+    private lateinit var importer: BookImporter
+
+    @Before
+    fun setUp() {
+        server = MockWebServer()
+        server.start()
+
+        context = ApplicationProvider.getApplicationContext()
+        storageManager = StorageManager(context = context)
+
+        importer = BookImporter(
+            storageManager = storageManager,
+            booksDao = booksDao,
+            assetRetriever = assetRetriever,
+            publicationOpener = publicationOpener,
+            httpClient = DefaultHttpClient(),
+            coverImageSaver = coverImageSaver,
+            ioDispatcher = UnconfinedTestDispatcher(),
+        )
+    }
+
+    @After
+    fun tearDown() {
+        server.shutdown()
+    }
 
     @Test
     fun `importFromUri saves file and inserts book into database`() = runTest {
         // Arrange
+        val testFile = File(context.cacheDir, "source_book.epub")
+        testFile.writeText(text = "Local Book Content")
+        val uri = Uri.fromFile(testFile)
+
         val mockAsset = mockk<Asset>()
         every { mockAsset.format.mediaType } returns MediaType.EPUB
 
@@ -62,26 +87,27 @@ class BookImporterTest {
 
         coEvery {
             assetRetriever.retrieve(url = any())
-        } returns Result.success(value = mockAsset)
+        } returns Try.success(success = mockAsset)
 
         coEvery {
             publicationOpener.open(asset = mockAsset, allowUserInteraction = false)
-        } returns Result.success(value = mockPublication)
+        } returns Try.success(success = mockPublication)
 
         coEvery { coverImageSaver.saveCover(publication = mockPublication) } returns null
         coEvery { booksDao.insertBook(book = any()) } returns 1L
 
         // Act
-        val result = importer.importFromUri(uri = mockk(relaxed = true))
+        val result = importer.importFromUri(uri = uri)
 
         // Assert
         assertTrue("Result should be success", result.isSuccess)
 
         val savedBook = result.getOrNull()!!
         val savedFile = File(savedBook.href)
+        assertTrue("Saved file should exist", savedFile.exists())
         assertEquals(
-            "File content should match FakeStorageGateway default",
-            "Fake Book Content",
+            "File content should match original",
+            "Local Book Content",
             savedFile.readText(),
         )
 
@@ -96,11 +122,12 @@ class BookImporterTest {
     fun `importFromUrl downloads file and inserts book`() = runTest {
         // Arrange
         val remoteContent = "Fake Remote Content"
-        val httpResult = HttpResult(
-            body = remoteContent.toByteArray(),
-            contentType = "application/epub+zip",
+        server.enqueue(
+            response = MockResponse()
+                .setBody(body = remoteContent)
+                .setHeader(name = "Content-Type", value = "application/epub+zip")
+                .setResponseCode(code = 200),
         )
-        coEvery { httpGateway.fetch(url = any()) } returns Try.success(success = httpResult)
 
         val mockAsset = mockk<Asset>()
         every { mockAsset.format.mediaType } returns MediaType.EPUB
@@ -110,17 +137,17 @@ class BookImporterTest {
 
         coEvery {
             assetRetriever.retrieve(url = any())
-        } returns Result.success(value = mockAsset)
+        } returns Try.success(success = mockAsset)
 
         coEvery {
             publicationOpener.open(asset = mockAsset, allowUserInteraction = false)
-        } returns Result.success(value = mockPublication)
+        } returns Try.success(success = mockPublication)
 
         coEvery { coverImageSaver.saveCover(publication = mockPublication) } returns null
         coEvery { booksDao.insertBook(book = any()) } returns 1L
 
         // Act
-        val remoteUrl = AbsoluteUrl(url = "http://example.com/book.epub")!!
+        val remoteUrl = AbsoluteUrl(url = server.url(path = "/book.epub").toString())!!
         val result = importer.importFromUrl(url = remoteUrl)
 
         // Assert

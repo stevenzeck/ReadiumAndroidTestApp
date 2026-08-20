@@ -37,17 +37,17 @@ class MediaService : MediaLibraryService() {
     @Inject
     lateinit var sessionCallback: AudiobookLibrarySessionCallback
 
+    @Inject
+    lateinit var localAudioServer: LocalAudioServer
+
     private var mediaLibrarySession: MediaLibrarySession? = null
     private lateinit var fallbackPlayer: Player
     private var castPlayer: CastPlayer? = null
     private var localPlayer: Player? = null
 
-    private var localAudioServer: LocalAudioServer? = null
-
     override fun onCreate() {
         super.onCreate()
-        localAudioServer = LocalAudioServer()
-        localAudioServer?.start()
+        localAudioServer.start()
 
         setMediaNotificationProvider(DefaultMediaNotificationProvider.Builder(this).build())
 
@@ -106,7 +106,7 @@ class MediaService : MediaLibraryService() {
                     return
                 }
 
-            localAudioServer?.publication = publication
+            localAudioServer.publication = publication
 
             localPlayer = player
 
@@ -161,7 +161,7 @@ class MediaService : MediaLibraryService() {
                     } else {
                         originalUri
                     }
-                    val remoteUrl = localAudioServer?.getServerUrl(filePath = path)
+                    val remoteUrl = localAudioServer.getServerUrl(filePath = path)
                     if (remoteUrl != null) {
                         Timber.i("Casting local file via Ktor server: $remoteUrl")
                         finalItem = originalItem.buildUpon().setUri(remoteUrl).build()
@@ -199,7 +199,9 @@ class MediaService : MediaLibraryService() {
 
     override fun onDestroy() {
         binder.closeSession()
-        localAudioServer?.stop()
+        if (this::localAudioServer.isInitialized) {
+            localAudioServer.stop()
+        }
         mediaLibrarySession?.let { session ->
             removeSession(session)
             session.release()

@@ -1,9 +1,8 @@
 package com.example.readiumandroidtestapp.features.bookshelf.ui
 
 import com.example.readiumandroidtestapp.R
-import com.example.readiumandroidtestapp.core.data.repository.FakeBookRepository
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import io.mockk.coEvery
@@ -32,16 +31,17 @@ import org.readium.r2.shared.util.mediatype.MediaType
 class BookshelfViewModelTest {
 
     private lateinit var viewModel: BookshelfViewModel
-    private lateinit var fakeRepository: FakeBookRepository
+    private val bookRepository: BookRepository = mockk(relaxed = true)
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val audioPlaybackManager: AudioPlaybackManager = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
+    private val booksFlow = MutableStateFlow<List<Book>>(value = emptyList())
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher = testDispatcher)
-        fakeRepository = FakeBookRepository()
-        every { audioPlaybackManager.book } returns MutableStateFlow(null)
+        every { bookRepository.books } returns booksFlow
+        every { audioPlaybackManager.book } returns MutableStateFlow(value = null)
     }
 
     @After
@@ -69,10 +69,10 @@ class BookshelfViewModelTest {
                 cover = null,
             ),
         )
-        fakeRepository.addBooks(*books.toTypedArray())
+        booksFlow.value = books
 
         viewModel = BookshelfViewModel(
-            bookRepository = fakeRepository,
+            bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             audioPlaybackManager = audioPlaybackManager,
         )
@@ -91,8 +91,10 @@ class BookshelfViewModelTest {
 
     @Test
     fun `uiState emits Empty when no books exist`() = runTest(context = testDispatcher) {
+        booksFlow.value = emptyList()
+
         viewModel = BookshelfViewModel(
-            bookRepository = fakeRepository,
+            bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             audioPlaybackManager = audioPlaybackManager,
         )
@@ -109,7 +111,7 @@ class BookshelfViewModelTest {
     }
 
     @Test
-    fun `deleteBook removes book from uiState`() = runTest(testDispatcher) {
+    fun `deleteBook removes book from uiState`() = runTest(context = testDispatcher) {
         val book = Book(
             id = 123L,
             href = "href",
@@ -118,15 +120,19 @@ class BookshelfViewModelTest {
             mediaType = MediaType.EPUB,
             cover = null,
         )
-        fakeRepository.addBooks(book)
+        booksFlow.value = listOf(book)
+        coEvery { bookRepository.deleteBook(bookId = book.id) } answers {
+            booksFlow.value = emptyList()
+            Try.success(success = Unit)
+        }
 
         viewModel = BookshelfViewModel(
-            bookRepository = fakeRepository,
+            bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             audioPlaybackManager = audioPlaybackManager,
         )
 
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        backgroundScope.launch(context = UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect()
         }
         advanceUntilIdle()
@@ -144,8 +150,7 @@ class BookshelfViewModelTest {
     }
 
     @Test
-    fun `deleteBook failure emits error message`() = runTest(testDispatcher) {
-        val mockRepo = mockk<BookRepository>(relaxed = true)
+    fun `deleteBook failure emits error message`() = runTest(context = testDispatcher) {
         val book = Book(
             id = 123L,
             href = "href",
@@ -155,14 +160,17 @@ class BookshelfViewModelTest {
             cover = null,
         )
 
-        coEvery { mockRepo.deleteBook(bookId = any()) } returns Try.failure(failure = Exception("Fail"))
+        coEvery { bookRepository.deleteBook(bookId = any()) } returns Try.failure(
+            failure = Exception(
+                "Fail",
+            ),
+        )
 
-        val viewModelWithMock =
-            BookshelfViewModel(
-                bookRepository = mockRepo,
-                userMessageManager = userMessageManager,
-                audioPlaybackManager = audioPlaybackManager,
-            )
+        val viewModelWithMock = BookshelfViewModel(
+            bookRepository = bookRepository,
+            userMessageManager = userMessageManager,
+            audioPlaybackManager = audioPlaybackManager,
+        )
 
         viewModelWithMock.deleteBook(bookId = book.id)
         advanceUntilIdle()

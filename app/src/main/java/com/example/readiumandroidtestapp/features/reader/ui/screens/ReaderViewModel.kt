@@ -1,13 +1,12 @@
 package com.example.readiumandroidtestapp.features.reader.ui.screens
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.core.domain.model.Bookmark
 import com.example.readiumandroidtestapp.core.domain.model.ReaderAnnotation
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
 import com.example.readiumandroidtestapp.features.reader.domain.ReaderDecorationManager
@@ -56,7 +55,6 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel(assistedFactory = ReaderViewModel.Factory::class)
 class ReaderViewModel @AssistedInject constructor(
-    private val application: Application,
     private val bookRepository: BookRepository,
     private val openPublicationUseCase: OpenPublicationUseCase,
     private val searchManager: ReaderSearchManager,
@@ -162,7 +160,6 @@ class ReaderViewModel @AssistedInject constructor(
                 setupSession(
                     book = book,
                     publication = openedBook.publication,
-                    asset = openedBook.asset,
                 )
             }.onFailure { error ->
                 uiState.value = ReaderUiState.Error(
@@ -203,7 +200,7 @@ class ReaderViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun setupSession(book: Book, publication: Publication, asset: Asset) {
+    private suspend fun setupSession(book: Book, publication: Publication) {
         if (publication.conformsTo(profile = Publication.Profile.AUDIOBOOK)) {
             sessionFactory.createAudioSession(book, publication).onSuccess { audioState ->
                 startObservingAudioLocator(locatorFlow = audioState.navigator.currentLocator)
@@ -313,7 +310,6 @@ class ReaderViewModel @AssistedInject constructor(
                 bookId = bookId,
                 publication = pub,
                 ttsManager = ttsManager,
-                application = application,
             )
             if (session != null) {
                 settingsSheetState.value = ReaderSettingsSheet.Tts(session = session)
@@ -378,7 +374,6 @@ class ReaderViewModel @AssistedInject constructor(
                     bookId = bookId,
                     publication = visualState.publication,
                     ttsManager = ttsManager,
-                    application = application,
                 )
 
                 if (newSession != null) {

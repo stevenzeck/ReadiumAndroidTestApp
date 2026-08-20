@@ -12,14 +12,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class DataStoreSettingsRepositoryTest {
+class SettingsRepositoryTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val repository = DataStoreSettingsRepository(context = context)
+    private val repository = SettingsRepository(context = context)
 
     @Before
     fun setUp() = runTest {
-        repository.setAppTheme(AppTheme.SYSTEM)
+        repository.setAppTheme(theme = AppTheme.SYSTEM)
     }
 
     @Test

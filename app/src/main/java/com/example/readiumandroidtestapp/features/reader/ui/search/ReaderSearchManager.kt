@@ -9,7 +9,6 @@ import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.example.readiumandroidtestapp.features.reader.data.SearchPagingSource
-import com.example.readiumandroidtestapp.features.reader.domain.SearchGateway
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,14 +25,13 @@ import kotlinx.coroutines.flow.update
 import org.readium.r2.navigator.Decoration
 import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.Publication
+import org.readium.r2.shared.publication.services.search.search
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Singleton
-class ReaderSearchManager @Inject constructor(
-    private val searchGateway: SearchGateway,
-) {
+class ReaderSearchManager @Inject constructor() {
 
     val searchQuery: StateFlow<String?> field = MutableStateFlow<String?>(value = null)
 
@@ -68,7 +66,7 @@ class ReaderSearchManager @Inject constructor(
             if (query.isNullOrBlank() || pub == null) {
                 flowOf(value = PagingData.empty())
             } else {
-                val iterator = searchGateway.search(publication = pub, query = query)
+                val iterator = pub.search(query = query)
 
                 if (iterator == null) {
                     flowOf(value = PagingData.empty())
@@ -84,7 +82,7 @@ class ReaderSearchManager @Inject constructor(
                                 val beforeTitle = before?.locator?.title
                                 val afterTitle = after?.locator?.title
                                 if (afterTitle != null && beforeTitle != afterTitle) {
-                                    SearchItem.Header(afterTitle)
+                                    SearchItem.Header(title = afterTitle)
                                 } else {
                                     null
                                 }

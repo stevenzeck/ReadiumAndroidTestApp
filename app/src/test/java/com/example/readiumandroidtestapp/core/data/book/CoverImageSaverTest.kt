@@ -1,40 +1,45 @@
 package com.example.readiumandroidtestapp.core.data.book
 
+import android.content.Context
 import android.graphics.Bitmap
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.readiumandroidtestapp.core.data.storage.FakeStorageGateway
-import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
+import com.example.readiumandroidtestapp.core.data.storage.StorageManager
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.readium.r2.shared.publication.Manifest
 import org.readium.r2.shared.publication.Metadata
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.CoverService
-import org.readium.r2.shared.util.AbsoluteUrl
+import org.readium.r2.shared.util.http.HttpClient
 import java.io.File
-import java.nio.file.Files
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class CoverImageSaverTest {
 
-    private val tempDir = Files.createTempDirectory("robo_test").toFile()
-    private val fakeGateway = FakeStorageGateway(filesDir = tempDir)
-    private val fakeHttpGateway =
-        object : HttpGateway {
-            override suspend fun fetch(url: AbsoluteUrl) =
-                org.readium.r2.shared.util.Try.failure(Exception())
-        }
-    private val saver =
-        CoverImageSaver(storageGateway = fakeGateway, httpGateway = fakeHttpGateway)
+    private lateinit var context: Context
+    private lateinit var storageManager: StorageManager
+    private val httpClient: HttpClient = mockk(relaxed = true)
+    private lateinit var saver: CoverImageSaver
 
-    @After
-    fun tearDown() {
-        tempDir.deleteRecursively()
+    @Before
+    fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
+        storageManager = StorageManager(context = context)
+        saver = CoverImageSaver(
+            storageManager = storageManager,
+            httpClient = httpClient,
+            ioDispatcher = UnconfinedTestDispatcher(),
+        )
     }
 
     @Test

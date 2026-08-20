@@ -1,13 +1,14 @@
 package com.example.readiumandroidtestapp.main
 
+import android.content.Context
 import android.net.Uri
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.R
 import com.example.readiumandroidtestapp.core.data.book.ImportError
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
+import com.example.readiumandroidtestapp.core.data.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.designsystem.theme.AppTheme
-import com.example.readiumandroidtestapp.core.domain.gateway.UrlGateway
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
-import com.example.readiumandroidtestapp.core.domain.repository.SettingsRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import io.mockk.coEvery
@@ -27,20 +28,21 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.mediatype.MediaType
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(AndroidJUnit4::class)
 class MainViewModelTest {
 
     private val bookRepository: BookRepository = mockk()
     private val userMessageManager: UserMessageManager = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk()
-    private val urlGateway: UrlGateway = mockk()
     private val audioPlaybackManager: AudioPlaybackManager =
         mockk(relaxed = true)
-    private val context: android.content.Context = mockk(relaxed = true)
+    private val context: Context = mockk(relaxed = true)
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var viewModel: MainViewModel
@@ -49,7 +51,7 @@ class MainViewModelTest {
 
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
+        Dispatchers.setMain(dispatcher = testDispatcher)
         every { settingsRepository.appTheme } returns appThemeFlow
 
         // Mock StateFlows for AudioPlaybackManager
@@ -61,7 +63,6 @@ class MainViewModelTest {
             bookRepository = bookRepository,
             userMessageManager = userMessageManager,
             settingsRepository = settingsRepository,
-            urlGateway = urlGateway,
             context = context,
             audioPlaybackManager = audioPlaybackManager,
         )
@@ -125,8 +126,7 @@ class MainViewModelTest {
             mediaType = MediaType.EPUB,
             cover = null,
         )
-        val absoluteUrl = mockk<AbsoluteUrl>()
-        every { urlGateway.parseAbsoluteUrl(urlString) } returns absoluteUrl
+        val absoluteUrl = AbsoluteUrl(url = urlString)!!
         coEvery { bookRepository.addBook(url = any()) } returns Try.success(success = book)
 
         viewModel.importBook(url = urlString)
@@ -138,8 +138,7 @@ class MainViewModelTest {
 
     @Test
     fun `importBook with invalid URL emits error message`() = runTest {
-        val urlString = ""
-        every { urlGateway.parseAbsoluteUrl(url = urlString) } returns null
+        val urlString = "invalid url :"
 
         viewModel.importBook(url = urlString)
         advanceUntilIdle()

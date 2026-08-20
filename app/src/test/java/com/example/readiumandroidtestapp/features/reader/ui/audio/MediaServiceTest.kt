@@ -44,6 +44,7 @@ class MediaServiceTest {
         } returns mockSession
         service.mediaSessionFactory = sessionFactory
         service.sessionCallback = mockk(relaxed = true)
+        service.localAudioServer = mockk(relaxed = true)
         controller.create()
 
         val intent = Intent(ApplicationProvider.getApplicationContext(), MediaService::class.java)
@@ -51,6 +52,8 @@ class MediaServiceTest {
 
         assertNotNull(binder)
         assertTrue(binder is MediaService.LocalBinder)
+
+        controller.destroy()
     }
 
     @Test
@@ -61,6 +64,7 @@ class MediaServiceTest {
         val sessionFactory = mockk<MediaSessionFactory>(relaxed = true)
         service.mediaSessionFactory = sessionFactory
         service.sessionCallback = mockk(relaxed = true)
+        service.localAudioServer = mockk(relaxed = true)
 
         val player = TestExoPlayerBuilder(ApplicationProvider.getApplicationContext()).build()
 
@@ -98,6 +102,8 @@ class MediaServiceTest {
         session.release()
         ShadowLooper.shadowMainLooper().idle()
         player.release()
+
+        controller.destroy()
     }
 
     @Test
@@ -108,8 +114,8 @@ class MediaServiceTest {
         val sessionFactory = mockk<MediaSessionFactory>(relaxed = true)
         service.mediaSessionFactory = sessionFactory
         service.sessionCallback = mockk(relaxed = true)
+        service.localAudioServer = mockk(relaxed = true)
 
-        // Mock a basic session just to avoid null pointer in onCreate
         val player = TestExoPlayerBuilder(ApplicationProvider.getApplicationContext()).build()
         val session = MediaLibrarySession.Builder(service, player, mockk(relaxed = true))
             .setId("test_session_ignore_${Uuid.random()}").build()
@@ -137,6 +143,8 @@ class MediaServiceTest {
                 activityIntent = any(),
             )
         }
+
+        controller.destroy()
     }
 
     @Test
@@ -147,6 +155,7 @@ class MediaServiceTest {
         val sessionFactory = mockk<MediaSessionFactory>(relaxed = true)
         service.mediaSessionFactory = sessionFactory
         service.sessionCallback = mockk(relaxed = true)
+        service.localAudioServer = mockk(relaxed = true)
 
         val player = TestExoPlayerBuilder(ApplicationProvider.getApplicationContext()).build()
 
@@ -176,6 +185,7 @@ class MediaServiceTest {
         ShadowLooper.shadowMainLooper().idle()
 
         player.release()
+        controller.destroy()
     }
 
     @Test
@@ -186,6 +196,7 @@ class MediaServiceTest {
         val sessionFactory = mockk<MediaSessionFactory>(relaxed = true)
         service.mediaSessionFactory = sessionFactory
         service.sessionCallback = mockk(relaxed = true)
+        service.localAudioServer = mockk(relaxed = true)
 
         val player = TestExoPlayerBuilder(ApplicationProvider.getApplicationContext()).build()
 

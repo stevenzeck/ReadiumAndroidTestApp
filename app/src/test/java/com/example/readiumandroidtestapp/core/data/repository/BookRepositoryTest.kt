@@ -1,8 +1,11 @@
 package com.example.readiumandroidtestapp.core.data.repository
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.readiumandroidtestapp.core.data.book.BookImporter
 import com.example.readiumandroidtestapp.core.data.database.FakeBooksDao
-import com.example.readiumandroidtestapp.core.data.storage.FakeStorageGateway
+import com.example.readiumandroidtestapp.core.data.storage.StorageManager
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,34 +16,42 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.readium.r2.shared.util.mediatype.MediaType
 import java.io.File
-import java.nio.file.Files
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DefaultBookRepositoryTest {
+@RunWith(AndroidJUnit4::class)
+class BookRepositoryTest {
 
+    private lateinit var context: Context
+    private lateinit var storageManager: StorageManager
     private val booksDao = FakeBooksDao()
-    private val tempDir = Files.createTempDirectory("repo_test").toFile()
-    private val storageGateway = FakeStorageGateway(filesDir = tempDir)
     private val bookImporter: BookImporter = mockk()
+    private lateinit var repository: BookRepository
 
-    private val repository = DefaultBookRepository(
-        booksDao = booksDao,
-        bookImporter = bookImporter,
-        storageGateway = storageGateway,
-        ioDispatcher = UnconfinedTestDispatcher(),
-    )
+    @Before
+    fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
+        storageManager = StorageManager(context = context)
+        repository = BookRepository(
+            booksDao = booksDao,
+            bookImporter = bookImporter,
+            storageManager = storageManager,
+            ioDispatcher = UnconfinedTestDispatcher(),
+        )
+    }
 
     @Test
     fun `deleteBook removes book from database and storage`() = runTest {
         // Arrange
-        val bookFile = File(tempDir, "test_book.epub")
+        val bookFile = File(storageManager.filesDir, "test_book.epub")
         bookFile.createNewFile()
         assertTrue("File should exist before test", bookFile.exists())
 
-        // 2. Add the book to the Fake Database
+        // Add the book to the Fake Database
         val book = Book(
             id = 1L,
             href = bookFile.absolutePath,

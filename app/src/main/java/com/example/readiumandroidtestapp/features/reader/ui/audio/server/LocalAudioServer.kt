@@ -21,7 +21,10 @@ import java.io.File
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
-class LocalAudioServer(private val port: Int = 8080) {
+import javax.inject.Inject
+
+class LocalAudioServer @Inject constructor() {
+    private val port: Int = 8080
     private var server: EmbeddedServer<*, *>? = null
     var publication: Publication? = null
 

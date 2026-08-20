@@ -1,8 +1,7 @@
 package com.example.readiumandroidtestapp.features.reader.ui.screens
 
-import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.readiumandroidtestapp.core.data.repository.FakeBookRepository
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import com.example.readiumandroidtestapp.features.reader.domain.OpenPublicationUseCase
@@ -41,7 +40,7 @@ import org.readium.r2.shared.util.mediatype.MediaType
 class ReaderViewModelTest {
 
     private lateinit var viewModel: ReaderViewModel
-    private val bookRepository = FakeBookRepository()
+    private val bookRepository: BookRepository = mockk(relaxed = true)
     private val openPublicationUseCase: OpenPublicationUseCase = mockk()
     private val sessionFactory: ReaderSessionFactory = mockk()
     private val searchManager: ReaderSearchManager = mockk(relaxed = true)
@@ -50,7 +49,6 @@ class ReaderViewModelTest {
     private val decorationManager: ReaderDecorationManager = mockk(relaxed = true)
     private val audioPlaybackManager: AudioPlaybackManager =
         mockk(relaxed = true)
-    private val application: Application = mockk(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -71,10 +69,7 @@ class ReaderViewModelTest {
         every { audioPlaybackManager.book } returns MutableStateFlow(null)
         every { audioPlaybackManager.navigator } returns MutableStateFlow(null)
         every { audioPlaybackManager.publication } returns MutableStateFlow(null)
-
-        runTest(context = testDispatcher) {
-            bookRepository.addBooks(testBook)
-        }
+        coEvery { bookRepository.get(bookId = testBook.id) } returns testBook
     }
 
     @After
@@ -217,7 +212,6 @@ class ReaderViewModelTest {
                 bookId = any(),
                 publication = any(),
                 ttsManager = any(),
-                application = any(),
             )
         } returns mockSession
 
@@ -267,7 +261,6 @@ class ReaderViewModelTest {
 
     private fun createViewModel(bookId: Long): ReaderViewModel {
         return ReaderViewModel(
-            application = application,
             bookRepository = bookRepository,
             openPublicationUseCase = openPublicationUseCase,
             searchManager = searchManager,

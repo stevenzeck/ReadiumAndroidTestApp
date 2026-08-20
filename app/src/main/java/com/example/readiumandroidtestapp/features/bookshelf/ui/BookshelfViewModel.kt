@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.readiumandroidtestapp.R
+import com.example.readiumandroidtestapp.core.data.repository.BookRepository
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.domain.repository.BookRepository
 import com.example.readiumandroidtestapp.core.utils.UserMessageManager
 import com.example.readiumandroidtestapp.features.reader.domain.AudioPlaybackManager
 import dagger.hilt.android.lifecycle.HiltViewModel

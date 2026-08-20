@@ -167,20 +167,8 @@ kover {
                     "**.Routes",
                     "**.NavEntryBuilder",
 
-                    // 2. The "Wrappers" (Pass-throughs not being tested)
-                    "**.*NavigatorFactoryWrapper",
-                    "**.DefaultTtsNavigatorGateway",
-                    "**.DefaultTtsServiceGateway",
-                    "**.DefaultSearchGateway",
-                    "**.DefaultPreferencesSerializerFactory",
-                    "**.AndroidTtsNavigatorFactoryProvider",
-
-                    // 3. System & Service Glue (Hard to test, low value)
-                    "**.DefaultReaderMediaBinder*",
+                    // 2. System & Service Glue (Hard to test, low value)
                     "**.MediaService*",
-
-                    // 4. Data Class Boilerplate (equals/hashcode noise)
-                    "**.HttpResult",
 
                     // 5. Generated / Dagger internals
                     "*ComposableSingletons*",

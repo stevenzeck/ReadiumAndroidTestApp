@@ -8,10 +8,11 @@ import androidx.paging.PagingData
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.readiumandroidtestapp.features.reader.domain.SearchGateway
 import com.example.readiumandroidtestapp.features.reader.ui.state.SearchItem
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,6 +34,7 @@ import org.readium.r2.shared.publication.Locator
 import org.readium.r2.shared.publication.LocatorCollection
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.publication.services.search.SearchIterator
+import org.readium.r2.shared.publication.services.search.search
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
@@ -41,17 +43,18 @@ import org.readium.r2.shared.util.mediatype.MediaType
 @RunWith(AndroidJUnit4::class)
 class ReaderSearchManagerTest {
 
-    private val searchGateway: SearchGateway = mockk()
-    private val manager = ReaderSearchManager(searchGateway = searchGateway)
+    private val manager = ReaderSearchManager()
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher = testDispatcher)
+        mockkStatic("org.readium.r2.shared.publication.services.search.SearchServiceKt")
     }
 
     @After
     fun tearDown() {
+        unmockkStatic("org.readium.r2.shared.publication.services.search.SearchServiceKt")
         Dispatchers.resetMain()
     }
 
@@ -123,20 +126,17 @@ class ReaderSearchManagerTest {
         )
 
         coEvery {
-            searchGateway.search(
-                publication = publication,
-                query = "query",
-            )
+            publication.search(query = "query")
         } returns iterator
 
         val job = Job()
-        val scope = CoroutineScope(testDispatcher + job)
+        val scope = CoroutineScope(context = testDispatcher + job)
         val results = manager.getSearchResults(publicationFlow = publicationFlow, scope = scope)
 
         val pagingData = results.first()
 
         val owner = object : LifecycleOwner {
-            val registry = LifecycleRegistry(this)
+            val registry = LifecycleRegistry(provider = this)
             override val lifecycle = registry
         }
         owner.registry.currentState = Lifecycle.State.STARTED
@@ -157,7 +157,7 @@ class ReaderSearchManagerTest {
             },
             workerDispatcher = testDispatcher,
         )
-        differ.submitData(owner.lifecycle, pagingData)
+        differ.submitData(lifecycle = owner.lifecycle, pagingData = pagingData)
         val items = differ.snapshot().items
 
         assertEquals(4, items.size)

@@ -8,11 +8,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DefaultUserMessageManagerTest {
+class UserMessageManagerTest {
 
     @Test
     fun `emitMessage emits message to flow`() = runTest {
-        val manager = DefaultUserMessageManager()
+        val manager = UserMessageManager()
         val messageId = 123
         val receivedMessages = mutableListOf<Int>()
 

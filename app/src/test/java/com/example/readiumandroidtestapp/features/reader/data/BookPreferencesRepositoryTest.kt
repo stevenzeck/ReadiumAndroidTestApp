@@ -16,7 +16,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DefaultBookPreferencesRepositoryTest {
+class BookPreferencesRepositoryTest {
 
     @get:Rule
     val temporaryFolder = TemporaryFolder()
@@ -24,18 +24,18 @@ class DefaultBookPreferencesRepositoryTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private val testScope = TestScope(context = testDispatcher + Job())
 
-    private fun createRepository(file: File): DefaultBookPreferencesRepository {
+    private fun createRepository(file: File): BookPreferencesRepository {
         val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
             scope = testScope,
             produceFile = { file },
         )
-        return DefaultBookPreferencesRepository(dataStore)
+        return BookPreferencesRepository(dataStore = dataStore)
     }
 
     @Test
     fun `save and get preferences`() = testScope.runTest {
         val file = temporaryFolder.newFile("test_prefs.preferences_pb")
-        val repository = createRepository(file)
+        val repository = createRepository(file = file)
         val bookId = 1L
         val preferencesJson = """{"fontFamily": "SANS_SERIF"}"""
 
@@ -49,7 +49,7 @@ class DefaultBookPreferencesRepositoryTest {
     @Test
     fun `save and get tts preferences`() = testScope.runTest {
         val file = temporaryFolder.newFile("test_tts_prefs.preferences_pb")
-        val repository = createRepository(file)
+        val repository = createRepository(file = file)
         val bookId = 2L
         val preferencesJson = """{"rate": 1.5}"""
 
@@ -63,7 +63,7 @@ class DefaultBookPreferencesRepositoryTest {
     @Test
     fun `save and get audiobook preferences`() = testScope.runTest {
         val file = temporaryFolder.newFile("test_audio_prefs.preferences_pb")
-        val repository = createRepository(file)
+        val repository = createRepository(file = file)
         val bookId = 3L
         val preferencesJson = """{"volume": 0.8}"""
 

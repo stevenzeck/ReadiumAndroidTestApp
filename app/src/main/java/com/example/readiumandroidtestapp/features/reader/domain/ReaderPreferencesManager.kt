@@ -176,7 +176,6 @@ class ReaderPreferencesManager @Inject constructor(
         bookId: Long,
         publication: Publication,
         ttsManager: ReaderTtsManager,
-        application: Application,
     ): TtsSettingsSession? {
         val json = bookPreferencesRepository.getTtsPreferences(bookId)
         val preferences =

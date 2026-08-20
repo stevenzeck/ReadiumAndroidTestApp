@@ -3,18 +3,20 @@ package com.example.readiumandroidtestapp.core.data.book
 import android.net.Uri
 import com.example.readiumandroidtestapp.core.data.database.BooksDao
 import com.example.readiumandroidtestapp.core.data.di.IoDispatcher
-import com.example.readiumandroidtestapp.core.domain.gateway.AssetRetrieverGateway
-import com.example.readiumandroidtestapp.core.domain.gateway.PublicationOpenerGateway
+import com.example.readiumandroidtestapp.core.data.storage.StorageManager
 import com.example.readiumandroidtestapp.core.domain.model.Book
-import com.example.readiumandroidtestapp.core.domain.network.HttpGateway
-import com.example.readiumandroidtestapp.core.domain.storage.StorageGateway
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.readium.r2.shared.publication.Publication
 import org.readium.r2.shared.util.AbsoluteUrl
 import org.readium.r2.shared.util.Try
 import org.readium.r2.shared.util.asset.Asset
+import org.readium.r2.shared.util.asset.AssetRetriever
 import org.readium.r2.shared.util.flatMap
+import org.readium.r2.shared.util.http.HttpClient
+import org.readium.r2.shared.util.http.HttpRequest
+import org.readium.r2.shared.util.http.fetch
+import org.readium.r2.streamer.PublicationOpener
 import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -41,11 +43,11 @@ sealed class ImportError {
  */
 @Singleton
 class BookImporter @Inject constructor(
-    private val storageGateway: StorageGateway,
+    private val storageManager: StorageManager,
     private val booksDao: BooksDao,
-    private val assetRetriever: AssetRetrieverGateway,
-    private val publicationOpener: PublicationOpenerGateway,
-    private val httpGateway: HttpGateway,
+    private val assetRetriever: AssetRetriever,
+    private val publicationOpener: PublicationOpener,
+    private val httpClient: HttpClient,
     private val coverImageSaver: CoverImageSaver,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
@@ -58,23 +60,25 @@ class BookImporter @Inject constructor(
      */
     suspend fun importFromUrl(url: AbsoluteUrl): Try<Book, ImportError> =
         withContext(context = ioDispatcher) {
-            httpGateway.fetch(url = url)
+            httpClient.fetch(request = HttpRequest(url = url))
                 .mapFailure { ImportError.Network }
-                .flatMap { result ->
-                    val stream = ByteArrayInputStream(result.body)
+                .flatMap { response ->
+                    val stream = ByteArrayInputStream(response.body)
                     var extension = url.extension?.toString()
 
                     if (extension.isNullOrBlank()) {
-                        val mimeType = result.contentType
+                        val contentType = response.response.headers["Content-Type"]
+                            ?: response.response.headers["content-type"]
+                        val mimeType = contentType?.firstOrNull()?.substringBefore(";")?.trim()
 
                         if (mimeType != null) {
                             extension =
-                                storageGateway.resolveExtensionFromMimeType(mimeType = mimeType)
+                                storageManager.resolveExtensionFromMimeType(mimeType = mimeType)
                         }
                     }
 
                     // Save to local storage first to ensure we have a file handle for the parser.
-                    storageGateway.saveFileFromStream(input = stream, extension = extension)
+                    storageManager.saveFileFromStream(input = stream, extension = extension)
                         .mapFailure { mapIOError(e = it) }
                 }
                 .flatMap { file ->
@@ -94,17 +98,17 @@ class BookImporter @Inject constructor(
     suspend fun importFromUri(uri: Uri): Try<Book, ImportError> =
         withContext(context = ioDispatcher) {
             try {
-                val inputStream = storageGateway.openInputStream(uri = uri)
+                val inputStream = storageManager.openInputStream(uri = uri)
                     ?: throw IOException("Could not open input stream")
                 inputStream.use { stream ->
-                    storageGateway.saveFileFromStream(
+                    storageManager.saveFileFromStream(
                         input = stream,
-                        extension = storageGateway.resolveExtension(uri = uri),
+                        extension = storageManager.resolveExtension(uri = uri),
                     )
                         .mapFailure { mapIOError(e = it) }
                 }
             } catch (e: Exception) {
-                Try.failure(failure = mapIOError(e))
+                Try.failure(failure = mapIOError(e = e))
             }
                 .flatMap { file ->
                     addBookFromFile(file = file)
@@ -124,22 +128,15 @@ class BookImporter @Inject constructor(
 
     // The core pipeline: Retrieve Asset -> Open Publication -> Extract Metadata -> Save to DB
     private suspend fun addBookFromFile(file: File): Try<Book, ImportError> {
-        val url = storageGateway.toUrl(file)
-            ?: return Try.failure(failure = ImportError.Unknown(cause = Exception("Could not convert file to URL")))
+        val url = storageManager.toUrl(file = file)
 
         return assetRetriever.retrieve(url = url)
-            .fold(
-                onSuccess = { Try.success(success = it) },
-                onFailure = { Try.failure(failure = ImportError.InvalidBook) },
-            )
+            .mapFailure { ImportError.InvalidBook }
             .flatMap { asset ->
                 // We open the publication here specifically to extract static metadata (title, author)
                 // and the cover image. This relies on the Readium Streamer.
                 publicationOpener.open(asset = asset, allowUserInteraction = false)
-                    .fold(
-                        onSuccess = { Try.success(success = it) },
-                        onFailure = { Try.failure(failure = ImportError.InvalidBook) },
-                    )
+                    .mapFailure { ImportError.InvalidBook }
                     .flatMap { publication ->
                         try {
                             val coverPath = coverImageSaver.saveCover(publication = publication)

@@ -1,8 +1,17 @@
 package com.example.readiumandroidtestapp.core.utils
 
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-interface UserMessageManager {
-    val messages: Flow<Int>
-    suspend fun emitMessage(messageId: Int)
+@Singleton
+class UserMessageManager @Inject constructor() {
+    private val _messages = Channel<Int>(capacity = Channel.BUFFERED)
+    val messages: Flow<Int> = _messages.receiveAsFlow()
+
+    suspend fun emitMessage(messageId: Int) {
+        _messages.send(element = messageId)
+    }
 }
