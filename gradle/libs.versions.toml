@@ -1,10 +1,10 @@
 [versions]
 # -- Android & Tools --
-agp = "9.3.1"
+agp = "9.4.0"
 desugar-jdk-libs = "2.1.5"
 
 # -- Kotlin --
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.9"
@@ -17,15 +17,15 @@ androidx-core = "1.19.0"
 androidx-datastore = "1.2.1"
 androidx-fragment = "1.9.0"
 androidx-lifecycle = "2.11.0"
-androidx-room3 = "3.0.1"
+androidx-room3 = "3.0.3"
 androidx-paging = "3.5.1"
 
 # -- Navigation (v3) --
-androidx-navigation3 = "1.1.6"
+androidx-navigation3 = "1.1.7"
 
 # -- Compose --
-compose-bom = "2026.08.00"
-compose-material3 = "1.5.0-alpha26"
+compose-bom = "2026.09.00"
+compose-material3 = "1.5.0-alpha28"
 compose-material3-adaptive-navigation = "1.4.0"
 
 # -- Media & Readium --
@@ -38,7 +38,7 @@ dagger-hilt = "2.60.1"
 androidx-hilt = "1.4.0"
 
 # -- Third Party --
-coil = "3.5.0"
+coil = "3.6.2"
 timber = "5.0.1"
 
 # -- Testing --
